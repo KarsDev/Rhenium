@@ -1,1 +1,1 @@
-int32
+int32 anint = 32 + 32
