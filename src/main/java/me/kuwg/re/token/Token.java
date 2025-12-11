@@ -1,17 +1,11 @@
 package me.kuwg.re.token;
 
+public record Token(TokenType type, String value, int line) {
+    public boolean matches(TokenType type) {
+        return this.type == type;
+    }
 
-/**
- * Token class, parsed by the Tokenizer.
- *
- * @param value The string representation of the value
- * @param type The type of the token
- * @param line The line where the token is found
- *
- * @author Kuwg
- *
- * @see me.kuwg.re.token.TokenType
- * @see me.kuwg.re.token.Tokenizer
- */
-public record Token(String value, TokenType type, int line) {
+    public boolean matches(TokenType type, String value) {
+        return this.type == type && this.value.equals(value);
+    }
 }

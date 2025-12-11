@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Rhenium:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Rhenium_jar</output-path>
+    <root id="archive" name="Rhenium.jar">
+      <element id="module-output" name="Rhenium" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/26.0.1/annotations-26.0.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.158/classgraph-4.8.158.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

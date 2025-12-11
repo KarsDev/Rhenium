@@ -1,0 +1,80 @@
+package me.kuwg.re.ast.nodes.blocks;
+
+import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.interrupt.InterruptNode;
+import me.kuwg.re.ast.nodes.raise.RaiseNode;
+import me.kuwg.re.compiler.Compilable;
+import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.RInternalError;
+import me.kuwg.re.error.errors.block.RBlockSyntaxError;
+import me.kuwg.re.error.errors.function.RFunctionReturnTypeMismatchError;
+import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.writer.Writeable;
+
+import java.util.List;
+
+public class BlockNode implements Writeable, Compilable {
+    private boolean compiled = false;
+    private final List<ASTNode> nodes;
+
+    public BlockNode(final List<ASTNode> nodes) {
+        this.nodes = nodes;
+    }
+
+    public List<ASTNode> getNodes() {
+        return nodes;
+    }
+
+    @Override
+    public void compile(final CompilationContext cctx) {
+        for (int i = 0; i < nodes.size(); i++) {
+            final ASTNode node = nodes.get(i);
+            node.compile(cctx);
+
+            if (node instanceof InterruptNode && i < nodes.size() - 1) {
+                new RBlockSyntaxError("Block gets interrupted but continues", node.getLine()).raise();
+            }
+        }
+        compiled = true;
+    }
+
+    @Override
+    public void write(final StringBuilder sb, final String indent) {
+        sb.append(indent).append("Block: ").append(NEWLINE);
+        nodes.forEach(node -> node.write(sb, TAB + indent));
+    }
+
+    public void checkTypes(TypeRef returnType, boolean mustReturn) {
+        if (!compiled) throw new RInternalError("Block node has not been compiled yet.");
+
+        boolean hasReturn = false;
+
+        for (final ASTNode node : nodes) {
+            if (node instanceof IBlockContainer bc) {
+                bc.getBlock().checkTypes(returnType, false);
+            }
+
+            if (node instanceof ReturnNode ret) {
+                hasReturn = true;
+                TypeRef type = ret.getValueType();
+
+                if (!type.isCompatibleWith(returnType)) {
+                    new RFunctionReturnTypeMismatchError(returnType, type, node.getLine()).raise();
+                }
+            }
+
+            if (node instanceof RaiseNode) {
+                hasReturn = true;
+            }
+        }
+
+        if (!hasReturn && !(returnType instanceof NoneBuiltinType) && mustReturn) {
+            new RFunctionReturnTypeMismatchError(
+                    returnType,
+                    NoneBuiltinType.INSTANCE,
+                    nodes.isEmpty() ? -1 : nodes.get(nodes.size() - 1).getLine()
+            ).raise();
+        }
+    }
+}
