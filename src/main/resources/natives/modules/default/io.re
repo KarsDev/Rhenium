@@ -11,7 +11,6 @@ declare i32 @getchar()
 @fmt_no_newline = private constant [3 x i8] c"%s\00"
 """
 
-
 _Builtin func println(s: str) -> none = """
 entry:
     ; Get pointer to the format string

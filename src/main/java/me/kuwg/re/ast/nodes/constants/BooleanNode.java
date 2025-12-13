@@ -14,10 +14,7 @@ public class BooleanNode extends ConstantNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String llvmValue = value ? "1" : "0";
-        String reg = cctx.nextRegister();
-        cctx.emit(reg + " = add i1 0, " + llvmValue + " ; load boolean literal");
-        return reg;
+        return value ? "true" : "false";
     }
 
     @Override

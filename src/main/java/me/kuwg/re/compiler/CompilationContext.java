@@ -155,12 +155,12 @@ final class CompilationContext {
         declarations.append(declaration).append('\n');
     }
 
-    public void include(int line, String name, String pkg) {
+    public void include(int line, String sourceFile, String name, String pkg) {
         if (includedModules.contains(name)) return;
         String str = name + (pkg == null ? "" : " in " + pkg);
         declare(" ; USING MODULE " + str);
         includedModules.add(name);
-        ModuleLoadingHelper.loadModule(line, name, pkg, this);
+        ModuleLoadingHelper.loadModule(line, sourceFile, name, pkg, this);
     }
 
     public Stack<LoopContext> getLoopStack() {
@@ -171,7 +171,7 @@ final class CompilationContext {
         return prefix + "_" + (labelCounter++);
     }
 
-    public String compileAndGet(File output) throws IOException {
+    public String compileAndGet(File output, List<String> clangArgs) throws IOException {
         var main = getFunction("main", List.of());
 
         if (main == null) {
@@ -180,7 +180,7 @@ final class CompilationContext {
             withMain(main, output);
         }
 
-        return getCompilationCommand(output.getAbsolutePath());
+        return getCompilationCommand(output.getAbsolutePath(), clangArgs);
     }
 
     private void noMain(File output) throws IOException {
@@ -232,27 +232,31 @@ final class CompilationContext {
         }
     }
 
-    private String getCompilationCommand(String name) {
+    private String getCompilationCommand(String name, List<String> clangArgs) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
+        final String extraClangArgs =
+                (clangArgs == null || clangArgs.isEmpty())
+                        ? ""
+                        : " " + String.join(" ", clangArgs);
 
         String exeBase = name;
         int lastDot = exeBase.lastIndexOf('.');
         if (lastDot > 0) exeBase = exeBase.substring(0, lastDot);
 
         String finalExe = exeBase + (WIN ? ".exe" : ".out");
-
         String deleteCmd = WIN ? "del /f " : "rm -f ";
-
         String and = " && ";
 
         StringBuilder cmd = new StringBuilder();
-
         List<String> bcFiles = new ArrayList<>();
+
         for (Path p : nativeCPPModules) {
             String src = p.toString();
             String bc = src + ".bc";
 
-            cmd.append("clang++ -O2 -c -emit-llvm ")
+            cmd.append("clang++ -O2 -c -emit-llvm")
+                    .append(extraClangArgs)
+                    .append(" ")
                     .append(quote.apply(src))
                     .append(" -o ")
                     .append(quote.apply(bc))
@@ -275,7 +279,9 @@ final class CompilationContext {
 
             cmd.append(and);
 
-            cmd.append("clang++ ")
+            cmd.append("clang++")
+                    .append(extraClangArgs)
+                    .append(" ")
                     .append(quote.apply(linked))
                     .append(" -o ")
                     .append(quote.apply(finalExe))
@@ -287,7 +293,10 @@ final class CompilationContext {
             }
 
         } else {
-            cmd.append("clang++ ")
+            // Direct compile
+            cmd.append("clang++")
+                    .append(extraClangArgs)
+                    .append(" ")
                     .append(quote.apply(name))
                     .append(" -o ")
                     .append(quote.apply(finalExe))
@@ -298,5 +307,9 @@ final class CompilationContext {
         }
 
         return cmd.toString().trim();
+    }
+
+    public Map<String, RVariable> getVariables() {
+        return variables;
     }
 }

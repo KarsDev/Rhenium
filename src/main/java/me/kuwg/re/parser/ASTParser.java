@@ -76,8 +76,8 @@ public class ASTParser {
     }
 
     private static void includeInitialModules(AST ast) {
-        ast.addChild(new UsingNode(0, "default\\io", null));     // io
-        ast.addChild(new UsingNode(0, "default\\system", null)); // system
+        ast.addChild(new UsingNode(0, null, "default\\io", null));     // io
+        ast.addChild(new UsingNode(0, null, "default\\system", null)); // system
     }
 
     public AST parse() {
@@ -169,7 +169,8 @@ public class ASTParser {
             case CHARACTER -> parseCharacter();
             case OPERATOR -> {
                 if (matchAndConsume(OPERATOR, "@")) yield parseDereferenceOperator();
-                else yield new RParserError("Unexpected operator in statement: " + current().value(), file, line()).raise();
+                else
+                    yield new RParserError("Unexpected operator in statement: " + current().value(), file, line()).raise();
             }
             default ->
                     new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line()).raise();
@@ -491,16 +492,18 @@ public class ASTParser {
         String pkg;
 
         if (matchAndConsume(OPERATOR, "in")) {
-            if (!match(STRING)) {
+            if (matchAndConsume(KEYWORD, "self")) {
+                pkg = "self";
+            } else if (!match(STRING)) {
                 return new RParserError("Expected string literal for using package", file, line).raise();
+            } else {
+                pkg = consume().value();
             }
-
-            pkg = consume().value();
         } else {
             pkg = null;
         }
 
-        return new UsingNode(line, name.toString(), pkg);
+        return new UsingNode(line, file, name.toString(), pkg);
     }
 
     private @SubFunc ASTNode parsePtrKeyword() {
@@ -744,11 +747,13 @@ public class ASTParser {
 
     private @SubFunc ASTNode parseLenKeyword() {
         int line = line();
-        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for len expression", file, line()).raise();
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for len expression", file, line()).raise();
 
         ValueNode value = parseValue();
 
-        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for len expression", file, line()).raise();
+        if (!matchAndConsume(DIVIDER, ")"))
+            return new RParserError("Expected ')' for len expression", file, line()).raise();
         return new LenNode(line, value);
     }
 
@@ -771,11 +776,13 @@ public class ASTParser {
         if (!matchAndConsume(OPERATOR, ">"))
             return new RParserError("Expected '>' for cast expression", file, line()).raise();
 
-        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for cast expression", file, line()).raise();
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for cast expression", file, line()).raise();
 
         ValueNode value = parseValue();
 
-        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for cast expression", file, line()).raise();
+        if (!matchAndConsume(DIVIDER, ")"))
+            return new RParserError("Expected ')' for cast expression", file, line()).raise();
 
         return new CastNode(line, type, value);
     }
@@ -843,7 +850,8 @@ public class ASTParser {
         if (matchAndConsume(KEYWORD, "none")) {
             value = null;
         } else {
-            if (!match(STRING)) return new RParserError("Expected string literal or none after raise", file, line).raise();
+            if (!match(STRING))
+                return new RParserError("Expected string literal or none after raise", file, line).raise();
             value = consume().value();
         }
 
@@ -853,7 +861,8 @@ public class ASTParser {
     private @SubFunc ASTNode parseTry() {
         int line = line();
 
-        if (!matchAndConsume(OPERATOR, ":")) return new RParserError("Expected ':' for try declaration", file, line).raise();
+        if (!matchAndConsume(OPERATOR, ":"))
+            return new RParserError("Expected ':' for try declaration", file, line).raise();
 
         BlockNode tryBlock = parseBlock();
 

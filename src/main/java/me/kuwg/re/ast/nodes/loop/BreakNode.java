@@ -1,10 +1,11 @@
 package me.kuwg.re.ast.nodes.loop;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.interrupt.InterruptNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.loop.RLoopError;
 
-public class BreakNode extends ASTNode {
+public class BreakNode extends ASTNode implements InterruptNode {
     public BreakNode(final int line) {
         super(line);
     }

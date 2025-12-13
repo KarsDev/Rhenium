@@ -1,9 +1,9 @@
 package me.kuwg.re.ast.nodes.statement;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.interrupt.InterruptNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
-import me.kuwg.re.ast.nodes.blocks.ReturnNode;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 
@@ -43,7 +43,7 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
         cctx.pushIndent();
         block.compile(cctx);
         cctx.popIndent();
-        if (!(block.getNodes().get(block.getNodes().size() - 1) instanceof ReturnNode)) cctx.emit("br label %" + endLabel);
+        if (!(block.getNodes().get(block.getNodes().size() - 1) instanceof InterruptNode)) cctx.emit("br label %" + endLabel);
 
         if (elseIfNode != null) {
             cctx.emit(elseLabel + ":");
@@ -51,7 +51,7 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
 
             BlockNode lastBlock = elseIfNode.getBlock();
             if (lastBlock != null && !lastBlock.getNodes().isEmpty()) {
-                if (!(lastBlock.getNodes().get(lastBlock.getNodes().size() - 1) instanceof ReturnNode)) {
+                if (!(lastBlock.getNodes().get(lastBlock.getNodes().size() - 1) instanceof InterruptNode)) {
                     cctx.emit("br label %" + endLabel);
                 }
             }
@@ -60,7 +60,10 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
             cctx.pushIndent();
             elseNode.compile(cctx);
             cctx.popIndent();
-            cctx.emit("br label %" + endLabel);
+            if (!elseNode.getNodes().isEmpty()
+                    && !(elseNode.getNodes().get(elseNode.getNodes().size() - 1) instanceof InterruptNode)) {
+                cctx.emit("br label %" + endLabel);
+            }
         }
 
         cctx.emit(endLabel + ":");

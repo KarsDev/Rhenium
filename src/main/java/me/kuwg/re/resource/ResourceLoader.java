@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 public class ResourceLoader {
-
     public static String loadResourceAsString(String resourcePath) {
         try (InputStream inputStream = ResourceLoader.class.getResourceAsStream(resourcePath)) {
             if (inputStream == null) {

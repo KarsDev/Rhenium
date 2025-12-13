@@ -23,7 +23,7 @@ public class NotEqualsBO extends BinaryOperator {
         TypeRef rightType = c.rightType();
 
         if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
-            c.cctx().include(-1, "string", null);
+            c.cctx().include(-1, null, "string", null);
 
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(resReg + " = call i1 @strcmp_neq(i8* " + c.leftReg() + ", i8* " + c.rightReg() + ")");

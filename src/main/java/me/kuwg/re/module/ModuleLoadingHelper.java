@@ -9,36 +9,53 @@ import me.kuwg.re.parser.ASTParser;
 import me.kuwg.re.resource.ResourceLoader;
 import me.kuwg.re.token.Tokenizer;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class ModuleLoadingHelper {
     private ModuleLoadingHelper() {
         throw new RInternalError();
     }
 
-    public static void loadModule(int line, String name, String pkg, CompilationContext cctx) {
+    public static void loadModule(int line, String sourceFile, String name, String pkg, CompilationContext cctx) {
         if (pkg == null) {
             loadNativeModule(line, name, cctx);
             return;
         }
 
-        var file = new File(pkg, name + ".re");
+        final Path srcPath = Path.of(sourceFile);
+        Path base = pkg.equals("self") ? srcPath.getParent() : Path.of(pkg);
 
-        if (!file.exists()) {
+        if (pkg.equals("..")) {
+            Path sourcePath = srcPath.getParent();
+            if (sourcePath != null) {
+                base = sourcePath.getParent();
+            }
+        }
+
+
+        if (base == null) {
             new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            return;
+        }
+
+        Path file = base.resolve(name + ".re");
+
+        if (!Files.exists(file)) {
+            new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            return;
         }
 
         String src;
         try {
-            src = new String(Files.readAllBytes(file.toPath()));
+            src = Files.readString(file);
         } catch (IOException e) {
             new RModuleCouldNotBeLoadedError(pkg + "->" + name, line).raise();
             return;
         }
 
-        load(file.getName(), src, cctx);
+        load(file.getFileName().toString(), src, cctx);
     }
 
     private static void loadNativeModule(int line, String name, CompilationContext cctx) {

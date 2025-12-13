@@ -23,7 +23,7 @@ public class GreaterOrEqualBO extends BinaryOperator {
         TypeRef rightType = c.rightType();
 
         if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
-            c.cctx().include(-1, "string", null);
+            c.cctx().include(-1, null, "string", null);
             String lLen = c.cctx().nextRegister();
             String rLen = c.cctx().nextRegister();
 

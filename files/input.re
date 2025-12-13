@@ -1,20 +1,19 @@
 using time
-using string
+
+func work() -> int:
+    s: mut int = 0
+    for i in range(1_000_000_000):
+        s = s + 1
+    return s
 
 func main() -> int:
     start = timeMillis()
 
-    println("Starting the wait proc...")
+    res = work()
 
-    end: mut = timeMillis()
+    took = timeMillis() - start
 
-    while true:
-        end = timeMillis()
-        if end - start >= 1000:
-            break
+    println("res=" + res)
+    println("took=" + took + "ms")
 
-    txt = longToStr(end - start)
-
-    println("Took " + txt + "ms")
-
-    raise "LOL"
+    return 0
