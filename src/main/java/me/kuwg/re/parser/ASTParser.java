@@ -332,89 +332,12 @@ public class ASTParser {
         String name = self ? "self" : consume().value();
 
         ValueNode node = new DirectVariableReferenceNode(line, name);
-        while (true) {
-            if (outOfBounds(0)) break;
-            line = line();
 
-            if (match(DIVIDER, "(")) {
-                if (self) {
-                    return new RParserError("Using self as function call", file, line).raise();
-                }
-                var args = parseParamsCall();
-
-                if (node instanceof DirectVariableReferenceNode) {
-                    node = new FunctionCallNode(line, name, args);
-                    continue;
-                }
-
-                return new RParserError("Invalid parenthesis", file, line).raise();
-            }
-
-            if (matchAndConsume(DIVIDER, "[")) {
-                if (self) {
-                    return new RParserError("Using self as array access", file, line).raise();
-                }
-
-                ValueNode index = parseValue();
-
-                if (!matchAndConsume(DIVIDER, "]")) {
-                    return new RParserError("Expected ']'", file, line).raise();
-                }
-
-                if (matchAndConsume(OPERATOR, "=")) {
-                    ValueNode value = parseValue();
-                    node = new ArraySetNode(line, node, index, value);
-                } else {
-                    node = new ArrayAccessNode(line, node, index);
-                }
-                continue;
-            }
-
-            if (matchAndConsume(OPERATOR, "@")) {
-                if (matchAndConsume(OPERATOR, "=")) {
-                    ValueNode value = parseValue();
-                    node = new DereferenceAssignNode(line, node, value);
-                    continue;
-                }
-
-                if (!(node instanceof VariableReference vr)) {
-                    return new RParserError("Expected variable reference for dereference operator", file, line).raise();
-                }
-
-                node = new DereferenceNode(line, vr);
-                continue;
-            }
-
-            if (matchAndConsume(OPERATOR, ".")) {
-                String fieldName = identifier();
-                if (!(node instanceof VariableReference vr)) {
-                    return new RParserError("Expected reference for struct access", file, line).raise();
-                }
-
-                if (!match(DIVIDER, "(")) {
-                    node = new StructFieldAccessNode(line, vr, fieldName);
-                    continue;
-                }
-
-                var args = parseParamsCall();
-
-                node = new StructFunctionCallNode(line, node, fieldName, args);
-            }
-
-            break;
-        }
-
-        if (match(OPERATOR, "=") || match(OPERATOR, ":")) {
-            if (!(node instanceof VariableReference vr)) {
-                return new RParserError("Expected reference for assignment", file, line).raise();
-            }
-            return parseVariableAssignment(line, vr);
-        }
-
+        node = parseSubExpr(line, self, name, node);
         return node;
     }
 
-    private @SubFunc ASTNode parseVariableAssignment(int line, VariableReference variable) {
+    private @SubFunc ValueNode parseVariableAssignment(int line, VariableReference variable) {
         return switch (current().value()) {
             case "=" -> {
                 consume();
@@ -928,6 +851,107 @@ public class ASTParser {
         ValueNode value = parseValue();
 
         return new BitwiseNotNode(line, value);
+    }
+
+    private ASTNode parseDivider() {
+        int line = line();
+
+        if (!matchAndConsume(DIVIDER, "(")) {
+            return new RParserError("Unexpected divider: " + current().value(), file, line).raise();
+        }
+        ValueNode value = parseValue();
+
+        if (!matchAndConsume(DIVIDER, ")")) {
+            return new RParserError("Expected closing divider ')'", file, line).raise();
+        }
+
+        return parseSubExpr(line, false, null, value);
+    }
+
+    private ValueNode parseSubExpr(int line, boolean self, String name, ValueNode node) {
+        while (true) {
+            if (outOfBounds(0)) break;
+            line = line();
+
+            if (match(DIVIDER, "(")) {
+                if (self) {
+                    return new RParserError("Using self as function call", file, line).raise();
+                }
+                if (name == null) {
+                    return new RParserError("You can't call a function here", file, line).raise();
+                }
+                var args = parseParamsCall();
+
+                if (node instanceof DirectVariableReferenceNode) {
+                    node = new FunctionCallNode(line, name, args);
+                    continue;
+                }
+
+                return new RParserError("Invalid parenthesis", file, line).raise();
+            }
+
+            if (matchAndConsume(DIVIDER, "[")) {
+                if (self) {
+                    return new RParserError("Using self as array access", file, line).raise();
+                }
+
+                ValueNode index = parseValue();
+
+                if (!matchAndConsume(DIVIDER, "]")) {
+                    return new RParserError("Expected ']'", file, line).raise();
+                }
+
+                if (matchAndConsume(OPERATOR, "=")) {
+                    ValueNode value = parseValue();
+                    node = new ArraySetNode(line, node, index, value);
+                } else {
+                    node = new ArrayAccessNode(line, node, index);
+                }
+                continue;
+            }
+
+            if (matchAndConsume(OPERATOR, "@")) {
+                if (matchAndConsume(OPERATOR, "=")) {
+                    ValueNode value = parseValue();
+                    node = new DereferenceAssignNode(line, node, value);
+                    continue;
+                }
+
+                if (!(node instanceof VariableReference vr)) {
+                    return new RParserError("Expected variable reference for dereference operator", file, line).raise();
+                }
+
+                node = new DereferenceNode(line, vr);
+                continue;
+            }
+
+            if (matchAndConsume(OPERATOR, ".")) {
+                String fieldName = identifier();
+                if (!(node instanceof VariableReference vr)) {
+                    return new RParserError("Expected reference for struct access", file, line).raise();
+                }
+
+                if (!match(DIVIDER, "(")) {
+                    node = new StructFieldAccessNode(line, vr, fieldName);
+                    continue;
+                }
+
+                var args = parseParamsCall();
+
+                node = new StructFunctionCallNode(line, node, fieldName, args);
+            }
+
+            break;
+        }
+
+        if (match(OPERATOR, "=") || match(OPERATOR, ":")) {
+            if (!(node instanceof VariableReference vr)) {
+                return new RParserError("Expected reference for assignment", file, line).raise();
+            }
+            return parseVariableAssignment(line, vr);
+        }
+
+        return node;
     }
 
     /*

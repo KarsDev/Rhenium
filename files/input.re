@@ -11,7 +11,7 @@ func main() -> int:
 
     f.createNew()
 
-    f.rename("TEST_2.XT")
+    f.rename("TEST_2.TXT")
 
     println(f.name)
 
