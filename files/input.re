@@ -1,19 +1,18 @@
-using time
-
-func work() -> int:
-    s: mut int = 0
-    for i in range(1_000_000_000):
-        s = s + 1
-    return s
+using file
 
 func main() -> int:
-    start = timeMillis()
 
-    res = work()
+    f = init File("TEST.txt")
 
-    took = timeMillis() - start
+    if (f.exists()):
+        println("EXISTS")
+    else:
+        println("DOES NOT EXIST")
 
-    println("res=" + res)
-    println("took=" + took + "ms")
+    f.createNew()
+
+    f.rename("TEST_2.XT")
+
+    println(f.name)
 
     return 0

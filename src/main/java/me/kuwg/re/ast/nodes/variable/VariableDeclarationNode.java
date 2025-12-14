@@ -1,10 +1,13 @@
 package me.kuwg.re.ast.nodes.variable;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
+import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.variable.RVariableIsNotMutableError;
+import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableReassignmentTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.arr.ArrayType;
@@ -25,21 +28,23 @@ public class VariableDeclarationNode extends ValueNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Variable Declaration: ").append(NEWLINE)
-                .append(indent).append(TAB).append("Name: ").append(NEWLINE);
+        sb.append(indent).append("Variable Declaration: ").append(NEWLINE).append(indent).append(TAB).append("Name: ").append(NEWLINE);
         variable.write(sb, indent + TAB + TAB);
         sb.append(indent).append(TAB).append("Value: ").append(NEWLINE);
         value.write(sb, indent + TAB + TAB);
 
         if (type != null)
             sb.append(indent).append(TAB).append("Type: ").append(mutable ? "mut " : "").append(type.getName()).append(NEWLINE);
-        else
-            sb.append(indent).append(TAB).append("Type: mut ?").append(NEWLINE);
+        else sb.append(indent).append(TAB).append("Type: mut ?").append(NEWLINE);
     }
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         var oldVar = variable.getVariable(cctx);
+
+        if (variable instanceof StructFieldAccessNode && oldVar == null) {
+            return new RVariableNotFoundError(variable.getCompleteName(), line).raise();
+        }
 
         String valueReg = value.compileAndGet(cctx);
         TypeRef valueType = value.getType();
@@ -68,6 +73,25 @@ public class VariableDeclarationNode extends ValueNode {
             new RVariableReassignmentTypeError(variable.getCompleteName(), line).raise();
         }
 
+        if (variable instanceof StructFieldAccessNode fieldRef) {
+            RVariable structVar = fieldRef.struct.getVariable(cctx);
+
+            if (structVar == null) {
+                throw new RInternalError(); // already validated earlier
+            }
+
+            TypeRef fieldType = oldVar.type();
+
+            if (!fieldType.equals(valueType)) {
+                ValueNode castNode = new CastNode(line, fieldType, value);
+                valueReg = castNode.compileAndGet(cctx);
+            }
+
+            cctx.emit("store " + fieldType.getLLVMName() + " " + valueReg + ", " + fieldType.getLLVMName() + "* " + oldVar.valueReg() + " ; Reassign struct field " + variable.getCompleteName());
+
+            return valueReg;
+        }
+
         if (!oldVar.mutable()) {
             new RVariableIsNotMutableError(variable.getCompleteName(), line).raise();
         }
@@ -84,6 +108,7 @@ public class VariableDeclarationNode extends ValueNode {
         }
 
         cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", " + varType.getLLVMName() + "* %" + variable.getSimpleName() + " ; Reassign variable " + variable.getCompleteName());
+
         return valueReg;
     }
 
@@ -110,15 +135,9 @@ public class VariableDeclarationNode extends ValueNode {
 
         if (varType instanceof ArrayType arrType) {
             String sizeConst = Integer.toString(arrType.size() * arrType.inner().getSize());
-            cctx.emit("call void @llvm.memcpy.p0.p0.i64("
-                    + "ptr " + varReg + ", "
-                    + "ptr " + valueReg + ", "
-                    + "i64 " + sizeConst + ", "
-                    + "i1 false)"
-            );
+            cctx.emit("call void @llvm.memcpy.p0.p0.i64(" + "ptr " + varReg + ", " + "ptr " + valueReg + ", " + "i64 " + sizeConst + ", " + "i1 false)");
         } else {
-            cctx.emit("store " + varType.getLLVMName() + " " + valueReg +
-                    ", " + varType.getLLVMName() + "* " + varReg);
+            cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", " + varType.getLLVMName() + "* " + varReg);
         }
 
         var v = new RVariable(variable.getSimpleName(), mutable, varType, varReg);

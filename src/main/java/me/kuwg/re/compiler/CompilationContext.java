@@ -254,7 +254,7 @@ final class CompilationContext {
             String src = p.toString();
             String bc = src + ".bc";
 
-            cmd.append("clang++ -O2 -c -emit-llvm")
+            cmd.append("clang++ -O2 -c -emit-llvm -std=c++17")
                     .append(extraClangArgs)
                     .append(" ")
                     .append(quote.apply(src))

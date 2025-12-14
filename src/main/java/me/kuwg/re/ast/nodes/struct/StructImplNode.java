@@ -9,6 +9,7 @@ import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
+import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ public class StructImplNode extends ASTNode {
 
     private List<FunctionParameter> addSelfParam(RStruct struct, List<FunctionParameter> original) {
         List<FunctionParameter> newParams = new ArrayList<>(original.size() + 1);
-        newParams.add(new FunctionParameter("self", false, struct.type()));
+        newParams.add(new FunctionParameter("self", false, new PointerType(struct.type())));
         newParams.addAll(original);
         return newParams;
     }
@@ -78,11 +79,13 @@ public class StructImplNode extends ASTNode {
     private RFunction compileFunction(CompilationContext cctx, RStruct struct, FunctionDeclarationNode original) {
 
         String mangledName = generateName(struct.type().getName(), original.getName());
+
         List<FunctionParameter> newParams = addSelfParam(struct, original.getParameters());
 
         FunctionDeclarationNode renamed = new FunctionDeclarationNode(
                 original.getLine(),
                 mangledName,
+                false,
                 newParams,
                 original.getReturnType(),
                 original.getBlock()

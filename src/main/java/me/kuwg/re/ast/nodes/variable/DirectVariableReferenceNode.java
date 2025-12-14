@@ -67,6 +67,8 @@ public class DirectVariableReferenceNode extends VariableReference {
 
     @Override
     public String toString() {
-        throw new RInternalError();
+        return "DirectVariableReferenceNode{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

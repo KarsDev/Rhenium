@@ -4,10 +4,12 @@ import me.kuwg.re.ast.nodes.struct.StructImplNode;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.ArrayList;
@@ -29,9 +31,16 @@ public class StructFunctionCallNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String selfValue = struct.compileAndGet(cctx);
-        TypeRef structType = struct.getType();
+        if (!(struct instanceof me.kuwg.re.ast.nodes.variable.VariableReference vr)) {
+            return new RVariableTypeError("struct", struct.getType().getName(), line).raise();
+        }
 
+        RVariable selfVar = vr.getVariable(cctx);
+        if (selfVar == null) {
+            return new RVariableTypeError("struct", "unknown", line).raise();
+        }
+
+        TypeRef structType = selfVar.type();
         if (!(structType instanceof StructType structObj)) {
             return new RVariableTypeError("struct", structType.getName(), line).raise();
         }
@@ -41,8 +50,8 @@ public class StructFunctionCallNode extends ValueNode {
         List<String> llvmArgs = new ArrayList<>();
         List<TypeRef> argTypes = new ArrayList<>();
 
-        llvmArgs.add(selfValue);
-        argTypes.add(structType);
+        llvmArgs.add(selfVar.valueReg());
+        argTypes.add(new PointerType(structType));
 
         for (ValueNode p : params) {
             llvmArgs.add(p.compileAndGet(cctx));
@@ -55,17 +64,13 @@ public class StructFunctionCallNode extends ValueNode {
             var sb = new StringBuilder("(");
             for (int i = 0; i < argTypes.size(); i++) {
                 sb.append(argTypes.get(i).getName());
-                if (i < argTypes.size() - 1) {
-                    sb.append(", ");
-                }
+                if (i < argTypes.size() - 1) sb.append(", ");
             }
             sb.append(")");
-            return new RFunctionNotFoundError(
-                    name,
-                    sb.toString(),
-                    line
-            ).raise();
+            return new RFunctionNotFoundError(name, sb.toString(), line).raise();
         }
+
+        setType(fn.returnType());
 
         StringBuilder call = new StringBuilder();
         call.append("call ")
@@ -79,8 +84,7 @@ public class StructFunctionCallNode extends ValueNode {
                     .append(" ")
                     .append(llvmArgs.get(i));
 
-            if (i < llvmArgs.size() - 1)
-                call.append(", ");
+            if (i < llvmArgs.size() - 1) call.append(", ");
         }
 
         call.append(")");

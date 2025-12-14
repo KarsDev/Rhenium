@@ -24,9 +24,9 @@ public class FunctionDeclarationNode extends ASTNode implements IBlockContainer 
 
     private boolean registered = false;
 
-    public FunctionDeclarationNode(final int line, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
+    public FunctionDeclarationNode(final int line, final String name, boolean makeUnique, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
         super(line);
-        this.llvmName = RFunction.makeUnique(name);
+        this.llvmName = makeUnique ? RFunction.makeUnique(name) : name;
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;

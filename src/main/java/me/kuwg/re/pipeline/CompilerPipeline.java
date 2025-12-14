@@ -29,8 +29,8 @@ public final class CompilerPipeline {
             String command = cctx.compileAndGet(args.outputFile(), args.clangArgs());
 
             if (args.dumpAST()) dumpAST(ast);
-            else if (args.runOutput()) CommandRunner.run(command);
-            else if (!args.emitLLVM()) args.outputFile().delete();
+            if (args.runOutput()) CommandRunner.run(command);
+            if (!args.keepLLVM()) args.outputFile().delete();
 
         } catch (Exception e) {
             System.err.println("Compilation failed");

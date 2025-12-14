@@ -10,6 +10,7 @@ import me.kuwg.re.ast.nodes.blocks.ReturnNode;
 import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.constants.*;
 import me.kuwg.re.ast.nodes.expression.BinaryExpressionNode;
+import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
 import me.kuwg.re.ast.nodes.extern.NativeCPPNode;
 import me.kuwg.re.ast.nodes.function.*;
 import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
@@ -169,9 +170,11 @@ public class ASTParser {
             case CHARACTER -> parseCharacter();
             case OPERATOR -> {
                 if (matchAndConsume(OPERATOR, "@")) yield parseDereferenceOperator();
+                else if (matchAndConsume(OPERATOR, "~")) yield parseBitwiseNotOperator();
                 else
                     yield new RParserError("Unexpected operator in statement: " + current().value(), file, line()).raise();
             }
+            case DIVIDER -> parseDivider();
             default ->
                     new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line()).raise();
         };
@@ -184,7 +187,11 @@ public class ASTParser {
         switch (token.type()) {
             case NUMBER -> node = parseNumber();
             case STRING -> node = parseString();
-            case IDENTIFIER -> node = new DirectVariableReferenceNode(line(), identifier());
+            case IDENTIFIER -> {
+                ASTNode n2 = parseIdentifier(false);
+                if (!(n2 instanceof ValueNode v)) return new RParserError("Expected a value", file, line()).raise();
+                node = v;
+            }
             case OPERATOR -> {
                 switch (token.value()) {
                     case "@" -> {
@@ -198,6 +205,10 @@ public class ASTParser {
                     case "+" -> {
                         consume();
                         node = new BinaryExpressionNode(line(), NumberNode.ZERO, AddBO.INSTANCE, parseValue());
+                    }
+                    case "~" -> {
+                        consume();
+                        node = parseBitwiseNotOperator();
                     }
                     default -> {
                         return new RParserError("Unexpected operator: " + token.value(), file, line()).raise();
@@ -525,7 +536,7 @@ public class ASTParser {
 
     private @SubFunc ValueNode parseDereferenceOperator() {
         int line = line();
-        VariableReference vr = new DirectVariableReferenceNode(line, identifier());
+        VariableReference vr = new DirectVariableReferenceNode(line, matchAndConsume(KEYWORD, "self") ? "self" : identifier());
 
         if (matchAndConsume(OPERATOR, ".")) {
             throw new RInternalError("TODO: nested @");
@@ -545,7 +556,8 @@ public class ASTParser {
 
     private @SubFunc ASTNode parseWhileKeyword() {
         int line = line();
-        ValueNode condition = parseValue();
+
+        ValueNode condition = parseCondition();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' after while loop condition", file, line()).raise();
@@ -583,11 +595,13 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        return new FunctionDeclarationNode(line, name, params, returnType, block);
+        return new FunctionDeclarationNode(line, name, true, params, returnType, block);
     }
 
     private @SubFunc ASTNode parseForKeyword() {
         int line = line();
+
+        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for for loop", file, line).raise();
 
         String name = identifier();
 
@@ -596,6 +610,8 @@ public class ASTParser {
         }
 
         var collection = parseValue();
+
+        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for for loop", file, line).raise();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' after for loop collection", file, line()).raise();
@@ -708,7 +724,7 @@ public class ASTParser {
 
     private @SubFunc IfStatementNode parseIfKeyword() {
         int line = line();
-        ValueNode condition = parseValue();
+        ValueNode condition = parseCondition();
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' after if condition", file, line()).raise();
         }
@@ -907,6 +923,13 @@ public class ASTParser {
         return new NativeCPPNode(line, name, functions);
     }
 
+    private ValueNode parseBitwiseNotOperator() {
+        int line = line();
+        ValueNode value = parseValue();
+
+        return new BitwiseNotNode(line, value);
+    }
+
     /*
     general utils
      */
@@ -1014,6 +1037,14 @@ public class ASTParser {
         }
 
         return args;
+    }
+
+    private @SubFunc ValueNode parseCondition() {
+        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for the condition", file, line()).raise();
+        ValueNode condition = parseValue();
+        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for the condition", file, line()).raise();
+
+        return condition;
     }
 
     /*

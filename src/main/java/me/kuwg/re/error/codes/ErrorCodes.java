@@ -31,4 +31,5 @@ public final class ErrorCodes {
     public static final int CONVERSION_NOT_POSSIBLE_ERROR = 27;
     public static final int GLOBAL_VARIABLE_SCOPE_ERROR = 28;
     public static final int BLOCK_SYNTAX_ERROR = 29;
+    public static final int UNSUPPORTED_UNARY_EXPRESSION_ERROR = 30;
 }

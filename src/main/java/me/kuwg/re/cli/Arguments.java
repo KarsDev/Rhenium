@@ -10,11 +10,11 @@ public final class Arguments {
     private final File inputFile;
     private final File outputFile;
 
-    @IncompatibleWith({"emitLLVM"})
+    @IncompatibleWith({"dumpAST"})
     private final boolean runOutput;
 
-    @IncompatibleWith({"runOutput"})
-    private final boolean emitLLVM;
+    @IncompatibleWith({"dumpAST"})
+    private final boolean keepLLVM;
 
     @IncompatibleWith({"runOutput"})
     private final boolean dumpAST;
@@ -25,7 +25,7 @@ public final class Arguments {
         this.inputFile = b.inputFile;
         this.outputFile = b.outputFile;
         this.runOutput = b.runOutput;
-        this.emitLLVM = b.emitLLVM;
+        this.keepLLVM = b.keepLLVM;
         this.dumpAST = b.dumpAST;
         this.clangArgs = List.copyOf(b.clangArgs);
     }
@@ -42,8 +42,8 @@ public final class Arguments {
         return runOutput;
     }
 
-    public boolean emitLLVM() {
-        return emitLLVM;
+    public boolean keepLLVM() {
+        return keepLLVM;
     }
 
     public boolean dumpAST() {
@@ -57,9 +57,9 @@ public final class Arguments {
     @SuppressWarnings("UnusedReturnValue")
     public static final class Builder {
         File inputFile;
-        File outputFile = new File("output.llvm");
+        File outputFile;
         boolean runOutput = true;
-        boolean emitLLVM = false;
+        boolean keepLLVM = false;
         boolean dumpAST = false;
         List<String> clangArgs = List.of();
 
@@ -78,8 +78,8 @@ public final class Arguments {
             return this;
         }
 
-        public Builder emitLLVM(boolean v) {
-            emitLLVM = v;
+        public Builder keepLLVM(boolean v) {
+            keepLLVM = v;
             return this;
         }
 
@@ -96,6 +96,10 @@ public final class Arguments {
         public Arguments build() {
             if (inputFile == null) {
                 return RThrower.throwError("Input file not specified");
+            }
+
+            if (outputFile == null) {
+                outputFile = new File(inputFile.getParent(), "output.ll");
             }
             return new Arguments(this);
         }

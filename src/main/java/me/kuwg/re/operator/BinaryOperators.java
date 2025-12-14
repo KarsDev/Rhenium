@@ -3,6 +3,7 @@ package me.kuwg.re.operator;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.operator.ops.add.AddBO;
 import me.kuwg.re.operator.ops.add.SubBO;
+import me.kuwg.re.operator.ops.bit.*;
 import me.kuwg.re.operator.ops.comp.*;
 import me.kuwg.re.operator.ops.log.AndBO;
 import me.kuwg.re.operator.ops.log.OrBO;
@@ -31,7 +32,12 @@ public final class BinaryOperators {
                 AndBO.INSTANCE,
                 OrBO.INSTANCE,
 
-
+                BitwiseAndBO.INSTANCE,
+                BitwiseXorBO.INSTANCE,
+                LeftShiftBO.INSTANCE,
+                RightShiftBO.INSTANCE,
+                UnsignedRightShiftBO.INSTANCE,
+                BitwiseOrBO.INSTANCE,
         };
     }
 

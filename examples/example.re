@@ -22,13 +22,13 @@ func main() -> int:
 
     println(person1.name)
 
-    for i in range(0, 5):
-        if arr_numbers[i] % 2 == 0:
+    for (i in range(0, 5)):
+        if (arr_numbers[i] % 2 == 0):
             continue
         else:
             break
 
-    while x > 0:
+    while (x > 0):
         @y = @y - 1
         x = x - 1
         if x == 5:
@@ -43,6 +43,6 @@ func main() -> int:
 
 func sum_array(arr: arr -> int) -> int:
     total: mut int = 0
-    for i in range(0, len(arr)):
+    for (i in range(0, len(arr))):
         total = total + arr[i]
     return total

@@ -7,12 +7,13 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
+import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.StructType;
 
 public class StructFieldAccessNode extends VariableReference {
-    private final VariableReference struct;
+    public final VariableReference struct;
     private final String fieldName;
 
     public StructFieldAccessNode(final int line, final VariableReference struct, final String fieldName) {

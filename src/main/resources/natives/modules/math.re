@@ -1,20 +1,3 @@
-/*
-    sin
-    cos
-    tan
-
-    asin
-    acos
-    atan
-
-    sinh
-    cosh
-    tanh
-
-    toRadians
-    toDegrees
-*/
-
 // The natural base of logarithms
 global E: double =  2.7182818284590452
 
@@ -29,13 +12,13 @@ global RAD_TO_DEG: double = 57.2957795130823209
 
 // Returns the absolute value of an int
 func abs(val: int) -> int:
-    if val < 0:
+    if (val < 0):
         return -val
     return val
 
 // Returns the absolute value of a long
 func abs(val: long) -> long:
-    if val < 0:
+    if (val < 0):
         return -val
     return val
 
@@ -47,7 +30,7 @@ func abs(val: double) -> double:
 
 // Returns the absolute value of a float
 func abs(val: float) -> float:
-    if val < 0:
+    if (val < 0):
         return -val
     return val
 
@@ -61,18 +44,21 @@ func toRadians(deg: double) -> double:
 
 // Builtins:
 
+// Returns the sine of an angle
 _Builtin func sin(x: double) -> double = """
 entry:
     %res = call double @llvm.sin.f64(double %x)
     ret double %res
 """
 
+// Returns the cosine of an angle
 _Builtin func cos(x: double) -> double = """
 entry:
     %res = call double @llvm.cos.f64(double %x)
     ret double %res
 """
 
+// Returns the tangent of an angle
 _Builtin func tan(x: double) -> double = """
 entry:
     %sin = call double @llvm.sin.f64(double %x)
@@ -81,54 +67,63 @@ entry:
     ret double %res
 """
 
+// Returns the arcsin of an angle
 _Builtin func asin(x: double) -> double = """
 entry:
     %res = call double @llvm.asin.f64(double %x)
     ret double %res
 """
 
+// Returns the arccosine of an angle
 _Builtin func acos(x: double) -> double = """
 entry:
     %res = call double @llvm.acos.f64(double %x)
     ret double %res
 """
 
+// Returns the arctan of an angle
 _Builtin func atan(x: double) -> double = """
 entry:
     %res = call double @llvm.atan.f64(double %x)
     ret double %res
 """
 
+// Returns the hyperbolic sine of an angle
 _Builtin func sinh(x: double) -> double = """
 entry:
     %res = call double @llvm.sinh.f64(double %x)
     ret double %res
 """
 
+// Returns the hyperbolic cosine of an angle
 _Builtin func cosh(x: double) -> double = """
 entry:
     %res = call double @llvm.cosh.f64(double %x)
     ret double %res
 """
 
+// Returns the hyperbolic tangent of an angle
 _Builtin func tanh(x: double) -> double = """
 entry:
     %res = call double @llvm.tanh.f64(double %x)
     ret double %res
 """
 
+// Returns the power of x^y
 _Builtin func pow(x: double, y: double) -> double = """
 entry:
     %res = call double @llvm.pow.f64(double %x, double %y)
     ret double %res
 """
 
+// Returns the square root of number
 _Builtin func sqrt(x: double) -> double = """
 entry:
     %res = call double @llvm.sqrt.f64(double %x)
     ret double %res
 """
 
+// Returns the cubic root of a number
 _Builtin func cbrt(x: double) -> double = """
 entry:
     %res = call double @llvm.cbrt.f64(double %x)
