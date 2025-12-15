@@ -49,7 +49,7 @@ import me.kuwg.re.operator.ops.add.SubBO;
 import me.kuwg.re.token.Token;
 import me.kuwg.re.token.TokenType;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.arr.ArrayType;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;

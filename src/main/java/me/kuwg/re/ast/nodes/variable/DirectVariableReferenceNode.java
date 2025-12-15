@@ -3,11 +3,10 @@ package me.kuwg.re.ast.nodes.variable;
 
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
-import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.arr.ArrayType;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 
 public class DirectVariableReferenceNode extends VariableReference {
     private final String name;

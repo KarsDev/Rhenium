@@ -3,7 +3,7 @@ package me.kuwg.re.ast.nodes.range;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.RInternalError;
-import me.kuwg.re.type.iterable.RangeType;
+import me.kuwg.re.type.iterable.range.RangeType;
 
 public class RangeNode extends ValueNode {
     public RangeNode(final int line, final ValueNode start, final ValueNode end, final ValueNode step) {

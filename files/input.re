@@ -13,6 +13,8 @@ func main() -> int:
 
     f.rename("TEST_2.TXT")
 
+    f.delete()
+
     println(f.name)
 
     return 0

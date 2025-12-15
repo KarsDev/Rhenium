@@ -6,7 +6,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.array.RArrayTypesMismatchError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.arr.ArrayType;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.ArrayList;
 import java.util.List;

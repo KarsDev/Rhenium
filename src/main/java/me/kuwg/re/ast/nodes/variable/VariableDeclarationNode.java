@@ -10,7 +10,7 @@ import me.kuwg.re.error.errors.variable.RVariableIsNotMutableError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableReassignmentTypeError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.arr.ArrayType;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 
 public class VariableDeclarationNode extends ValueNode {
     private final VariableReference variable;

@@ -1,4 +1,4 @@
-package me.kuwg.re.type.arr;
+package me.kuwg.re.type.iterable.arr;
 
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.iterable.IterableTypeRef;

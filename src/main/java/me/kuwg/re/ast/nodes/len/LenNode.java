@@ -5,7 +5,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.len.RInvalidLenError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.arr.ArrayType;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 
