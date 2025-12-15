@@ -6,9 +6,9 @@ import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.ByteBuiltinType;
-import me.kuwg.re.type.builtin.ShortBuiltinType;
 import me.kuwg.re.type.builtin.IntBuiltinType;
 import me.kuwg.re.type.builtin.LongBuiltinType;
+import me.kuwg.re.type.builtin.ShortBuiltinType;
 
 public final class BitwiseXorBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new BitwiseXorBO();

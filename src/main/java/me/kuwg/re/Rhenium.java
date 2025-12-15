@@ -1,7 +1,7 @@
 package me.kuwg.re;
 
-import me.kuwg.re.cli.Arguments;
 import me.kuwg.re.cli.ArgumentParser;
+import me.kuwg.re.cli.Arguments;
 import me.kuwg.re.env.EnvironmentValidator;
 import me.kuwg.re.pipeline.CompilerPipeline;
 

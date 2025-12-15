@@ -1,6 +1,6 @@
 package me.kuwg.re.runner;
 
-import static me.kuwg.re.constants.Constants.Lang.*;
+import static me.kuwg.re.constants.Constants.Lang.WIN;
 
 public final class CommandRunner {
 

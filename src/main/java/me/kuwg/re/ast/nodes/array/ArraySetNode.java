@@ -4,8 +4,8 @@ import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 
 public class ArraySetNode extends ValueNode {
     private final ValueNode array;
