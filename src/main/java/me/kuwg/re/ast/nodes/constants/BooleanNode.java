@@ -14,7 +14,7 @@ public class BooleanNode extends ConstantNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        return value ? "true" : "false";
+        return Boolean.toString(value);
     }
 
     @Override
