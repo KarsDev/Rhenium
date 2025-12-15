@@ -9,7 +9,7 @@ public abstract class Constants {
         throw new RInternalError();
     }
 
-    public static final class Tokens {
+    public static final class Tokens extends Constants {
         public static final String[] KEYWORDS = {
                 "using",
                 "mut", "const", "global",
