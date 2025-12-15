@@ -69,7 +69,7 @@ public final class ArgumentParser {
                 
                 Options:
                   -out <file>           Output LLVM file
-                  -keep-llvm            Emit LLVM IR only
+                  -keep-llvm            Keep LLVM IR
                   -dump-ast             Print AST
                   -clang-args a,b,c     Extra clang arguments
                   -no-run               Do not compile output LLVM

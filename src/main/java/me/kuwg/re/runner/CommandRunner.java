@@ -3,7 +3,6 @@ package me.kuwg.re.runner;
 import static me.kuwg.re.constants.Constants.Lang.WIN;
 
 public final class CommandRunner {
-
     public static void run(String command) throws Exception {
         ProcessBuilder builder = new ProcessBuilder(
                 WIN ? "cmd.exe" : "sh",
