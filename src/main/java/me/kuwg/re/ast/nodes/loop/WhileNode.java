@@ -6,6 +6,8 @@ import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.LoopContext;
+import me.kuwg.re.error.errors.condition.RInvalidConditionError;
+import me.kuwg.re.type.builtin.BoolBuiltinType;
 
 public class WhileNode extends ASTNode implements IBlockContainer {
     private final ValueNode condition;
@@ -36,6 +38,12 @@ public class WhileNode extends ASTNode implements IBlockContainer {
 
         cctx.emit(startLabel + ":");
         String condReg = condition.compileAndGet(cctx);
+
+        if (!(condition.getType() instanceof BoolBuiltinType)) {
+            new RInvalidConditionError(condition.getType(), line).raise();
+            return;
+        }
+
         cctx.emit("br i1 " + condReg + ", label %" + bodyLabel + ", label %" + endLabel);
 
         cctx.emit(bodyLabel + ":");

@@ -50,6 +50,7 @@ import me.kuwg.re.token.Token;
 import me.kuwg.re.token.TokenType;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
@@ -506,11 +507,7 @@ public class ASTParser {
 
         var params = parseParamsDeclare();
 
-        if (!matchAndConsume(OPERATOR, "->")) {
-            return new RParserError("Expected \"->\" for function type declaration", file, line).raise();
-        }
-
-        TypeRef returnType = parseType();
+        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType() : NoneBuiltinType.INSTANCE;
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for function declaration", file, line).raise();
@@ -1064,9 +1061,11 @@ public class ASTParser {
     }
 
     private @SubFunc ValueNode parseCondition() {
-        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for the condition", file, line()).raise();
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for the condition", file, line()).raise();
         ValueNode condition = parseValue();
-        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for the condition", file, line()).raise();
+        if (!matchAndConsume(DIVIDER, ")"))
+            return new RParserError("Expected ')' for the condition", file, line()).raise();
 
         return condition;
     }

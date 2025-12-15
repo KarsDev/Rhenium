@@ -1,20 +1,10 @@
-using file
-
 func main() -> int:
-
-    f = init File("TEST.txt")
-
-    if (f.exists()):
-        println("EXISTS")
-    else:
-        println("DOES NOT EXIST")
-
-    f.createNew()
-
-    f.rename("TEST_2.TXT")
-
-    f.delete()
-
-    println(f.name)
-
+    x = "LOL"
+    
+    if (x):
+        println(x)
+    
+    if (x == "LOL"):
+        println("LOL but equals")
+    
     return 0

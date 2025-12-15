@@ -6,6 +6,8 @@ import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.condition.RInvalidConditionError;
+import me.kuwg.re.type.builtin.BoolBuiltinType;
 
 import java.util.Objects;
 
@@ -36,6 +38,11 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
         }
 
         String condReg = condition.compileAndGet(cctx);
+
+        if (!(condition.getType() instanceof BoolBuiltinType)) {
+            new RInvalidConditionError(condition.getType(), line).raise();
+            return;
+        }
 
         cctx.emit("br i1 " + condReg + ", label %" + ifLabel + ", label %" + Objects.requireNonNullElse(elseLabel, endLabel));
 
