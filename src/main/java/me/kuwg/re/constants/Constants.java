@@ -23,6 +23,7 @@ public abstract class Constants {
                 "bool", "char", "str", "ptr",
                 "struct", "init", "impl", "self",
                 "try", "catch", "raise",
+                "is",
         };
 
         public static final String[] BOOLEANS = {
@@ -30,7 +31,7 @@ public abstract class Constants {
         };
 
         public static final String[] OPERATORS = {
-                "and", "or", "not", "in", "is", "to",
+                "and", "or", "not", "in",
                 "+", "-", "*", "/", "%",
                 ">", "<", ">=", "<=", "==", "!=",
                 "^", "<<", ">>", ">>>",

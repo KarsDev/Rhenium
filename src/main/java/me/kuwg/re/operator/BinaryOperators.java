@@ -5,7 +5,6 @@ import me.kuwg.re.operator.ops.add.AddBO;
 import me.kuwg.re.operator.ops.add.SubBO;
 import me.kuwg.re.operator.ops.bit.*;
 import me.kuwg.re.operator.ops.comp.*;
-import me.kuwg.re.operator.ops.instance.IsBO;
 import me.kuwg.re.operator.ops.log.AndBO;
 import me.kuwg.re.operator.ops.log.OrBO;
 import me.kuwg.re.operator.ops.mul.DivBO;
@@ -39,8 +38,6 @@ public final class BinaryOperators {
                 RightShiftBO.INSTANCE,
                 UnsignedRightShiftBO.INSTANCE,
                 BitwiseOrBO.INSTANCE,
-
-                IsBO.INSTANCE,
 
         };
     }

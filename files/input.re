@@ -1,7 +1,7 @@
 func main() -> int:
     x = "LOL"
     
-    if (x):
+    if (x is str):
         println(x)
     
     if (x == "LOL"):

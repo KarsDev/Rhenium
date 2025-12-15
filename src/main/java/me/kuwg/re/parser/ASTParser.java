@@ -14,6 +14,7 @@ import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
 import me.kuwg.re.ast.nodes.extern.NativeCPPNode;
 import me.kuwg.re.ast.nodes.function.*;
 import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
+import me.kuwg.re.ast.nodes.instance.IsNode;
 import me.kuwg.re.ast.nodes.ir.IRDeclarationNode;
 import me.kuwg.re.ast.nodes.len.LenNode;
 import me.kuwg.re.ast.nodes.loop.BreakNode;
@@ -335,6 +336,7 @@ public class ASTParser {
         ValueNode node = new DirectVariableReferenceNode(line, name);
 
         node = parseSubExpr(line, self, name, node);
+
         return node;
     }
 
@@ -939,6 +941,11 @@ public class ASTParser {
             }
 
             break;
+        }
+
+        if (matchAndConsume(KEYWORD, "is")) {
+            TypeRef type = parseType();
+            return new IsNode(line, node, type);
         }
 
         if (match(OPERATOR, "=") || match(OPERATOR, ":")) {
