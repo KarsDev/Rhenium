@@ -34,6 +34,7 @@ import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
 import me.kuwg.re.ast.nodes.struct.StructImplNode;
 import me.kuwg.re.ast.nodes.struct.StructInitNode;
+import me.kuwg.re.ast.nodes.ternary.TernaryOperatorNode;
 import me.kuwg.re.ast.nodes.type.TypeofNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
 import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
@@ -158,6 +159,8 @@ public class ASTParser {
 
             left = new BinaryExpressionNode(line, left, op, right);
         }
+
+        if (matchAndConsume(KEYWORD, "if")) return parseTernaryOperator(left);
 
         return left;
     }
@@ -956,6 +959,20 @@ public class ASTParser {
         }
 
         return node;
+    }
+
+    private @SubFunc ValueNode parseTernaryOperator(ValueNode thenExpr) {
+        int line = line();
+
+        ValueNode condition = parseValue();
+
+        if (!matchAndConsume(KEYWORD, "else")) {
+            return new RParserError("Expected 'else' for ternary operator", file, line).raise();
+        }
+
+        ValueNode elseExpr = parseValue();
+
+        return new TernaryOperatorNode(line, condition, thenExpr, elseExpr);
     }
 
     /*
