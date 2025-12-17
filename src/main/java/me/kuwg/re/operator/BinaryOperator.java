@@ -46,6 +46,7 @@ public abstract class BinaryOperator {
         if (a instanceof ShortBuiltinType || b instanceof ShortBuiltinType) return BuiltinTypes.SHORT.getType();
         if (a instanceof ByteBuiltinType || b instanceof ByteBuiltinType) return BuiltinTypes.BYTE.getType();
         if (a instanceof CharBuiltinType || b instanceof CharBuiltinType) return BuiltinTypes.BYTE.getType();
+        if (a instanceof BoolBuiltinType || b instanceof BoolBuiltinType) return BuiltinTypes.BOOL.getType();
         return null;
     }
 

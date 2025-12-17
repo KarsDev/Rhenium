@@ -11,6 +11,7 @@ final class ErrorManager {
         System.err.println("  At line " + error.getLine());
         System.err.println("  Internal error name: \"" + getIEN(error.getCode()) + "\"");
 
+        if (true) throw new RuntimeException();
         System.exit(error.getCode());
     }
 

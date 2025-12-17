@@ -8,19 +8,21 @@ import me.kuwg.re.error.errors.module.RModuleNotFoundError;
 import me.kuwg.re.parser.ASTParser;
 import me.kuwg.re.resource.ResourceLoader;
 import me.kuwg.re.token.Tokenizer;
+import me.kuwg.re.type.TypeRef;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class ModuleLoadingHelper {
     private ModuleLoadingHelper() {
         throw new RInternalError();
     }
 
-    public static void loadModule(int line, String sourceFile, String name, String pkg, CompilationContext cctx) {
+    public static void loadModule(int line, Map<String, TypeRef> typeMap, String sourceFile, String name, String pkg, CompilationContext cctx) {
         if (pkg == null) {
-            loadNativeModule(line, name, cctx);
+            loadNativeModule(line, typeMap, name, cctx);
             return;
         }
 
@@ -55,22 +57,25 @@ public class ModuleLoadingHelper {
             return;
         }
 
-        load(file.getFileName().toString(), src, cctx);
+        load(typeMap, file.getFileName().toString(), src, cctx);
     }
 
-    private static void loadNativeModule(int line, String name, CompilationContext cctx) {
+    private static void loadNativeModule(int line, Map<String, TypeRef> typeMap, String name, CompilationContext cctx) {
         String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
         if (src == null) {
             new RModuleNotFoundError(name, line).raise();
             return;
         }
 
-        load(name, src, cctx);
+        load(typeMap, name, src, cctx);
     }
 
-    private static void load(String module, String src, CompilationContext cctx) {
+    private static void load(Map<String, TypeRef> typeMap, String module, String src, CompilationContext cctx) {
         var tokens = Tokenizer.tokenize(src);
-        ASTParser parser = new ASTParser(module, tokens, false);
+        ASTParser parser = new ASTParser(module, tokens, typeMap);
+
+        cctx.addTypes(parser.typeMap);
+
         AST ast = parser.parse();
 
         ast.compile(cctx);

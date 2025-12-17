@@ -4,6 +4,7 @@ public enum TokenType {
     IDENTIFIER,
     INDENT,
     DEDENT,
+    NEWLINE,
     NUMBER,
     STRING,
     CHARACTER,

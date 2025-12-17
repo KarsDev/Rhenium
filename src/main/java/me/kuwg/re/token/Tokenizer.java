@@ -57,6 +57,7 @@ public class Tokenizer {
 
             if (isBlank) {
                 if (scan < n && source.charAt(scan) == '\n') {
+                    tokens.add(new Token(TokenType.NEWLINE, "", line));
                     scan++;
                     line++;
                 }
@@ -83,8 +84,13 @@ public class Tokenizer {
 
             char c = source.charAt(i);
 
+            if (c == '\n') {
+                tokens.add(new Token(TokenType.NEWLINE, "", line));
+                line++;
+                i++;
+                continue;
+            }
             if (Character.isWhitespace(c)) {
-                if (c == '\n') line++;
                 i++;
                 continue;
             }

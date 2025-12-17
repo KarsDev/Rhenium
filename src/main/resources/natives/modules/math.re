@@ -12,27 +12,19 @@ global RAD_TO_DEG: double = 57.2957795130823209
 
 // Returns the absolute value of an int
 func abs(val: int) -> int:
-    if (val < 0):
-        return -val
-    return val
+    return val if val >= 0 else -val
 
 // Returns the absolute value of a long
 func abs(val: long) -> long:
-    if (val < 0):
-        return -val
-    return val
+    return val if val >= 0 else -val
 
 // Returns the absolute value of a double
 func abs(val: double) -> double:
-    if val < 0:
-        return -val
-    return val
+    return val if val >= 0 else -val
 
 // Returns the absolute value of a float
 func abs(val: float) -> float:
-    if (val < 0):
-        return -val
-    return val
+    return val if val >= 0 else -val
 
 // Returns the angle in degrees
 func toDegrees(rad: double) -> double:

@@ -1,8 +1,7 @@
 package me.kuwg.re.compiler.variable;
 
 import me.kuwg.re.ast.value.ValueNode;
-import me.kuwg.re.type.TypeRef;
 import org.jetbrains.annotations.Nullable;
 
-public record RStructField(String name, TypeRef type, @Nullable ValueNode defaultValue) {
+public record RParamValue(@Nullable String name, ValueNode value) {
 }

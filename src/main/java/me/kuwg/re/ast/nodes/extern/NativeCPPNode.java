@@ -3,6 +3,8 @@ package me.kuwg.re.ast.nodes.extern;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.error.errors.natv.RNativeCPPError;
+import me.kuwg.re.error.errors.parser.RParserError;
 import me.kuwg.re.resource.ResourceLoader;
 
 import java.nio.file.Path;
@@ -45,6 +47,9 @@ public class NativeCPPNode extends ASTNode {
         }
 
         Path path = ResourceLoader.getResourcePath("/natives/cpp/" + name + ".cpp");
+        if (path == null) {
+            new RNativeCPPError("Native C++ module not found: " + name, line).raise();
+        }
         cctx.addNativeCPPModule(path);
     }
 

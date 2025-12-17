@@ -41,6 +41,7 @@ import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.expr.RImplNotFunctionError;
@@ -57,10 +58,7 @@ import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static me.kuwg.re.token.TokenType.*;
 
@@ -69,14 +67,22 @@ public class ASTParser {
     private final Token[] tokens;
     private final boolean initial;
 
-    private final Map<String, TypeRef> typeMap = new HashMap<>();
+    public final Map<String, TypeRef> typeMap;
 
     private int tokenIndex;
 
-    public ASTParser(final String file, final Token[] tokens, final boolean initial) {
+    public ASTParser(final String file, final Token[] tokens) {
         this.file = file;
         this.tokens = tokens;
-        this.initial = initial;
+        this.initial = true;
+        this.typeMap = new HashMap<>();
+    }
+
+    public ASTParser(final String file, final Token[] tokens, final Map<String, TypeRef> typeMap) {
+        this.file = file;
+        this.tokens = tokens;
+        this.initial = true;
+        this.typeMap = typeMap;
     }
 
     private static void includeInitialModules(AST ast) {
@@ -104,6 +110,8 @@ public class ASTParser {
     }
 
     private BlockNode parseBlock() {
+        removeNewlines();
+
         if (!match(INDENT)) {
             return new RParserError("Expected indented block", file, line()).raise();
         }
@@ -112,20 +120,20 @@ public class ASTParser {
 
         List<ASTNode> statements = new ArrayList<>();
 
-        while (!match(EOF)) {
-            if (match(DEDENT)) {
-                consume();
+        while (!match(EOF) && !match(DEDENT)) {
+            removeNewlines();
 
-                if (match(INDENT)) {
-                    consume();
-                    continue;
-                } else {
-                    break;
-                }
-            }
+            if (match(EOF) || match(DEDENT)) break;
 
             ASTNode stmt = parseStatement();
             statements.add(stmt);
+        }
+
+        if (match(EOF)) return new BlockNode(statements);
+        if (match(DEDENT)) {
+            consume();
+        } else {
+            return new RParserError("Expected dedent to close block", file, line()).raise();
         }
 
         return new BlockNode(statements);
@@ -160,13 +168,14 @@ public class ASTParser {
             left = new BinaryExpressionNode(line, left, op, right);
         }
 
-        if (matchAndConsume(KEYWORD, "if")) return parseTernaryOperator(left);
+        if (matchAndConsume(KEYWORD, "when")) return parseTernaryOperator(left);
 
         return left;
     }
 
     private ASTNode parseStatement() {
-        return switch (current().type()) {
+        removeNewlines();
+        ASTNode n = switch (current().type()) {
             case INDENT -> new RParserError("Unexpected indent", file, line()).raise();
             case KEYWORD -> parseKeyword();
             case IDENTIFIER -> parseIdentifier(false);
@@ -180,9 +189,24 @@ public class ASTParser {
                     yield new RParserError("Unexpected operator in statement: " + current().value(), file, line()).raise();
             }
             case DIVIDER -> parseDivider();
-            default ->
-                    new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line()).raise();
+            default -> new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line()).raise();
+
         };
+
+        if (match(EOF) || match(DEDENT)) {
+            return n;
+        }
+        if (!previous().matches(DEDENT)) {
+            if (!match(NEWLINE)) {
+                return new RParserError(
+                        "Expected newline after statement, got " + current().value(),
+                        file, line()
+                ).raise();
+            }
+            consume();
+        }
+
+        return n;
     }
 
     private ValueNode parsePrimary() {
@@ -595,6 +619,10 @@ public class ASTParser {
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for struct declaration", file, line()).raise();
         }
+        if (!match(NEWLINE)) {
+            return new RParserError("Expected newline after struct declaration", file, line()).raise();
+        }
+        consume();
 
         if (!match(INDENT)) {
             return new RParserError("Expected indent for struct field declaration", file, line()).raise();
@@ -605,6 +633,7 @@ public class ASTParser {
         List<TypeRef> types = new ArrayList<>();
 
         while (!match(EOF)) {
+            removeNewlines();
             if (match(DEDENT)) {
                 consume();
 
@@ -627,7 +656,10 @@ public class ASTParser {
 
             TypeRef fieldType = parseType();
 
-            fields.add(new RStructField(fieldName, fieldType));
+            ValueNode defaultValue = matchAndConsume(OPERATOR, "=") ? parseValue() : null;
+
+
+            fields.add(new RStructField(fieldName, fieldType, defaultValue));
             types.add(fieldType);
         }
 
@@ -642,7 +674,31 @@ public class ASTParser {
         if (!match(DIVIDER, "(")) {
             return new RParserError("Expected '(' for struct initialization", file, line()).raise();
         }
-        List<ValueNode> args = parseParamsCall();
+
+        if (!matchAndConsume(DIVIDER, "(")) {
+            return new RParserError("Expected '(' for parameters call", file, line()).raise();
+        }
+
+        if (matchAndConsume(DIVIDER, ")")) {
+            return new StructInitNode(line, name, List.of());
+        }
+
+        List<RParamValue> args = new ArrayList<>();
+
+        do {
+            String paramName;
+            if (match(IDENTIFIER) && next().matches(OPERATOR, "=")) {
+                paramName = identifier();
+                consume();
+            } else {
+                paramName = null;
+            }
+            args.add(new RParamValue(paramName, parseValue()));
+        } while (matchAndConsume(DIVIDER, ","));
+
+        if (!matchAndConsume(DIVIDER, ")")) {
+            return new RParserError("Expected ')' for parameters call", file, line()).raise();
+        }
 
         return new StructInitNode(line, name, args);
     }
@@ -1094,10 +1150,6 @@ public class ASTParser {
         return condition;
     }
 
-    /*
-    token util functions
-    */
-
     private ValueNode parseArrayDeclaration() {
         int line = line();
         List<ValueNode> values = new ArrayList<>();
@@ -1112,6 +1164,19 @@ public class ASTParser {
             return new RParserError("Expected ']' for array declaration", file, line()).raise();
 
         return new ArrayNode(line, values);
+    }
+
+    /*
+       token util functions
+     */
+
+    private void removeNewlines() {
+        while (match(NEWLINE)) consume();
+    }
+
+    private Token next() {
+        checkTokenIndex(1);
+        return tokens[tokenIndex + 1];
     }
 
     private String identifier() {

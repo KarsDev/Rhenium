@@ -22,6 +22,7 @@ import static me.kuwg.re.writer.Writeable.TAB;
 
 public @SuppressWarnings("unused")
 final class CompilationContext {
+    private final Map<String, TypeRef> typeMap;
     private final List<String> irCode = new ArrayList<>();
     private final StringBuilder declarations = new StringBuilder();
     private final StringBuilder globalCode = new StringBuilder();
@@ -38,7 +39,9 @@ final class CompilationContext {
     private int indentLevel = 1;
     private int labelCounter = 0;
 
-    public CompilationContext() {
+    public CompilationContext(Map<String, TypeRef> typeMap) {
+        this.typeMap = typeMap;
+
         irCode.add("; Generated LLVM IR\n\n");
         codeStack.push(globalCode);
     }
@@ -160,7 +163,7 @@ final class CompilationContext {
         String str = name + (pkg == null ? "" : " in " + pkg);
         declare(" ; USING MODULE " + str);
         includedModules.add(name);
-        ModuleLoadingHelper.loadModule(line, sourceFile, name, pkg, this);
+        ModuleLoadingHelper.loadModule(line, typeMap, sourceFile, name, pkg, this);
     }
 
     public Stack<LoopContext> getLoopStack() {
@@ -169,6 +172,10 @@ final class CompilationContext {
 
     public String nextLabel(String prefix) {
         return prefix + "_" + (labelCounter++);
+    }
+
+    public void addTypes(Map<String, TypeRef> typeMap) {
+        this.typeMap.putAll(typeMap);
     }
 
     public String compileAndGet(File output, List<String> clangArgs) throws IOException {
