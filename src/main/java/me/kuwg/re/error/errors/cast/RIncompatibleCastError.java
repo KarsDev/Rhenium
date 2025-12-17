@@ -1,5 +1,6 @@
 package me.kuwg.re.error.errors.cast;
 
+import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 import me.kuwg.re.type.TypeRef;
 
@@ -10,6 +11,6 @@ public class RIncompatibleCastError extends RError {
 
     @Override
     protected int getCode() {
-        return 0;
+        return ErrorCodes.INCOMPATIBLE_CAST_ERROR;
     }
 }

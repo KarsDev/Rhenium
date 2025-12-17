@@ -34,4 +34,5 @@ public final class ErrorCodes {
     public static final int UNSUPPORTED_UNARY_EXPRESSION_ERROR = 30;
     public static final int INVALID_CONDITION_ERROR = 31;
     public static final int NATIVE_CPP_ERROR = 32;
+    public static final int INCOMPATIBLE_CAST_ERROR = 33;
 }

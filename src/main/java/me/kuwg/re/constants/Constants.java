@@ -32,12 +32,17 @@ public abstract class Constants {
 
         public static final String[] OPERATORS = {
                 "and", "or", "not", "in",
+
                 "+", "-", "*", "/", "%",
+                "+=", "-=", "*=", "/=", "%=",
+
                 ">", "<", ">=", "<=", "==", "!=",
                 "^", "<<", ">>", ">>>",
                 ":", "=",
                 "->", "@", ".",
+
                 "<<", ">>", ">>>", "&", "|", "~", "^",
+                "<<=", ">>=", ">>>=", "&=", "|=", "^=",
         };
 
         public static final String[] DIVIDERS = {

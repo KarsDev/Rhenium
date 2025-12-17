@@ -14,93 +14,60 @@ public class NumberNode extends ConstantNode {
         this.value = parseNumber(literal);
     }
 
-    private static String stripSuffix(String literal) {
-        literal = literal.trim();
-        if (literal.isEmpty()) return literal;
-
-        char last = Character.toLowerCase(literal.charAt(literal.length() - 1));
-        if (last == 'f' || last == 'd' || last == 'l') {
-            return literal.substring(0, literal.length() - 1);
-        }
-        return literal;
-    }
-
     private static TypeRef inferType(String literal) {
         literal = literal.trim().toLowerCase();
 
-        if (literal.endsWith("f")) return BuiltinTypes.FLOAT.getType();
-        if (literal.endsWith("d")) return BuiltinTypes.DOUBLE.getType();
-        if (literal.endsWith("l")) return BuiltinTypes.LONG.getType();
+        if (literal.contains(".") || literal.contains("e")) {
+            if (literal.endsWith("f")) return BuiltinTypes.FLOAT.getType();
+            return BuiltinTypes.DOUBLE.getType();
+        }
 
-        String numericPart = stripSuffix(literal).replace("_", "");
+        char last = literal.charAt(literal.length() - 1);
+        if (last == 'l' || last == 's' || last == 'b') {
+            literal = literal.substring(0, literal.length() - 1);
+        }
 
-        try {
-            if (numericPart.contains(".") || numericPart.contains("e") || numericPart.contains("p")) {
-                return BuiltinTypes.DOUBLE.getType();
-            }
-
-            if (numericPart.startsWith("0x")) {
-                long val = Long.parseLong(numericPart.substring(2), 16);
-                if (val <= Byte.MAX_VALUE) return BuiltinTypes.BYTE.getType();
-                if (val <= Short.MAX_VALUE) return BuiltinTypes.SHORT.getType();
-                return BuiltinTypes.INT.getType();
-            } else if (numericPart.startsWith("0b")) {
-                long val = Long.parseLong(numericPart.substring(2), 2);
-                if (val <= Short.MAX_VALUE) return BuiltinTypes.SHORT.getType();
-                return BuiltinTypes.INT.getType();
-            } else if (numericPart.startsWith("0") && numericPart.length() > 1) {
-                return BuiltinTypes.INT.getType();
-            } else {
-                long val = Long.parseLong(numericPart);
-                if (val <= Integer.MAX_VALUE) return BuiltinTypes.INT.getType();
-                return BuiltinTypes.LONG.getType();
-            }
-
-        } catch (NumberFormatException e) {
+        long value = parseLong(literal);
+        if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
             return BuiltinTypes.INT.getType();
+        } else {
+            return BuiltinTypes.LONG.getType();
         }
     }
 
     private static Number parseNumber(String literal) {
         literal = literal.trim().toLowerCase();
-        String numericPart = stripSuffix(literal).replace("_", "");
 
-        try {
-            if (literal.endsWith("f")) return Float.parseFloat(numericPart);
-            if (literal.endsWith("d")) return Double.parseDouble(numericPart);
-            if (literal.endsWith("l")) return parseInteger(numericPart, BuiltinTypes.LONG.getType());
-            if (numericPart.contains(".") || numericPart.contains("e") || numericPart.contains("p"))
-                return Double.parseDouble(numericPart);
-
-            if (numericPart.startsWith("0x")) return parseInteger(numericPart, null);
-            if (numericPart.startsWith("0b")) return parseInteger(numericPart, BuiltinTypes.SHORT.getType());
-            if (numericPart.startsWith("0") && numericPart.length() > 1)
-                return parseInteger(numericPart, BuiltinTypes.INT.getType());
-
-            return parseInteger(numericPart, null);
-
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid numeric literal: " + literal);
+        if (literal.contains(".") || literal.contains("e")) {
+            if (literal.endsWith("f")) return Float.parseFloat(literal.substring(0, literal.length() - 1));
+            return Double.parseDouble(literal);
         }
+
+        char last = literal.charAt(literal.length() - 1);
+        boolean forceLong = false, forceShort = false, forceByte = false;
+
+        if (last == 'l') { literal = literal.substring(0, literal.length() - 1); forceLong = true; }
+        else if (last == 's') { literal = literal.substring(0, literal.length() - 1); forceShort = true; }
+        else if (last == 'b') { literal = literal.substring(0, literal.length() - 1); forceByte = true; }
+
+        long value = parseLong(literal);
+
+        if (forceLong) return value;
+        if (forceShort) return (short) value;
+        if (forceByte) return (byte) value;
+
+        if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) return (int) value;
+        return value;
     }
 
-    private static Number parseInteger(String numericPart, TypeRef forcedType) {
-        long val;
-        if (numericPart.startsWith("0x")) val = Long.parseLong(numericPart.substring(2), 16);
-        else if (numericPart.startsWith("0b")) val = Long.parseLong(numericPart.substring(2), 2);
-        else if (numericPart.startsWith("0") && numericPart.length() > 1)
-            val = Long.parseLong(numericPart.substring(1), 8);
-        else val = Long.parseLong(numericPart);
+    private static long parseLong(String literal) {
+        int radix = 10;
 
-        if (forcedType != null) {
-            if (forcedType.equals(BuiltinTypes.BYTE.getType())) return (byte) val;
-            if (forcedType.equals(BuiltinTypes.SHORT.getType())) return (short) val;
-            if (forcedType.equals(BuiltinTypes.INT.getType())) return (int) val;
-            return val;
-        }
+        if (literal.startsWith("0x")) { radix = 16; literal = literal.substring(2); }
+        else if (literal.startsWith("0b")) { radix = 2; literal = literal.substring(2); }
+        else if (literal.startsWith("0") && literal.length() > 1) { radix = 8; literal = literal.substring(1); }
 
-        if (val >= Integer.MIN_VALUE && val <= Integer.MAX_VALUE) return (int) val;
-        return val;
+        return Long.parseLong(literal, radix);
     }
 
     public Number getValue() {
@@ -125,7 +92,8 @@ public class NumberNode extends ConstantNode {
     }
 
     private boolean isIntegerType() {
-        return type.equals(BuiltinTypes.INT.getType()) || type.equals(BuiltinTypes.LONG.getType()) || type.equals(BuiltinTypes.SHORT.getType()) || type.equals(BuiltinTypes.BYTE.getType());
+        return type.equals(BuiltinTypes.INT.getType()) || type.equals(BuiltinTypes.LONG.getType()) ||
+                type.equals(BuiltinTypes.SHORT.getType()) || type.equals(BuiltinTypes.BYTE.getType());
     }
 
     private String formatLLVMValue() {
@@ -136,7 +104,7 @@ public class NumberNode extends ConstantNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Number: ").append(value).append(", type: ").append(type.getName()).append(NEWLINE);
+        sb.append(indent).append("Number: ").append(value).append(", type: ").append(type.getName()).append("\n");
     }
 
     @Override

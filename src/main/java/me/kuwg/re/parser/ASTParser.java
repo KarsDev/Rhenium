@@ -152,7 +152,6 @@ public class ASTParser {
 
             String opSymbol = current().value();
 
-
             var op = BinaryOperators.getBySymbol(opSymbol);
 
             if (op == null) break;
@@ -1009,6 +1008,30 @@ public class ASTParser {
             }
             return parseVariableAssignment(line, vr);
         }
+
+        if (match(OPERATOR)) {
+            String opSymbol = current().value();
+
+            if (BinaryOperators.getBySymbol(opSymbol) != null || (opSymbol.length() > 2 && opSymbol.endsWith("=")))
+                return node;
+
+            String opAssignSymbol = opSymbol.substring(0, opSymbol.length() - 1);
+
+            var opAssign = BinaryOperators.getBySymbol(opAssignSymbol);
+
+            if (opAssign == null) return node;
+
+            if (!(node instanceof VariableReference leftRef)) {
+                return new RParserError("Expected variable reference for assignment operation", file, line).raise();
+            }
+
+            consume();
+
+            ValueNode value = new BinaryExpressionNode(line, node, opAssign, parseValue());
+
+            return new VariableDeclarationNode(line, leftRef, false, null, value);
+        }
+
 
         return node;
     }
