@@ -1,19 +1,30 @@
-using file
+using File
 using FileWriter
 
 func main() -> int:
+    input = init File("file_input.txt") 
 
-    file = init File("test.txt")
+    input.createNew()
 
-    file.createNew()
+    writer = init FileWriter(input)
 
-    fw = init FileWriter(file)
+    writer.open()
 
-    fw.open()
+    writer.write("hmmmmm")
 
-    fw.write("Hello World!")
+    writer.flush()
+    writer.close()
 
-    fw.flush()
-    fw.close()
+    reader = init FileReader(input)
+
+    reader.open()
+
+    line = reader.readLine()
+
+    reader.close()
+
+    println(line)
+
+    input.delete()
 
     return 0

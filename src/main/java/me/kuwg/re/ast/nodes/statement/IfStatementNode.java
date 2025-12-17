@@ -50,7 +50,11 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
         cctx.pushIndent();
         block.compile(cctx);
         cctx.popIndent();
-        if (!(block.getNodes().get(block.getNodes().size() - 1) instanceof InterruptNode)) cctx.emit("br label %" + endLabel);
+
+        block.compile(cctx);
+        if (block.getNodes().isEmpty() || !(block.getNodes().get(block.getNodes().size() - 1) instanceof InterruptNode)) {
+            cctx.emit("br label %" + endLabel);
+        }
 
         if (elseIfNode != null) {
             cctx.emit(elseLabel + ":");

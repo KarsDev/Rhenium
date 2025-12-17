@@ -145,12 +145,8 @@ public class ASTParser {
         while (match(OPERATOR)) {
             int line = line();
 
-            if (matchAndConsume(OPERATOR, ".")) {
-                if (!(left instanceof VariableReference ref)) {
-                    return new RParserError("Expected variable reference for struct access", file, line).raise();
-                }
-
-                left = new StructFieldAccessNode(line, ref, identifier());
+            if (match(OPERATOR, ".")) {
+                left = parseSubExpr(line, false, null, left);
                 continue;
             }
 

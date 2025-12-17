@@ -11,7 +11,7 @@ public class UsingNode extends ASTNode {
     public UsingNode(final int line, final String sourceFile, final String name, final String pkg) {
         super(line);
         this.sourceFile = sourceFile;
-        this.name = name;
+        this.name = name.toLowerCase();
         this.pkg = pkg;
     }
 
