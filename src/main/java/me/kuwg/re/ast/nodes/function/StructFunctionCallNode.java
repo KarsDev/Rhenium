@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.function;
 
 import me.kuwg.re.ast.nodes.struct.StructImplNode;
+import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
@@ -31,7 +32,7 @@ public class StructFunctionCallNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        if (!(struct instanceof me.kuwg.re.ast.nodes.variable.VariableReference vr)) {
+        if (!(struct instanceof VariableReference vr)) {
             return new RVariableTypeError("struct", struct.getType().getName(), line).raise();
         }
 
@@ -40,63 +41,74 @@ public class StructFunctionCallNode extends ValueNode {
             return new RVariableTypeError("struct", "unknown", line).raise();
         }
 
-        TypeRef structType = selfVar.type();
-        if (!(structType instanceof StructType structObj)) {
-            return new RVariableTypeError("struct", structType.getName(), line).raise();
+        TypeRef selfVarType = selfVar.type();
+        if (!(selfVarType instanceof StructType structType)) {
+            return new RVariableTypeError("struct", selfVarType.getName(), line).raise();
         }
 
-        String mangled = StructImplNode.generateName(structObj.name(), name);
+        RFunction fn;
+        String mangled;
 
-        List<String> llvmArgs = new ArrayList<>();
-        List<TypeRef> argTypes = new ArrayList<>();
+        StructType current = structType;
 
-        llvmArgs.add(selfVar.valueReg());
-        argTypes.add(new PointerType(structType));
+        while (true) {
+            List<String> llvmArgs = new ArrayList<>();
+            List<TypeRef> argTypes = new ArrayList<>();
 
-        for (ValueNode p : params) {
-            llvmArgs.add(p.compileAndGet(cctx));
-            argTypes.add(p.getType());
-        }
+            // self pointer
+            llvmArgs.add(selfVar.valueReg());
+            argTypes.add(new PointerType(current));
 
-        RFunction fn = cctx.getFunction(mangled, argTypes);
-
-        if (fn == null) {
-            var sb = new StringBuilder("(");
-            for (int i = 0; i < argTypes.size(); i++) {
-                sb.append(argTypes.get(i).getName());
-                if (i < argTypes.size() - 1) sb.append(", ");
+            // parameters
+            for (ValueNode p : params) {
+                llvmArgs.add(p.compileAndGet(cctx));
+                argTypes.add(p.getType());
             }
-            sb.append(")");
-            return new RFunctionNotFoundError(name, sb.toString(), line).raise();
+
+            mangled = StructImplNode.generateName(current.name(), name);
+            fn = cctx.getFunction(mangled, argTypes);
+
+            if (fn != null) {
+                setType(fn.returnType());
+
+                StringBuilder call = new StringBuilder();
+                call.append("call ")
+                        .append(fn.returnType().getLLVMName())
+                        .append(" @")
+                        .append(mangled)
+                        .append("(");
+
+                for (int i = 0; i < llvmArgs.size(); i++) {
+                    call.append(argTypes.get(i).getLLVMName())
+                            .append(" ")
+                            .append(llvmArgs.get(i));
+                    if (i < llvmArgs.size() - 1) call.append(", ");
+                }
+
+                call.append(")");
+
+                if (fn.returnType() instanceof NoneBuiltinType) {
+                    cctx.emit(call.toString());
+                    return "";
+                }
+
+                String result = cctx.nextRegister();
+                cctx.emit(result + " = " + call);
+                return result;
+            }
+
+            if (current.inherited() == null) {
+                StringBuilder sig = new StringBuilder("(");
+                for (int i = 0; i < argTypes.size(); i++) {
+                    sig.append(argTypes.get(i).getName());
+                    if (i < argTypes.size() - 1) sig.append(", ");
+                }
+                sig.append(")");
+                return new RFunctionNotFoundError(name, sig.toString(), line).raise();
+            }
+
+            current = current.inherited();
         }
-
-        setType(fn.returnType());
-
-        StringBuilder call = new StringBuilder();
-        call.append("call ")
-                .append(fn.returnType().getLLVMName())
-                .append(" @")
-                .append(mangled)
-                .append("(");
-
-        for (int i = 0; i < llvmArgs.size(); i++) {
-            call.append(argTypes.get(i).getLLVMName())
-                    .append(" ")
-                    .append(llvmArgs.get(i));
-
-            if (i < llvmArgs.size() - 1) call.append(", ");
-        }
-
-        call.append(")");
-
-        if (fn.returnType() instanceof NoneBuiltinType) {
-            cctx.emit(call.toString());
-            return "";
-        }
-
-        String result = cctx.nextRegister();
-        cctx.emit(result + " = " + call);
-        return result;
     }
 
     @Override

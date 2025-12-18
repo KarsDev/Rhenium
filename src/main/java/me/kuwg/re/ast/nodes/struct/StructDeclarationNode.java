@@ -9,19 +9,19 @@ import java.util.List;
 
 public class StructDeclarationNode extends ASTNode {
     private final String name;
+    private final StructType type;
     private final List<RStructField> fields;
 
-    public StructDeclarationNode(final int line, final String name, final List<RStructField> fields) {
+    public StructDeclarationNode(final int line, final String name, final StructType type, final List<RStructField> fields) {
         super(line);
         this.name = name;
+        this.type = type;
         this.fields = fields;
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        var structType = new StructType(name, List.copyOf(fields.stream().map(RStructField::type).toList()));
-
-        cctx.addStruct(name, structType, fields);
+        cctx.addStruct(name, type, fields);
 
         StringBuilder sb = new StringBuilder();
         sb.append("; Struct declaration\n");

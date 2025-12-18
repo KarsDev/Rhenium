@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-public record StructType(String name, List<TypeRef> fieldTypes) implements TypeRef {
+public record StructType(String name, List<TypeRef> fieldTypes, StructType inherited) implements TypeRef {
     @Override
     public boolean isPrimitive() {
         return false;

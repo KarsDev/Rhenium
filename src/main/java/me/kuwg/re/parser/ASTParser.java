@@ -611,6 +611,26 @@ public class ASTParser {
     private @SubFunc ASTNode parseStructKeyword() {
         int line = line();
         String name = identifier();
+
+        StructType inherited;
+
+        if (matchAndConsume(KEYWORD, "inherits")) {
+            return new RParserError("Inheritance is still unsupported", file, line).raise();
+            /*
+            This works, but struct constructor implementation is needed before.
+
+            String inheritedName = identifier();
+
+            TypeRef tmp = typeMap.get(inheritedName);
+            if (!(tmp instanceof StructType st)) {
+                return new RParserError("Expected struct type for inheriting", file, line).raise();
+            }
+            inherited = st;
+            */
+        } else {
+            inherited = null;
+        }
+
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for struct declaration", file, line()).raise();
         }
@@ -641,6 +661,7 @@ public class ASTParser {
             }
 
             String fieldName = identifier();
+
             if (!matchAndConsume(OPERATOR, ":")) {
                 return new RParserError("Expected ':' for struct field declaration", file, line()).raise();
             }
@@ -658,8 +679,10 @@ public class ASTParser {
             types.add(fieldType);
         }
 
-        typeMap.put(name, new StructType(name, types));
-        return new StructDeclarationNode(line, name, fields);
+        var type = new StructType(name, types, inherited);
+
+        typeMap.put(name, type);
+        return new StructDeclarationNode(line, name, type, fields);
     }
 
     private @SubFunc ASTNode parseInitKeyword() {
@@ -1032,7 +1055,6 @@ public class ASTParser {
             return new VariableDeclarationNode(line, leftRef, false, null, value);
         }
 
-
         return node;
     }
 
@@ -1247,8 +1269,6 @@ public class ASTParser {
         if (outOfBounds(0)) return false;
         return current().matches(type, value);
     }
-
-    // modules
 
     private boolean matchAndConsume(TokenType type, String value) {
         if (match(type, value)) {
