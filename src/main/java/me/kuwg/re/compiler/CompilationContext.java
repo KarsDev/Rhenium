@@ -35,6 +35,7 @@ final class CompilationContext {
     private final Map<String, RStruct> structs = new HashMap<>();
     private final Stack<String> catchScopeStack = new Stack<>();
     private final List<Path> nativeCPPModules = new ArrayList<>();
+    private final Set<String> declaredIR = new LinkedHashSet<>();
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -143,14 +144,13 @@ final class CompilationContext {
     public void addIR(String ir) {
         String[] lines = ir.split("\n");
         for (String line : lines) {
-            line = line.trim();
-            if (line.startsWith(";")) {
-                irCode.add(line);
-                continue;
-            }
+            String trimmed = line.split(";")[0].strip();
+            if (trimmed.isEmpty()) continue;
 
-            if (irCode.contains(line)) continue;
-            irCode.add(line);
+            if (!declaredIR.contains(trimmed)) {
+                irCode.add(line);
+                declaredIR.add(trimmed);
+            }
         }
     }
 

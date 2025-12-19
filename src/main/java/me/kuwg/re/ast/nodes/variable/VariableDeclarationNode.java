@@ -109,7 +109,7 @@ public class VariableDeclarationNode extends ValueNode {
             valueReg = castNode.compileAndGet(cctx);
         }
 
-        cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", " + varType.getLLVMName() + "* %" + variable.getSimpleName() + " ; Reassign variable " + variable.getCompleteName());
+        cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", " + varType.getLLVMName() + "* " + oldVar.valueReg() + " ; Reassign variable " + variable.getCompleteName());
 
         return valueReg;
     }

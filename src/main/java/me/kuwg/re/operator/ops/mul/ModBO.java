@@ -4,10 +4,7 @@ import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
-import me.kuwg.re.type.builtin.ByteBuiltinType;
-import me.kuwg.re.type.builtin.IntBuiltinType;
-import me.kuwg.re.type.builtin.LongBuiltinType;
-import me.kuwg.re.type.builtin.ShortBuiltinType;
+import me.kuwg.re.type.builtin.*;
 
 public final class ModBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new ModBO();
@@ -22,6 +19,7 @@ public final class ModBO extends BinaryOperator {
         var rightType = c.rightType();
 
         String llvmType;
+        boolean isFloating = false;
 
         if (leftType instanceof ByteBuiltinType && rightType instanceof ByteBuiltinType) {
             llvmType = "i8";
@@ -31,6 +29,12 @@ public final class ModBO extends BinaryOperator {
             llvmType = "i32";
         } else if (leftType instanceof LongBuiltinType && rightType instanceof LongBuiltinType) {
             llvmType = "i64";
+        } else if (leftType instanceof FloatBuiltinType && rightType instanceof FloatBuiltinType) {
+            llvmType = "float";
+            isFloating = true;
+        } else if (leftType instanceof DoubleBuiltinType && rightType instanceof DoubleBuiltinType) {
+            llvmType = "double";
+            isFloating = true;
         } else {
             return new RUnsupportedBinaryExpressionError(
                     leftType.getName(), getSymbol(), rightType.getName(), c.line()
@@ -51,7 +55,12 @@ public final class ModBO extends BinaryOperator {
         }
 
         String resReg = c.cctx().nextRegister();
-        c.cctx().emit(resReg + " = srem " + llvmType + " " + leftReg + ", " + rightReg);
+        if (isFloating) {
+            c.cctx().emit(resReg + " = frem " + llvmType + " " + leftReg + ", " + rightReg);
+        } else {
+            c.cctx().emit(resReg + " = srem " + llvmType + " " + leftReg + ", " + rightReg);
+        }
+
 
         return res(resReg, leftType);
     }

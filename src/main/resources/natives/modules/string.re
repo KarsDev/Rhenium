@@ -3,6 +3,7 @@ _IR """
 declare i32 @strlen(i8*)
 declare i8* @malloc(i64)
 declare i32 @strcmp(i8*)
+declare i8* @memcpy(i8*, i8*, i64)
 
 ; Replacement for sprintf
 declare i32 @sprintf_external(i8*, i64, i8*, ...)
