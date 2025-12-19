@@ -1,6 +1,6 @@
 package me.kuwg.re.type.iterable.range;
 
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.IterableTypeRef;

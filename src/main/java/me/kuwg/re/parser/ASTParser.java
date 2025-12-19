@@ -40,7 +40,7 @@ import me.kuwg.re.ast.nodes.type.TypeofNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
 import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;

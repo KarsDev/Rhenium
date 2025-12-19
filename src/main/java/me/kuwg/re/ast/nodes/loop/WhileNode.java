@@ -3,7 +3,7 @@ package me.kuwg.re.ast.nodes.loop;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.LoopContext;
 import me.kuwg.re.error.errors.condition.RInvalidConditionError;

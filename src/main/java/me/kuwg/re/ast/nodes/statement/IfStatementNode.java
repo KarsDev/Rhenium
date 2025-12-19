@@ -1,10 +1,10 @@
 package me.kuwg.re.ast.nodes.statement;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.interrupt.InterruptNode;
+import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.condition.RInvalidConditionError;
 import me.kuwg.re.type.builtin.BoolBuiltinType;

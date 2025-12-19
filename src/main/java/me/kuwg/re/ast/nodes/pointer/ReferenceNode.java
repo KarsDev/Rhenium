@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.pointer;
 
 import me.kuwg.re.ast.nodes.variable.VariableReference;
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;

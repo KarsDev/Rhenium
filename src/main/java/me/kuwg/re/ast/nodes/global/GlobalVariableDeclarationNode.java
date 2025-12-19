@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.global;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.global.GlobalNode;
+import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;

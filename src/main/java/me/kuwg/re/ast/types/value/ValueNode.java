@@ -1,4 +1,4 @@
-package me.kuwg.re.ast.value;
+package me.kuwg.re.ast.types.value;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.compiler.CompilationContext;

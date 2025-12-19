@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.ir;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.global.GlobalNode;
+import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 
 public class IRDeclarationNode extends ASTNode implements GlobalNode {

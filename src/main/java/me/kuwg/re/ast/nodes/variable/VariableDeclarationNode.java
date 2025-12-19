@@ -2,7 +2,7 @@ package me.kuwg.re.ast.nodes.variable;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.RInternalError;

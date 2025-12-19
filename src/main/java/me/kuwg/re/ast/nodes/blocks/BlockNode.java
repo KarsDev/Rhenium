@@ -1,8 +1,8 @@
 package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.global.GlobalNode;
-import me.kuwg.re.ast.interrupt.InterruptNode;
+import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.compiler.Compilable;
 import me.kuwg.re.compiler.CompilationContext;

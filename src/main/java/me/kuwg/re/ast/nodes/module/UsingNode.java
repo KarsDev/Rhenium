@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.module;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.global.GlobalNode;
+import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 
 public class UsingNode extends ASTNode implements GlobalNode {

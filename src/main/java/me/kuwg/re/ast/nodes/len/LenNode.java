@@ -1,6 +1,6 @@
 package me.kuwg.re.ast.nodes.len;
 
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.len.RInvalidLenError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;

@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.array;
 
-import me.kuwg.re.ast.value.PointerValueNode;
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.PointerValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.array.RArrayTypesMismatchError;

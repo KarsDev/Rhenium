@@ -1,6 +1,6 @@
 package me.kuwg.re.cast;
 
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.cast.RIncompatibleCastError;
 import me.kuwg.re.type.TypeRef;

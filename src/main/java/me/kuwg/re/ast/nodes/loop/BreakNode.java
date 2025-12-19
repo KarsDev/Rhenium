@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.loop;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.interrupt.InterruptNode;
+import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.loop.RLoopError;
 

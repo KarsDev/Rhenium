@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
-import me.kuwg.re.ast.value.ValueNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RParamValue;
@@ -90,12 +90,12 @@ public class StructInitNode extends ValueNode {
         for (int i = 0; i < fields.size(); i++) {
             RStructField field = fields.get(i);
             ValueNode v = resolved[i];
-            String valueReg = v.compileAndGet(cctx);
 
             if (!v.getType().equals(field.type())) {
                 v = new CastNode(line, field.type(), v);
             }
 
+            String valueReg = v.compileAndGet(cctx);
 
             String newReg = cctx.nextRegister();
             String base = (aggReg == null) ? "undef" : aggReg;
