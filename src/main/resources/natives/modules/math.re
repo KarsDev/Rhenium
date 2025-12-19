@@ -1,5 +1,6 @@
 _IR """
 declare double @cbrt(double)
+declare i32 @llvm.ctlz.i32(i32, i1)
 """
 
 // The natural base of logarithms
@@ -125,3 +126,42 @@ entry:
     %res = call double @cbrt(double %x)
     ret double %res
 """
+
+// Returns the natural logarithm (base e) of a number
+_Builtin func ln(x: double) -> double = """
+entry:
+    %res = call double @llvm.log.f64(double %x)
+    ret double %res
+"""
+
+// Returns the base 10 logarithm of a number
+_Builtin func log10(x: double) -> double = """
+entry:
+    %res = call double @llvm.log10.f64(double %x)
+    ret double %res
+"""
+
+// Returns the base 2 logarithm of a number
+_Builtin func log2(x: double) -> double = """
+entry:
+    %res = call double @llvm.log2.f64(double %x)
+    ret double %res
+"""
+
+// Returns the base 2 logarithm of a integer (Fastest option)
+_Builtin func log2Int(n: int) -> int = """
+entry:
+  ; Step 1: Count leading zeros. 
+  ; llvm.ctlz.i32(value, is_zero_undef)
+  %clz = call i32 @llvm.ctlz.i32(i32 %n, i1 true)
+  
+  ; Step 2: Subtract from 31 to get the log2 floor
+  ; log2(n) = 31 - clz(n)
+  %result = sub i32 31, %clz
+  
+  ret i32 %result
+"""
+
+// Returns the logarithm of x with a specified base
+func log(x: double, base: double) -> double:
+    return ln(x) / ln(base)
