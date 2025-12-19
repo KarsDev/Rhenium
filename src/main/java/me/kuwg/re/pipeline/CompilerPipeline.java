@@ -31,7 +31,6 @@ public final class CompilerPipeline {
             if (args.dumpAST()) dumpAST(ast);
             if (args.runOutput()) CommandRunner.run(command);
             if (!args.keepLLVM()) args.outputFile().delete();
-
         } catch (Exception e) {
             System.err.println("Compilation failed");
             e.printStackTrace(System.err);

@@ -1,3 +1,7 @@
+_IR """
+declare double @cbrt(double)
+"""
+
 // The natural base of logarithms
 global E: double =  2.7182818284590452
 
@@ -118,6 +122,6 @@ entry:
 // Returns the cubic root of a number
 _Builtin func cbrt(x: double) -> double = """
 entry:
-    %res = call double @llvm.cbrt.f64(double %x)
+    %res = call double @cbrt(double %x)
     ret double %res
 """
