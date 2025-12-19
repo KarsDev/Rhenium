@@ -88,8 +88,7 @@ public class ASTParser {
     }
 
     private static void includeInitialModules(AST ast) {
-        ast.addChild(new UsingNode(0, null, "default\\io", null));     // io
-        ast.addChild(new UsingNode(0, null, "default\\system", null)); // system
+        ast.addChild(new UsingNode(0, null, "default\\default.re", null));
     }
 
     public AST parse() {
