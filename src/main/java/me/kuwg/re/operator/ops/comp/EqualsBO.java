@@ -26,7 +26,7 @@ public class EqualsBO extends BinaryOperator {
             c.cctx().include(-1, null, "string", null);
 
             String resReg = c.cctx().nextRegister();
-            c.cctx().emit(resReg + " = call i1 @strcmp_eq(i8* " + c.leftReg() + ", i8* " + c.rightReg() + ")");
+            c.cctx().emit(resReg + " = call i1 @strEquals(i8* " + c.leftReg() + ", i8* " + c.rightReg() + ")");
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 
