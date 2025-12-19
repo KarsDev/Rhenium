@@ -1,13 +1,14 @@
 package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.List;
 
-public class StructDeclarationNode extends ASTNode {
+public class StructDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
     private final StructType type;
     private final List<RStructField> fields;

@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.global;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
@@ -8,7 +9,7 @@ import me.kuwg.re.error.errors.variable.RGlobalVariableScopeError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 
-public class GlobalVariableDeclarationNode extends ASTNode {
+public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
     private final TypeRef type;
     private final ConstantNode value;

@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.function;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.compiler.CompilationContext;
@@ -11,11 +12,13 @@ import me.kuwg.re.error.errors.function.RMainFunctionError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.StrBuiltinType;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionDeclarationNode extends ASTNode implements IBlockContainer {
+public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlockContainer {
     private final String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
@@ -52,7 +55,7 @@ public class FunctionDeclarationNode extends ASTNode implements IBlockContainer 
 
     @Override
     public void compile(final CompilationContext cctx) {
-        boolean main = name.equals("main") && parameters.isEmpty();
+        boolean main = isMain();
 
         List<TypeRef> types = new ArrayList<>(parameters.size());
         for (int i = 0; i < parameters.size(); i++) {
@@ -61,7 +64,8 @@ public class FunctionDeclarationNode extends ASTNode implements IBlockContainer 
         }
 
         StringBuilder func = new StringBuilder();
-        func.append("define ").append(returnType.getLLVMName()).append(" @").append(main ? "main" : llvmName).append("(");
+        func.append("define ").append(returnType.getLLVMName()).append(" @")
+                .append(main ? "main" : llvmName).append("(");
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
@@ -77,27 +81,28 @@ public class FunctionDeclarationNode extends ASTNode implements IBlockContainer 
         cctx.pushFunctionBody();
 
         for (FunctionParameter param : parameters) {
-
             String paramPtr = "%" + param.name() + ".addr";
             cctx.emit(paramPtr + " = alloca " + param.type().getLLVMName() + " ; allocate parameter");
-            cctx.emit("store " + param.type().getLLVMName() + " %" + param.name() + ", " + param.type().getLLVMName() + "* " + paramPtr + " ; store parameter value");
-
+            cctx.emit("store " + param.type().getLLVMName() + " %" + param.name() + ", "
+                    + param.type().getLLVMName() + "* " + paramPtr + " ; store parameter value");
             RVariable paramVar = new RVariable(param.name(), param.mutable(), param.type(), paramPtr);
             cctx.addVariable(paramVar);
         }
 
         block.compile(cctx);
+
         if (returnType instanceof NoneBuiltinType) {
             cctx.emit("ret void");
         }
 
-        block.checkTypes(returnType, true);
-
+        if (!main) {
+            block.checkTypes(returnType, true);
+        }
 
         String body = cctx.popFunctionBody();
         StringBuilder bodySB = new StringBuilder(body);
 
-        if (appendMainReturn(bodySB)) {
+        if (main && appendMainReturn(bodySB)) {
             bodySB.append(TAB).append("ret ").append(returnType.getLLVMName()).append(" 0\n");
         }
 
@@ -105,7 +110,6 @@ public class FunctionDeclarationNode extends ASTNode implements IBlockContainer 
         cctx.popIndent();
 
         func.append(bodySB);
-
         func.append("}\n\n");
 
         cctx.declare(func.toString());
@@ -118,7 +122,8 @@ public class FunctionDeclarationNode extends ASTNode implements IBlockContainer 
 
         if (cctx.getFunction(name, types) != null) {
             String paramsToString = types.toString().replace("[", "(").replace("]", ")");
-            String error = "While compiling a function, a function with the same name and parameters was found existing: " + name + paramsToString;
+            String error = "While compiling a function, a function with the same name and parameters was found existing: "
+                    + name + paramsToString;
             new RFunctionAlreadyExistError(error, line).raise();
         }
 
@@ -142,6 +147,13 @@ public class FunctionDeclarationNode extends ASTNode implements IBlockContainer 
         RFunction fnObj = new RFunction(llvmName, name, returnType, parameters);
         cctx.addFunction(fnObj);
         registered = true;
+    }
+
+    private boolean isMain() {
+        if (!name.equals("main")) return false;
+        if (parameters.isEmpty()) return true;
+        if (parameters.size() != 1) return false;
+        return parameters.get(0).type() instanceof ArrayType arr && arr.inner() instanceof StrBuiltinType;
     }
 
     public String getName() {

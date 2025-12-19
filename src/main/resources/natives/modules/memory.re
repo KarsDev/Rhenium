@@ -1,9 +1,9 @@
 _IR """
 ; External declarations of standard C library memory functions.
 ; These tell the LLVM linker to look for these symbols in libc.
-declare i8* @malloc(i64)          ; Allocate memory
-declare void @free(i8*)           ; Deallocate memory
-declare i8* @realloc(i8*, i64)    ; Resize allocated memory
+declare i8* @malloc(i64)            ; Allocate memory
+declare void @free(i8*)             ; Deallocate memory
+declare i8* @realloc(i8*, i64)      ; Resize allocated memory
 declare i8* @memcpy(i8*, i8*, i64)  ; Copy memory (non-overlapping)
 declare i8* @memmove(i8*, i8*, i64) ; Copy memory (safe for overlapping)
 declare i8* @memset(i8*, i32, i64)  ; Fill memory with a constant byte

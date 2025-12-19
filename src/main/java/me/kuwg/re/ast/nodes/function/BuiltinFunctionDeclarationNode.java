@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.function;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.error.errors.function.RFunctionAlreadyExistError;
@@ -9,7 +10,7 @@ import me.kuwg.re.type.TypeRef;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BuiltinFunctionDeclarationNode extends ASTNode {
+public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNode {
     private final String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;

@@ -1,9 +1,10 @@
 package me.kuwg.re.ast.nodes.module;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 
-public class UsingNode extends ASTNode {
+public class UsingNode extends ASTNode implements GlobalNode {
     private final String sourceFile;
     private final String name;
     private final String pkg;

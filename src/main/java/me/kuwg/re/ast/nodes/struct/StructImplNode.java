@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.ast.nodes.function.BuiltinFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.FunctionParameter;
@@ -14,7 +15,7 @@ import me.kuwg.re.type.ptr.PointerType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StructImplNode extends ASTNode {
+public class StructImplNode extends ASTNode implements GlobalNode {
     private final String name;
     private final List<ASTNode> functions;
 

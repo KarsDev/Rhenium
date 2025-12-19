@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.ast.interrupt.InterruptNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.compiler.Compilable;
@@ -14,12 +15,18 @@ import me.kuwg.re.writer.Writeable;
 
 import java.util.List;
 
-public class BlockNode implements Writeable, Compilable {
-    private boolean compiled = false;
+public class BlockNode implements Writeable, Compilable, GlobalNode {
     private final List<ASTNode> nodes;
+    private boolean compiled = false;
 
     public BlockNode(final List<ASTNode> nodes) {
         this.nodes = nodes;
+
+        nodes.stream()
+            .takeWhile(node -> node instanceof GlobalNode)
+            .forEach(node ->
+                    new RBlockSyntaxError("Block cannot contain global statements", node.getLine()).raise()
+            );
     }
 
     public List<ASTNode> getNodes() {

@@ -1,16 +1,16 @@
 package me.kuwg.re.ast.nodes.extern;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.error.errors.natv.RNativeCPPError;
-import me.kuwg.re.error.errors.parser.RParserError;
 import me.kuwg.re.resource.ResourceLoader;
 
 import java.nio.file.Path;
 import java.util.List;
 
-public class NativeCPPNode extends ASTNode {
+public class NativeCPPNode extends ASTNode implements GlobalNode {
     private final String name;
     private final List<RFunction> functions;
 
