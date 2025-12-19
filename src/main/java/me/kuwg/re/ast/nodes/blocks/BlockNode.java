@@ -1,6 +1,8 @@
 package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.nodes.function.FunctionCallNode;
+import me.kuwg.re.ast.nodes.function.FunctionDeclarationNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
@@ -13,6 +15,7 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.writer.Writeable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BlockNode implements Writeable, Compilable, GlobalNode {
@@ -21,12 +24,6 @@ public class BlockNode implements Writeable, Compilable, GlobalNode {
 
     public BlockNode(final List<ASTNode> nodes) {
         this.nodes = nodes;
-
-        nodes.stream()
-            .takeWhile(node -> node instanceof GlobalNode)
-            .forEach(node ->
-                    new RBlockSyntaxError("Block cannot contain global statements", node.getLine()).raise()
-            );
     }
 
     public List<ASTNode> getNodes() {
@@ -35,6 +32,12 @@ public class BlockNode implements Writeable, Compilable, GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        nodes.stream()
+            .takeWhile(node -> node instanceof GlobalNode)
+            .forEach(node ->
+                    new RBlockSyntaxError("Block cannot contain global statements: " + node, node.getLine()).raise()
+            );
+
         for (int i = 0; i < nodes.size(); i++) {
             final ASTNode node = nodes.get(i);
             node.compile(cctx);
@@ -44,6 +47,17 @@ public class BlockNode implements Writeable, Compilable, GlobalNode {
             }
         }
         compiled = true;
+    }
+
+    public String compileAndGet(TypeRef type, CompilationContext cctx) {
+        String name = "\"BlockCompilationFunction" + cctx.nextRegister().substring(1) + "\"";
+
+        var fdn = new FunctionDeclarationNode(0, true, name, new ArrayList<>(), type, this);
+        fdn.compile(cctx);
+
+        var fcn = new FunctionCallNode(0, name, new ArrayList<>());
+
+        return fcn.compileAndGet(cctx);
     }
 
     @Override

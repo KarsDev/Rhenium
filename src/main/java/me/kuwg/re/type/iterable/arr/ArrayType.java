@@ -32,6 +32,7 @@ public record ArrayType(int size, TypeRef inner) implements IterableTypeRef {
 
     @Override
     public String getLLVMName() {
+        if (size == UNKNOWN_SIZE) return inner.getLLVMName() + "*";
         return "[" + size + " x " + inner.getLLVMName() + "]";
     }
 

@@ -90,12 +90,12 @@ public class StructInitNode extends ValueNode {
         for (int i = 0; i < fields.size(); i++) {
             RStructField field = fields.get(i);
             ValueNode v = resolved[i];
+            String valueReg = v.compileAndGet(cctx);
 
             if (!v.getType().equals(field.type())) {
                 v = new CastNode(line, field.type(), v);
+                valueReg = v.compileAndGet(cctx);
             }
-
-            String valueReg = v.compileAndGet(cctx);
 
             String newReg = cctx.nextRegister();
             String base = (aggReg == null) ? "undef" : aggReg;

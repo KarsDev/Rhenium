@@ -24,6 +24,7 @@ public abstract class Constants {
                 "struct", "init", "impl", "self", "inherits",
                 "try", "catch", "raise",
                 "is",
+                "async",
         };
 
         public static final String[] BOOLEANS = {

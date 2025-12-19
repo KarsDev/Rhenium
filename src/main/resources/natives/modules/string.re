@@ -2,8 +2,9 @@ _IR """
 ; External C function declarations for memory and string handling
 declare i32 @strlen(i8*)               ; Returns length of string
 declare i8* @malloc(i64)               ; Allocates memory on the heap
-declare i32 @strcmp(i8*, i8*)           ; Compares two strings
+declare i32 @strcmp(i8*, i8*)          ; Compares two strings
 declare i8* @memcpy(i8*, i8*, i64)     ; Copies memory blocks
+declare i32 @strncmp(i8*, i8*, i32)    ; Compares up to N bytes of two strings
 
 ; Custom external wrapper for sprintf to handle variable arguments safely
 declare i32 @sprintf_external(i8*, i64, i8*, ...)
@@ -155,11 +156,19 @@ entry:
 _Builtin func strSplit(s: str) -> arr -> str = """
 entry:
     %len = call i32 @strlen(i8* %s)
-    %arr = call i8** @malloc(i64 mul i64 (zext i32 %len to i64), 8) ; array of pointers
+
+    ; bytes = len * sizeof(i8*)
+    %len64 = zext i32 %len to i64
+    %bytes = mul i64 %len64, 8
+
+    ; malloc returns i8*
+    %raw = call i8* @malloc(i64 %bytes)
+
+    ; cast to i8**
+    %arr = bitcast i8* %raw to i8**
 
     %i = alloca i32
     store i32 0, i32* %i
-
     br label %loop
 
 loop:
@@ -168,15 +177,18 @@ loop:
     br i1 %cmp, label %body, label %end
 
 body:
-    %char_ptr = call i8* @malloc(i64 2)         ; single char + null
-    %char_val = call i8* getelementptr(i8, i8* %s, i32 %idx)
-    %val = load i8, i8* %char_val
+    ; allocate char string
+    %char_ptr = call i8* @malloc(i64 2)
+
+    %src_ptr = getelementptr i8, i8* %s, i32 %idx
+    %val = load i8, i8* %src_ptr
     store i8 %val, i8* %char_ptr
+
     %nullpos = getelementptr i8, i8* %char_ptr, i32 1
     store i8 0, i8* %nullpos
 
-    %arr_elem_ptr = getelementptr i8*, i8** %arr, i32 %idx
-    store i8* %char_ptr, i8** %arr_elem_ptr
+    %arr_elem = getelementptr i8*, i8** %arr, i32 %idx
+    store i8* %char_ptr, i8** %arr_elem
 
     %next = add i32 %idx, 1
     store i32 %next, i32* %i
@@ -190,8 +202,13 @@ end:
 _Builtin func strGetBytes(s: str) -> arr -> byte = """
 entry:
     %len = call i32 @strlen(i8* %s)
-    %arr = call i8* @malloc(i64 (zext i32 %len to i64))
-    
+
+    ; extend length to i64
+    %len64 = zext i32 %len to i64
+
+    ; allocate byte array
+    %arr = call i8* @malloc(i64 %len64)
+
     %i = alloca i32
     store i32 0, i32* %i
     br label %loop
@@ -204,8 +221,10 @@ loop:
 body:
     %c_ptr = getelementptr i8, i8* %s, i32 %idx
     %c_val = load i8, i8* %c_ptr
+
     %dst = getelementptr i8, i8* %arr, i32 %idx
     store i8 %c_val, i8* %dst
+
     %next = add i32 %idx, 1
     store i32 %next, i32* %i
     br label %loop
@@ -219,10 +238,13 @@ _Builtin func strIndexOf(s: str, val: str) -> int = """
 entry:
     %len_s = call i32 @strlen(i8* %s)
     %len_val = call i32 @strlen(i8* %val)
+
+    ; last valid start index = len_s - len_val
+    %limit = sub i32 %len_s, %len_val
+
     %i = alloca i32
     store i32 0, i32* %i
-    %found = alloca i1
-    store i1 false, i1* %found
+
     %index = alloca i32
     store i32 -1, i32* %index
 
@@ -230,17 +252,16 @@ entry:
 
 loop:
     %idx = load i32, i32* %i
-    %cmp = icmp sle i32 %idx, sub i32 %len_s, %len_val
+    %cmp = icmp sle i32 %idx, %limit
     br i1 %cmp, label %body, label %end
 
 body:
     %s_ptr = getelementptr i8, i8* %s, i32 %idx
-    %eq = call i32 @strncmp(i8* %s_ptr, i8* %val, i32 %len_val)
-    %is_eq = icmp eq i32 %eq, 0
-    br i1 %is_eq, label %found_label, label %next
+    %cmp_val = call i32 @strncmp(i8* %s_ptr, i8* %val, i32 %len_val)
+    %is_eq = icmp eq i32 %cmp_val, 0
+    br i1 %is_eq, label %found, label %next
 
-found_label:
-    store i1 true, i1* %found
+found:
     store i32 %idx, i32* %index
     br label %end
 
@@ -254,37 +275,64 @@ end:
     ret i32 %res
 """
 
-// Returns substring from begin to end-1
-_Builtin func strSub(begin: int, end: int) -> str = """
-entry:
-    %len = sub i32 %end, %begin
-    %buf = call i8* @malloc(i64 add (zext i32 %len to i64), 1)
-    %src_ptr = getelementptr i8, i8* %s, i32 %begin
-    call i8* @memcpy(i8* %buf, i8* %src_ptr, i32 %len)
-    %nullpos = getelementptr i8, i8* %buf, i32 %len
-    store i8 0, i8* %nullpos
-    ret i8* %buf
-"""
-
 // Returns substring from begin to end of string
-_Builtin func strSub(begin: int) -> str = """
+_Builtin global func strSub(s: str, begin: int) -> str = """
 entry:
     %len_s = call i32 @strlen(i8* %s)
     %len = sub i32 %len_s, %begin
-    %buf = call i8* @malloc(i64 add (zext i32 %len to i64), 1)
+
+    ; len -> i64
+    %len64 = zext i32 %len to i64
+
+    ; +1 for null terminator
+    %size = add i64 %len64, 1
+
+    ; allocate buffer
+    %buf = call i8* @malloc(i64 %size)
+
     %src_ptr = getelementptr i8, i8* %s, i32 %begin
     call i8* @memcpy(i8* %buf, i8* %src_ptr, i32 %len)
+
     %nullpos = getelementptr i8, i8* %buf, i32 %len
     store i8 0, i8* %nullpos
+
     ret i8* %buf
 """
 
-// Trims leading whitespace
-_Builtin func strTrim(begin: int) -> str = """
+// Returns substring from begin to end-1
+_Builtin global func strSubRange(s: str, begin: int, end: int) -> str = """
+entry:
+    ; compute length = end - begin
+    %len = sub i32 %end, %begin
+
+    ; extend length to i64
+    %len64 = zext i32 %len to i64
+
+    ; +1 for null terminator
+    %size = add i64 %len64, 1
+
+    ; allocate buffer
+    %buf = call i8* @malloc(i64 %size)
+
+    ; pointer to source start
+    %src_ptr = getelementptr i8, i8* %s, i32 %begin
+
+    ; copy substring
+    call i8* @memcpy(i8* %buf, i8* %src_ptr, i32 %len)
+
+    ; null-terminate
+    %nullpos = getelementptr i8, i8* %buf, i32 %len
+    store i8 0, i8* %nullpos
+
+    ret i8* %buf
+"""
+
+_Builtin func strTrim(s: str, begin: int) -> str = """
 entry:
     %len = call i32 @strlen(i8* %s)
     %start = alloca i32
     store i32 %begin, i32* %start
+    br label %loop
 
 loop:
     %i = load i32, i32* %start
@@ -306,7 +354,7 @@ inc:
 
 done:
     %new_begin = load i32, i32* %start
-    %sub = call strSub(i32 %new_begin)
+    %sub = call i8* @strSub(i8* %s, i32 %new_begin)
     ret i8* %sub
 
 end:
@@ -316,11 +364,12 @@ end:
 """
 
 // Strips trailing whitespace
-_Builtin func strStrip(begin: int) -> str = """
+_Builtin func strStrip(s: str, begin: int) -> str = """
 entry:
     %len = call i32 @strlen(i8* %s)
     %end = alloca i32
     store i32 %len, i32* %end
+    br label %loop
 
 loop:
     %i = load i32, i32* %end
@@ -328,7 +377,8 @@ loop:
     br i1 %cmp, label %check, label %done
 
 check:
-    %c_ptr = getelementptr i8, i8* %s, i32 sub(i32 %i, 1)
+    %idx_minus1 = sub i32 %i, 1
+    %c_ptr = getelementptr i8, i8* %s, i32 %idx_minus1
     %c_val = load i8, i8* %c_ptr
     %is_space = icmp eq i8 %c_val, 32
     %is_tab = icmp eq i8 %c_val, 9
@@ -342,6 +392,6 @@ dec:
 
 done:
     %new_end = load i32, i32* %end
-    %sub = call strSub(i32 %begin, i32 %new_end)
+    %sub = call i8* @strSub(i8* %s, i32 %begin, i32 %new_end)
     ret i8* %sub
 """

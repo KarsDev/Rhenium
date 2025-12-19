@@ -8,6 +8,7 @@ import me.kuwg.re.type.TypeRef;
 
 public class ReturnNode extends ASTNode implements InterruptNode {
     private final ValueNode value;
+
     public ReturnNode(final int line, final ValueNode value) {
         super(line);
         this.value = value;
@@ -30,6 +31,10 @@ public class ReturnNode extends ASTNode implements InterruptNode {
         if (value != null) {
             value.write(sb, indent + TAB);
         }
+    }
+
+    public ValueNode getValue() {
+        return value;
     }
 
     public TypeRef getValueType() {

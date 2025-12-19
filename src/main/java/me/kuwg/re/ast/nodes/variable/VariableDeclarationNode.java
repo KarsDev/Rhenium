@@ -13,6 +13,7 @@ import me.kuwg.re.error.errors.variable.RVariableReassignmentTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.struct.StructType;
 
 public class VariableDeclarationNode extends ValueNode {
     private final VariableReference variable;
@@ -141,7 +142,9 @@ public class VariableDeclarationNode extends ValueNode {
 
         if (varType instanceof ArrayType arrType) {
             String sizeConst = Integer.toString(arrType.size() * arrType.inner().getSize());
-            cctx.emit("call void @llvm.memcpy.p0.p0.i64(" + "ptr " + varReg + ", " + "ptr " + valueReg + ", " + "i64 " + sizeConst + ", " + "i1 false)");
+            cctx.emit("call void @llvm.memcpy.p0.p0.i64(ptr " + varReg + ", ptr " + valueReg + ", i64 " + sizeConst + ", i1 false)");
+        } else if (varType instanceof StructType) {
+            cctx.emit("call void @llvm.memcpy.p0.p0.i64(ptr " + varReg + ", ptr " + valueReg + ", i64 8, i1 false)");
         } else {
             cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", " + varType.getLLVMName() + "* " + varReg);
         }

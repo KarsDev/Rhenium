@@ -27,11 +27,11 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     private boolean registered = false;
 
-    public FunctionDeclarationNode(final int line, final String name,
+    public FunctionDeclarationNode(final int line, final boolean keepName, final String name,
                                    final List<FunctionParameter> parameters,
                                    final TypeRef returnType, final BlockNode block) {
         super(line);
-        this.llvmName = RFunction.makeUnique(name);
+        this.llvmName = keepName ? name : RFunction.makeUnique(name);
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;

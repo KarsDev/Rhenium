@@ -5,6 +5,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.array.ArrayAccessNode;
 import me.kuwg.re.ast.nodes.array.ArrayNode;
 import me.kuwg.re.ast.nodes.array.ArraySetNode;
+import me.kuwg.re.ast.nodes.async.AsyncDeclarationNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.ReturnNode;
 import me.kuwg.re.ast.nodes.cast.CastNode;
@@ -88,7 +89,7 @@ public class ASTParser {
     }
 
     private static void includeInitialModules(AST ast) {
-        ast.addChild(new UsingNode(0, null, "default\\default.re", null));
+        ast.addChild(new UsingNode(0, null, "default\\default", null));
     }
 
     public AST parse() {
@@ -127,6 +128,7 @@ public class ASTParser {
             if (match(EOF) || match(DEDENT)) break;
 
             ASTNode stmt = parseStatement();
+            if (stmt == null) break;
             statements.add(stmt);
         }
 
@@ -171,6 +173,8 @@ public class ASTParser {
 
     private ASTNode parseStatement() {
         removeNewlines();
+
+        if (outOfBounds(0)) return null;
 
         int line = line();
 
@@ -352,6 +356,7 @@ public class ASTParser {
             case "try" -> parseTry();
             case "_NativeCPP" -> parse_NativeCPPKeyword();
             case "null" -> parseNullKeyword();
+            case "async" -> parseAsyncKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -548,7 +553,7 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        return new FunctionDeclarationNode(line, name, params, returnType, block);
+        return new FunctionDeclarationNode(line, false, name, params, returnType, block);
     }
 
     private @SubFunc ASTNode parseForKeyword() {
@@ -970,14 +975,14 @@ public class ASTParser {
         return new NullNode(previous().line());
     }
 
-    private ValueNode parseBitwiseNotOperator() {
+    private @SubFunc ValueNode parseBitwiseNotOperator() {
         int line = line();
         ValueNode value = parseValue();
 
         return new BitwiseNotNode(line, value);
     }
 
-    private ASTNode parseDivider() {
+    private @SubFunc ASTNode parseDivider() {
         int line = line();
 
         if (!matchAndConsume(DIVIDER, "(")) {
@@ -992,7 +997,7 @@ public class ASTParser {
         return parseSubExpr(line, false, null, value);
     }
 
-    private ValueNode parseSubExpr(int line, boolean self, String name, ValueNode node) {
+    private @SubFunc ValueNode parseSubExpr(int line, boolean self, String name, ValueNode node) {
         while (true) {
             if (outOfBounds(0)) break;
             line = line();
@@ -1118,6 +1123,33 @@ public class ASTParser {
         ValueNode elseExpr = parseValue();
 
         return new TernaryOperatorNode(line, condition, thenExpr, elseExpr);
+    }
+
+    private @SubFunc ValueNode parseAsyncKeyword() {
+        int line = line();
+
+        TypeRef returnType;
+
+        if (matchAndConsume(DIVIDER, "(")) {
+            returnType = parseType();
+            if (!matchAndConsume(DIVIDER, ")")) {
+                return new RParserError("Expected ')' for async function declaration", file, line).raise();
+            }
+        } else {
+            returnType = NoneBuiltinType.INSTANCE;
+        }
+
+        if (!matchAndConsume(OPERATOR, ":"))
+            return new RParserError("Expected ':' for async declaration", file, line).raise();
+
+        if (!match(NEWLINE))
+            new RParserError("Expected newline after async declaration", file, line).raise();
+
+        consume();
+
+        BlockNode block = parseBlock();
+
+        return new AsyncDeclarationNode(line, returnType, block);
     }
 
     /*

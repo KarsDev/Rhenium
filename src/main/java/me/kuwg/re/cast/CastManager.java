@@ -13,6 +13,10 @@ public final class CastManager {
         String valReg = value.compileAndGet(cctx);
         TypeRef from = value.getType();
 
+        return executeCast(line, valReg, from, type, cctx);
+    }
+
+    public static String executeCast(int line, String valReg, TypeRef from, TypeRef type, CompilationContext cctx) {
         if (from instanceof NullType) return fromNull(line, type, cctx);
         if (from instanceof LongBuiltinType) return fromLong(line, valReg, type, cctx);
         if (from instanceof IntBuiltinType) return fromInt(line, valReg, type, cctx);
@@ -27,6 +31,7 @@ public final class CastManager {
 
         return new RIncompatibleCastError(from, type, line).raise();
     }
+
 
     private static String fromNull(int line, TypeRef to, CompilationContext cctx) {
         if (!(to instanceof PointerType)) return new RIncompatibleCastError(NullType.INSTANCE, to, line).raise();
