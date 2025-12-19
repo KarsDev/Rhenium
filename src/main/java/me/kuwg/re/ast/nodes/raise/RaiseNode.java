@@ -23,7 +23,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
 
         if (catchLabel == null) {
             new FunctionCallNode(line, "println", List.of(new StringNode(line, log))).compile(cctx);
-            new FunctionCallNode(line, "exit0", List.of(new NumberNode(line, "1"))).compile(cctx);
+            new FunctionCallNode(line, "exit", List.of(new NumberNode(line, "1"))).compile(cctx);
             cctx.emit("unreachable");
         } else {
             cctx.emit("br label %" + catchLabel);

@@ -3,9 +3,11 @@ package me.kuwg.re.ast.nodes.pointer;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.error.errors.deref.RDerefAnyPointerError;
 import me.kuwg.re.error.errors.deref.RDerefNotPointerError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
+import me.kuwg.re.type.builtin.AnyPointerType;
 import me.kuwg.re.type.ptr.PointerType;
 
 public class DereferenceNode extends VariableReference {
@@ -31,14 +33,10 @@ public class DereferenceNode extends VariableReference {
         setType(ptr.inner());
 
         String ptrReg = cctx.nextRegister();
-        cctx.emit(ptrReg + " = load " + ptr.getLLVMName() + ", "
-                + ptr.getLLVMName() + "* " + var.valueReg()
-                + " ; load pointer " + value.getCompleteName());
+        cctx.emit(ptrReg + " = load " + ptr.getLLVMName() + ", " + ptr.getLLVMName() + "* " + var.valueReg() + " ; load pointer " + value.getCompleteName());
 
         String destReg = cctx.nextRegister();
-        cctx.emit(destReg + " = load " + ptr.inner().getLLVMName() + ", "
-                + ptr.inner().getLLVMName() + "* " + ptrReg
-                + " ; dereference " + value.getCompleteName());
+        cctx.emit(destReg + " = load " + ptr.inner().getLLVMName() + ", " + ptr.inner().getLLVMName() + "* " + ptrReg + " ; dereference " + value.getCompleteName());
 
         return destReg;
     }
@@ -57,23 +55,18 @@ public class DereferenceNode extends VariableReference {
     @Override
     public RVariable getVariable(final CompilationContext cctx) {
         RVariable var = value.getVariable(cctx);
-        if (var == null)
-            return new RVariableNotFoundError(value.getCompleteName(), line).raise();
+        if (var == null) return new RVariableNotFoundError(value.getCompleteName(), line).raise();
 
-        if (!(var.type() instanceof PointerType ptr))
-            return new RDerefNotPointerError(value.getCompleteName(), line).raise();
+        if (!(var.type().isPointer())) return new RDerefNotPointerError(value.getCompleteName(), line).raise();
+
+        if (var.type() instanceof AnyPointerType) return new RDerefAnyPointerError(line).raise();
+
+        PointerType ptr = (PointerType) var.type();
 
         String ptrReg = cctx.nextRegister();
-        cctx.emit(ptrReg + " = load " +
-                ptr.getLLVMName() + ", " + ptr.getLLVMName() + "* " + var.valueReg()
-        );
+        cctx.emit(ptrReg + " = load " + ptr.getLLVMName() + ", " + ptr.getLLVMName() + "* " + var.valueReg());
 
-        return new RVariable(
-                value.getSimpleName(),
-                true,
-                ptr.inner(),
-                ptrReg
-        );
+        return new RVariable(value.getSimpleName(), true, ptr.inner(), ptrReg);
     }
 
     @Override

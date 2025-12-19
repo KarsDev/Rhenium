@@ -1,5 +1,8 @@
 package me.kuwg.re.type;
 
+import me.kuwg.re.type.builtin.AnyPointerType;
+import me.kuwg.re.type.ptr.PointerType;
+
 public interface TypeRef {
 
     boolean isPrimitive();
@@ -13,4 +16,8 @@ public interface TypeRef {
     String getLLVMName();
 
     boolean equals(TypeRef other);
+
+    default boolean isPointer() {
+        return this instanceof PointerType || this instanceof AnyPointerType;
+    }
 }

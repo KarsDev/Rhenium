@@ -10,7 +10,7 @@ public class NoneBuiltinType extends BuiltinType {
 
     @Override
     public boolean isCompatibleWith(final TypeRef other) {
-        return other instanceof NoneBuiltinType;
+        return true;
     }
 
     @Override

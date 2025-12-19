@@ -70,6 +70,8 @@ public final class AddBO extends BinaryOperator {
         if (type instanceof DoubleBuiltinType) return "call i8* @doubleToStr(double " + reg + ")";
         if (type instanceof BoolBuiltinType)  return "call i8* @boolToStr(i1 " + reg + ")";
         if (type instanceof CharBuiltinType)  return "call i8* @charToStrAscii(i8 " + reg + ")";
+        if (type instanceof AnyPointerType)  return "call i8* @ptrToStr(i8* " + reg + ")";
+
         return new RStringConversionError(type.getName(), line).raise();
     }
 }

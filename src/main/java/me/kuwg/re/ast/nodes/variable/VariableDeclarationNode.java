@@ -6,10 +6,12 @@ import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.RInternalError;
+import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.variable.RVariableIsNotMutableError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableReassignmentTypeError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 
 public class VariableDeclarationNode extends ValueNode {
@@ -127,6 +129,10 @@ public class VariableDeclarationNode extends ValueNode {
 
             if (valueType instanceof ArrayType arrType) {
                 varType = new ArrayType(arrType.size(), ((ArrayType) type).inner());
+
+                if (((ArrayType) varType).inner() instanceof NoneBuiltinType) {
+                    return new RArrayTypeIsNoneError(line).raise();
+                }
             }
         }
 

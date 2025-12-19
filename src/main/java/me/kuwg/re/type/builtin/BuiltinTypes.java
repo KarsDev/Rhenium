@@ -13,6 +13,7 @@ public enum BuiltinTypes {
     STR(StrBuiltinType.INSTANCE),
     CHAR(CharBuiltinType.INSTANCE),
     NONE(NoneBuiltinType.INSTANCE),
+    ANYPTR(AnyPointerType.INSTANCE),
 
     ;
 

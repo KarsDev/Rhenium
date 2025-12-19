@@ -17,7 +17,7 @@ public abstract class Constants {
                 "_Builtin", "_IR", "_NativeCPP",
                 "range", "len", "sizeof", "cast", "_Typeof", "_TypeofLLVM",
                 "func", "return",
-                "none",
+                "none", "null", "anyptr",
                 "byte", "short", "int", "long",
                 "float", "double",
                 "bool", "char", "str", "ptr",

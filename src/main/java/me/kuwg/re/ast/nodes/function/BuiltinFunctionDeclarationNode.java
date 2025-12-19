@@ -10,13 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BuiltinFunctionDeclarationNode extends ASTNode {
+    private final String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
     private final TypeRef returnType;
     private final String llvmBody;
 
-    public BuiltinFunctionDeclarationNode(final int line, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
+    public BuiltinFunctionDeclarationNode(final int line, final boolean keepName, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
         super(line);
+        this.llvmName = keepName ? name : RFunction.makeUnique(name);
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;
@@ -25,13 +27,15 @@ public class BuiltinFunctionDeclarationNode extends ASTNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Builtin Function Declaration: ").append(NEWLINE).append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE).append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
+        sb.append(indent).append("Builtin Function Declaration: ").append(NEWLINE)
+                .append(indent).append(TAB).append("Name: ").append(name)
+                .append(NEWLINE).append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
         parameters.forEach(p -> p.write(sb, indent + TAB));
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        RFunction fnObj = new RFunction(name, name, returnType, parameters);
+        RFunction fnObj = new RFunction(llvmName, name, returnType, parameters);
 
 
         StringBuilder func = new StringBuilder();
@@ -52,8 +56,6 @@ public class BuiltinFunctionDeclarationNode extends ASTNode {
         func.append("}\n\n");
 
         cctx.declare(func.toString());
-
-
 
         List<TypeRef> types = new ArrayList<>(parameters.size());
         for (int i = 0; i < parameters.size(); i++) {

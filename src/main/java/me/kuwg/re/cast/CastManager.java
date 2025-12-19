@@ -5,12 +5,15 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.cast.RIncompatibleCastError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.ptr.NullType;
+import me.kuwg.re.type.ptr.PointerType;
 
 public final class CastManager {
     public static String executeCast(int line, ValueNode value, TypeRef type, CompilationContext cctx) {
         String valReg = value.compileAndGet(cctx);
         TypeRef from = value.getType();
 
+        if (from instanceof NullType) return fromNull(line, type, cctx);
         if (from instanceof LongBuiltinType) return fromLong(line, valReg, type, cctx);
         if (from instanceof IntBuiltinType) return fromInt(line, valReg, type, cctx);
         if (from instanceof ShortBuiltinType) return fromShort(line, valReg, type, cctx);
@@ -19,8 +22,17 @@ public final class CastManager {
         if (from instanceof DoubleBuiltinType) return fromDouble(line, valReg, type, cctx);
         if (from instanceof BoolBuiltinType) return fromBool(line, valReg, type, cctx);
         if (from instanceof CharBuiltinType) return fromChar(line, valReg, type, cctx);
+        if (from instanceof AnyPointerType) return fromAnyPointer(line, valReg, type, cctx);
+        if (from instanceof PointerType ptr) return fromPointer(line, ptr.inner(), valReg, type, cctx);
 
         return new RIncompatibleCastError(from, type, line).raise();
+    }
+
+    private static String fromNull(int line, TypeRef to, CompilationContext cctx) {
+        if (!(to instanceof PointerType)) return new RIncompatibleCastError(NullType.INSTANCE, to, line).raise();
+        String result = cctx.nextRegister();
+        cctx.emit(result + " = bitcast ptr null to " + to.getLLVMName());
+        return result;
     }
 
     private static String fromLong(int line, String valReg, TypeRef to, CompilationContext cctx) {
@@ -237,5 +249,39 @@ public final class CastManager {
             return result;
         }
         return new RIncompatibleCastError(BuiltinTypes.CHAR.getType(), to, line).raise();
+    }
+
+    private static String fromAnyPointer(int line, String valReg, TypeRef to, CompilationContext cctx) {
+        if (!(to instanceof PointerType)) {
+            if (to instanceof AnyPointerType) return valReg;
+            return new RIncompatibleCastError(BuiltinTypes.ANYPTR.getType(), to, line).raise();
+        }
+
+        String result = cctx.nextRegister();
+        cctx.emit(result + " = bitcast i8* " + valReg + " to " + to.getLLVMName());
+        return result;
+
+    }
+
+    private static String fromPointer(int line, TypeRef fromInner, String valReg, TypeRef to, CompilationContext cctx) {
+        if (to instanceof PointerType toPtr) {
+            PointerType fromPtr = new PointerType(fromInner);
+
+            if (fromPtr.getLLVMName().equals(toPtr.getLLVMName())) {
+                return valReg;
+            }
+
+            String result = cctx.nextRegister();
+            cctx.emit(result + " = bitcast " + fromPtr.getLLVMName() + " " + valReg + " to " + toPtr.getLLVMName());
+            return result;
+        }
+
+        if (!(to instanceof AnyPointerType)) {
+            return new RIncompatibleCastError(new PointerType(fromInner), to, line).raise();
+        }
+        String result = cctx.nextRegister();
+        cctx.emit(result + " = bitcast " + new PointerType(fromInner).getLLVMName() + " " + valReg + " to i8*");
+        return result;
+
     }
 }

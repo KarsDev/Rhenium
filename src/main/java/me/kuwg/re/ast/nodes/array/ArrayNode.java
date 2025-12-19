@@ -3,9 +3,11 @@ package me.kuwg.re.ast.nodes.array;
 import me.kuwg.re.ast.value.PointerValueNode;
 import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.array.RArrayTypesMismatchError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.ArrayList;
@@ -33,7 +35,13 @@ public class ArrayNode extends PointerValueNode {
             return;
         }
 
-        TypeRef arr = new ArrayType(values.size(), values.get(0).getType());
+        var arr = new ArrayType(values.size(), values.get(0).getType());
+
+        if (arr.inner() instanceof NoneBuiltinType) {
+            new RArrayTypeIsNoneError(line).raise();
+            return;
+        }
+
         setType(arr);
     }
 

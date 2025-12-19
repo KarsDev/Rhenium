@@ -17,7 +17,7 @@ public class NumberNode extends ConstantNode {
     private static TypeRef inferType(String literal) {
         literal = literal.trim().toLowerCase();
 
-        if (literal.contains(".") || literal.contains("e")) {
+        if (isDecimalFloating(literal)) {
             if (literal.endsWith("f")) return BuiltinTypes.FLOAT.getType();
             return BuiltinTypes.DOUBLE.getType();
         }
@@ -38,8 +38,10 @@ public class NumberNode extends ConstantNode {
     private static Number parseNumber(String literal) {
         literal = literal.trim().toLowerCase();
 
-        if (literal.contains(".") || literal.contains("e")) {
-            if (literal.endsWith("f")) return Float.parseFloat(literal.substring(0, literal.length() - 1));
+        if (isDecimalFloating(literal)) {
+            if (literal.endsWith("f")) {
+                return Float.parseFloat(literal.substring(0, literal.length() - 1));
+            }
             return Double.parseDouble(literal);
         }
 
@@ -68,6 +70,12 @@ public class NumberNode extends ConstantNode {
         else if (literal.startsWith("0") && literal.length() > 1) { radix = 8; literal = literal.substring(1); }
 
         return Long.parseLong(literal, radix);
+    }
+
+    private static boolean isDecimalFloating(String literal) {
+        return !literal.startsWith("0x")
+                && !literal.startsWith("0b")
+                && (literal.contains(".") || literal.contains("e"));
     }
 
     public Number getValue() {

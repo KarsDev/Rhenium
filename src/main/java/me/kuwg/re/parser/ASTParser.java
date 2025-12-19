@@ -24,6 +24,7 @@ import me.kuwg.re.ast.nodes.loop.WhileNode;
 import me.kuwg.re.ast.nodes.module.UsingNode;
 import me.kuwg.re.ast.nodes.pointer.DereferenceAssignNode;
 import me.kuwg.re.ast.nodes.pointer.DereferenceNode;
+import me.kuwg.re.ast.nodes.pointer.PointerCreationNode;
 import me.kuwg.re.ast.nodes.pointer.ReferenceNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.ast.nodes.range.RangeNode;
@@ -43,7 +44,7 @@ import me.kuwg.re.ast.value.ValueNode;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;
-import me.kuwg.re.error.errors.RInternalError;
+import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.expr.RImplNotFunctionError;
 import me.kuwg.re.error.errors.parser.RParserError;
 import me.kuwg.re.operator.BinaryOperators;
@@ -58,17 +59,18 @@ import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static me.kuwg.re.token.TokenType.*;
 
 public class ASTParser {
+    public final Map<String, TypeRef> typeMap;
     private final String file;
     private final Token[] tokens;
     private final boolean initial;
-
-    public final Map<String, TypeRef> typeMap;
-
     private int tokenIndex;
 
     public ASTParser(final String file, final Token[] tokens) {
@@ -170,8 +172,11 @@ public class ASTParser {
 
     private ASTNode parseStatement() {
         removeNewlines();
+
+        int line = line();
+
         ASTNode n = switch (current().type()) {
-            case INDENT -> new RParserError("Unexpected indent", file, line()).raise();
+            case INDENT -> new RParserError("Unexpected indent", file, line).raise();
             case KEYWORD -> parseKeyword();
             case IDENTIFIER -> parseIdentifier(false);
             case NUMBER -> parseNumber();
@@ -181,11 +186,11 @@ public class ASTParser {
                 if (matchAndConsume(OPERATOR, "@")) yield parseDereferenceOperator();
                 else if (matchAndConsume(OPERATOR, "~")) yield parseBitwiseNotOperator();
                 else
-                    yield new RParserError("Unexpected operator in statement: " + current().value(), file, line()).raise();
+                    yield new RParserError("Unexpected operator in statement: " + current().value(), file, line).raise();
             }
             case DIVIDER -> parseDivider();
-            default -> new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line()).raise();
-
+            default ->
+                    new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line).raise();
         };
 
         if (match(EOF) || match(DEDENT)) {
@@ -263,7 +268,7 @@ public class ASTParser {
             case KEYWORD -> {
                 ASTNode n2 = parseKeyword();
                 if (n2 instanceof ValueNode value) {
-                    return value;
+                    node = value;
                 } else {
                     return new RParserError("Expected value", file, line()).raise();
                 }
@@ -347,6 +352,7 @@ public class ASTParser {
             case "raise" -> parseRaise();
             case "try" -> parseTry();
             case "_NativeCPP" -> parse_NativeCPPKeyword();
+            case "null" -> parseNullKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -399,6 +405,8 @@ public class ASTParser {
     private @SubFunc ASTNode parse_BuiltinKeyword() {
         int line = line();
 
+        boolean keepName = matchAndConsume(KEYWORD, "global");
+
         if (!matchAndConsume(KEYWORD, "func")) {
             return new RParserError("Expected 'func' for builtin function declaration", file, line).raise();
         }
@@ -423,7 +431,7 @@ public class ASTParser {
 
         String body = consume().value();
 
-        return new BuiltinFunctionDeclarationNode(line, name, params, returnType, body);
+        return new BuiltinFunctionDeclarationNode(line, keepName, name, params, returnType, body);
     }
 
     private @SubFunc ASTNode parse_IRKeyword() {
@@ -476,6 +484,8 @@ public class ASTParser {
         if (!matchAndConsume(DIVIDER, ")"))
             return new RParserError("Expected ')' for pointer type declaration", file, line).raise();
 
+        if (value instanceof ConstantNode cnst) return new PointerCreationNode(line, cnst);
+
         if (!(value instanceof VariableReference vr))
             return new RParserError("Expected any type of variable reference for pointer type declaration", file, line).raise();
 
@@ -486,8 +496,8 @@ public class ASTParser {
         int line = line();
         VariableReference vr = new DirectVariableReferenceNode(line, matchAndConsume(KEYWORD, "self") ? "self" : identifier());
 
-        if (matchAndConsume(OPERATOR, ".")) {
-            throw new RInternalError("TODO: nested @");
+        if (match(OPERATOR, ".")) {
+            return parseSubExpr(line, false, null, vr);
         }
 
         if (match(OPERATOR, ":")) {
@@ -539,7 +549,7 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        return new FunctionDeclarationNode(line, name, true, params, returnType, block);
+        return new FunctionDeclarationNode(line, name, params, returnType, block);
     }
 
     private @SubFunc ASTNode parseForKeyword() {
@@ -612,24 +622,24 @@ public class ASTParser {
         int line = line();
         String name = identifier();
 
-        StructType inherited;
+        //StructType inherited;
 
-        if (matchAndConsume(KEYWORD, "inherits")) {
-            return new RParserError("Inheritance is still unsupported", file, line).raise();
-            /*
-            This works, but struct constructor implementation is needed before.
+        //if (matchAndConsume(KEYWORD, "inherits")) {
+        //    return new RParserError("Inheritance is still unsupported", file, line).raise();
+        //    /*
+        //    This works, but struct constructor implementation is needed before.
 
-            String inheritedName = identifier();
+        //    String inheritedName = identifier();
 
-            TypeRef tmp = typeMap.get(inheritedName);
-            if (!(tmp instanceof StructType st)) {
-                return new RParserError("Expected struct type for inheriting", file, line).raise();
-            }
-            inherited = st;
-            */
-        } else {
-            inherited = null;
-        }
+        //    TypeRef tmp = typeMap.get(inheritedName);
+        //    if (!(tmp instanceof StructType st)) {
+        //        return new RParserError("Expected struct type for inheriting", file, line).raise();
+        //    }
+        //    inherited = st;
+        //    */
+        //} else {
+        //    inherited = null;
+        //}
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for struct declaration", file, line()).raise();
@@ -679,7 +689,7 @@ public class ASTParser {
             types.add(fieldType);
         }
 
-        var type = new StructType(name, types, inherited);
+        var type = new StructType(name, types, null);
 
         typeMap.put(name, type);
         return new StructDeclarationNode(line, name, type, fields);
@@ -752,6 +762,41 @@ public class ASTParser {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
             return new RParserError("Expected '(' for sizeof expression", file, line()).raise();
+
+        int preType = tokenIndex;
+
+        TypeRef type;
+
+        LABEL_TYPE:
+        {
+            String typeName = consume().value();
+
+            switch (typeName) {
+                case "ptr" -> {
+                    type = parsePointerType(line);
+                    break LABEL_TYPE;
+                }
+                case "arr" -> {
+                    type = parseArrayType(line);
+                    break LABEL_TYPE;
+                }
+            }
+
+            if (typeMap.containsKey(typeName)) {
+                type = typeMap.get(typeName);
+                break LABEL_TYPE;
+            }
+
+            type = BuiltinTypes.getByName(typeName);
+        }
+
+        if (type != null) {
+            if (!matchAndConsume(DIVIDER, ")"))
+                return new RParserError("Expected ')' for sizeof expression", file, line()).raise();
+
+            return new SizeofNode(line, type);
+        }
+        tokenIndex = preType;
 
         ValueNode value = parseValue();
 
@@ -922,6 +967,10 @@ public class ASTParser {
         return new NativeCPPNode(line, name, functions);
     }
 
+    private ASTNode parseNullKeyword() {
+        return new NullNode(previous().line());
+    }
+
     private ValueNode parseBitwiseNotOperator() {
         int line = line();
         ValueNode value = parseValue();
@@ -1085,10 +1134,13 @@ public class ASTParser {
 
         String typeName = consume().value();
 
-        if (typeName.equals("ptr")) {
-            return parsePointerType(line);
-        } else if (typeName.equals("arr")) {
-            return parseArrayType(line);
+        switch (typeName) {
+            case "ptr" -> {
+                return parsePointerType(line);
+            }
+            case "arr" -> {
+                return parseArrayType(line);
+            }
         }
 
         if (typeMap.containsKey(typeName)) {
@@ -1107,12 +1159,12 @@ public class ASTParser {
     }
 
     private @SubFunc TypeRef parsePointerType(int line) {
-        if (!matchAndConsume(OPERATOR, "->")) {
+        if (!matchAndConsume(OPERATOR, "->"))
             return new RParserError("Expected \"->\" for pointer type declaration", file, line).raise();
-        }
 
         TypeRef inner = parseType();
-
+        if (inner instanceof NoneBuiltinType)
+            return new RParserError("You can't declare a void pointer, please use 'anyptr' instead", file, line).raise();
         return new PointerType(inner);
     }
 
@@ -1122,6 +1174,10 @@ public class ASTParser {
         }
 
         TypeRef inner = parseType();
+
+        if (inner instanceof NoneBuiltinType) {
+            return new RArrayTypeIsNoneError(line).raise();
+        }
 
         return new ArrayType(ArrayType.UNKNOWN_SIZE, inner);
     }

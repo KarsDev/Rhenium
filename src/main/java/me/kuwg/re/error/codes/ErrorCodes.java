@@ -35,4 +35,6 @@ public final class ErrorCodes {
     public static final int INVALID_CONDITION_ERROR = 31;
     public static final int NATIVE_CPP_ERROR = 32;
     public static final int INCOMPATIBLE_CAST_ERROR = 33;
+    public static final int ARRAY_TYPE_IS_NONE_ERROR = 34;
+    public static final int DEREFERENCE_ANYPTR_ERROR = 35;
 }

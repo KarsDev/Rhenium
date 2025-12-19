@@ -85,7 +85,6 @@ public class StructImplNode extends ASTNode {
         FunctionDeclarationNode renamed = new FunctionDeclarationNode(
                 original.getLine(),
                 mangledName,
-                false,
                 newParams,
                 original.getReturnType(),
                 original.getBlock()
@@ -97,12 +96,12 @@ public class StructImplNode extends ASTNode {
     }
 
     private RFunction compileBuiltin(CompilationContext cctx, RStruct struct, BuiltinFunctionDeclarationNode original) {
-
         String mangledName = generateName(struct.type().getName(), original.getName());
         List<FunctionParameter> newParams = addSelfParam(struct, original.getParameters());
 
         BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(
                 original.getLine(),
+                true,
                 mangledName,
                 newParams,
                 original.getReturnType(),

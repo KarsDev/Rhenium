@@ -7,6 +7,7 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.deref.RDerefNotPointerError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
+import me.kuwg.re.type.builtin.AnyPointerType;
 import me.kuwg.re.type.ptr.PointerType;
 
 public class DereferenceAssignNode extends ValueNode {
@@ -38,12 +39,38 @@ public class DereferenceAssignNode extends ValueNode {
             return;
         }
 
-        if (!(var.type() instanceof PointerType ptr)) {
+        if (!(var.type() .isPointer())) {
             new RDerefNotPointerError(vr.getCompleteName(), line).raise();
             return;
         }
 
         String valueReg = value.compileAndGet(cctx);
+
+        if (var.type() instanceof AnyPointerType) {
+            cctx.emit(" ; Dereference assign (anyptr)");
+
+            String ptrReg = cctx.nextRegister();
+            cctx.emit(ptrReg + " = load i8*, i8** " + var.valueReg() + " ; load anyptr");
+
+            String castedValueReg = valueReg;
+            if (!value.getType().getLLVMName().equals("i8*")) {
+                castedValueReg = cctx.nextRegister();
+                if (value.getType().getLLVMName().startsWith("i")) {
+                    cctx.emit(castedValueReg + " = inttoptr " + value.getType().getLLVMName() + " " + valueReg + " to i8*");
+                } else {
+                    cctx.emit(castedValueReg + " = bitcast " + value.getType().getLLVMName() + " " + valueReg + " to i8*");
+                }
+            }
+
+            cctx.emit("store i8* " + castedValueReg + ", i8** " + ptrReg + " ; dereference assign to anyptr");
+            setType(value.getType());
+            return;
+        }
+
+
+        PointerType ptr = (PointerType) var.type();
+
+
 
         if (!ptr.inner().isCompatibleWith(value.getType())) {
             new RVariableTypeError(value.getType().getName(), ptr.inner().getName(), line).raise();
