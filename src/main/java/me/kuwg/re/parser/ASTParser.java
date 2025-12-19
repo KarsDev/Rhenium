@@ -341,7 +341,7 @@ public class ASTParser {
             case "for" -> parseForKeyword();
             case "range" -> parseRangeKeyword();
             case "return" -> parseReturnKeyword();
-            case "struct" -> parseStructKeyword();
+            case "struct" -> parseStructKeyword(false);
             case "init" -> parseInitKeyword();
             case "if" -> parseIfKeyword();
             case "sizeof" -> parseSizeofKeyword();
@@ -408,6 +408,8 @@ public class ASTParser {
 
     private @SubFunc ASTNode parse_BuiltinKeyword() {
         int line = line();
+
+        if (matchAndConsume(KEYWORD, "struct")) return parseStructKeyword(true);
 
         boolean keepName = matchAndConsume(KEYWORD, "global");
 
@@ -622,7 +624,7 @@ public class ASTParser {
         return new ReturnNode(line, value);
     }
 
-    private @SubFunc ASTNode parseStructKeyword() {
+    private @SubFunc ASTNode parseStructKeyword(boolean builtin) {
         int line = line();
         String name = identifier();
 
@@ -696,7 +698,7 @@ public class ASTParser {
         var type = new StructType(name, types, null);
 
         typeMap.put(name, type);
-        return new StructDeclarationNode(line, name, type, fields);
+        return new StructDeclarationNode(line, builtin, name, type, fields);
     }
 
     private @SubFunc ASTNode parseInitKeyword() {

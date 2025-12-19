@@ -120,8 +120,8 @@ final class CompilationContext {
         return functions.get(name);
     }
 
-    public void addStruct(String name, TypeRef type, List<RStructField> fields) {
-        structs.put(name, new RStruct(type, fields, new ArrayList<>()));
+    public void addStruct(boolean builtin, String name, TypeRef type, List<RStructField> fields) {
+        structs.put(name, new RStruct(builtin, type, fields, new ArrayList<>()));
     }
 
     public RStruct getStruct(String name) {

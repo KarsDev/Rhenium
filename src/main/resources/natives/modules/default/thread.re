@@ -7,7 +7,7 @@ declare i8* @rhenium_join(i8*) ; join a rhenium thread
 """
 
 // Declare struct Thread used by the compiler
-struct Thread:
+_Builtin struct Thread:
     handle: anyptr
 
 impl Thread:

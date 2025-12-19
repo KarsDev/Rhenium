@@ -6,5 +6,5 @@ import me.kuwg.re.type.TypeRef;
 
 import java.util.List;
 
-public record RStruct(TypeRef type, List<RStructField> fields, List<RFunction> functions) {
+public record RStruct(boolean builtin, TypeRef type, List<RStructField> fields, List<RFunction> functions) {
 }

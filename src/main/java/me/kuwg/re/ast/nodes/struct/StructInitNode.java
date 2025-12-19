@@ -6,6 +6,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;
+import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructInitParamsError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
@@ -29,6 +30,10 @@ public class StructInitNode extends ValueNode {
 
         if (struct == null) {
             return new RStructUndefinedError(name, line).raise();
+        }
+
+        if (struct.builtin()) {
+            return new RStructAccessError("This struct can't be initialized: " + name, line).raise();
         }
 
         final List<RStructField> fields = struct.fields();

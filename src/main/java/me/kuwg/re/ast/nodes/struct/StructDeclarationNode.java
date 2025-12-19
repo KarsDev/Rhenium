@@ -9,12 +9,14 @@ import me.kuwg.re.type.struct.StructType;
 import java.util.List;
 
 public class StructDeclarationNode extends ASTNode implements GlobalNode {
+    private final boolean builtin;
     private final String name;
     private final StructType type;
     private final List<RStructField> fields;
 
-    public StructDeclarationNode(final int line, final String name, final StructType type, final List<RStructField> fields) {
+    public StructDeclarationNode(final int line, final boolean builtin, final String name, final StructType type, final List<RStructField> fields) {
         super(line);
+        this.builtin = builtin;
         this.name = name;
         this.type = type;
         this.fields = fields;
@@ -22,7 +24,7 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        cctx.addStruct(name, type, fields);
+        cctx.addStruct(builtin, name, type, fields);
 
         StringBuilder sb = new StringBuilder();
         sb.append("; Struct declaration\n");
