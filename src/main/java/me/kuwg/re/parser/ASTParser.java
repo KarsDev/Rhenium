@@ -14,6 +14,7 @@ import me.kuwg.re.ast.nodes.expression.BinaryExpressionNode;
 import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
 import me.kuwg.re.ast.nodes.extern.NativeCPPNode;
 import me.kuwg.re.ast.nodes.function.*;
+import me.kuwg.re.ast.nodes.function.generics.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
 import me.kuwg.re.ast.nodes.instance.IsNode;
 import me.kuwg.re.ast.nodes.ir.IRDeclarationNode;
@@ -42,6 +43,7 @@ import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
 import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;
@@ -56,6 +58,7 @@ import me.kuwg.re.token.TokenType;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
@@ -357,6 +360,7 @@ public class ASTParser {
             case "_NativeCPP" -> parse_NativeCPPKeyword();
             case "null" -> parseNullKeyword();
             case "async" -> parseAsyncKeyword();
+            case "generic" -> parseGenericKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -387,7 +391,7 @@ public class ASTParser {
 
                 TypeRef type;
 
-                if (!match(OPERATOR, "=")) type = parseType();
+                if (!match(OPERATOR, "=")) type = parseType(false);
                 else type = null;
 
                 if (!matchAndConsume(OPERATOR, "=")) {
@@ -419,13 +423,13 @@ public class ASTParser {
 
         String name = identifier();
 
-        var params = parseParamsDeclare();
+        var params = parseParamsDeclare(false);
 
         if (!matchAndConsume(OPERATOR, "->")) {
             return new RParserError("Expected \"->\" for builtin function type declaration", file, line).raise();
         }
 
-        TypeRef returnType = parseType();
+        TypeRef returnType = parseType(false);
 
         if (!matchAndConsume(OPERATOR, "=")) {
             return new RParserError("Expected '=' for builtin function declaration", file, line).raise();
@@ -545,9 +549,9 @@ public class ASTParser {
 
         String name = identifier();
 
-        var params = parseParamsDeclare();
+        var params = parseParamsDeclare(false);
 
-        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType() : NoneBuiltinType.INSTANCE;
+        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : NoneBuiltinType.INSTANCE;
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for function declaration", file, line).raise();
@@ -555,7 +559,7 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        return new FunctionDeclarationNode(line, false, name, params, returnType, block);
+        return new FunctionDeclarationNode(line, false, false, name, params, returnType, block);
     }
 
     private @SubFunc ASTNode parseForKeyword() {
@@ -692,7 +696,7 @@ public class ASTParser {
                 return new RParserError("You can't declare fields as mutable", file, line()).raise();
             }
 
-            TypeRef fieldType = parseType();
+            TypeRef fieldType = parseType(false);
 
             ValueNode defaultValue = matchAndConsume(OPERATOR, "=") ? parseValue() : null;
 
@@ -843,7 +847,7 @@ public class ASTParser {
         if (!matchAndConsume(OPERATOR, "<"))
             return new RParserError("Expected '<' for cast expression", file, line()).raise();
 
-        TypeRef type = parseType();
+        TypeRef type = parseType(false);
 
         if (!matchAndConsume(OPERATOR, ">"))
             return new RParserError("Expected '>' for cast expression", file, line()).raise();
@@ -898,7 +902,7 @@ public class ASTParser {
         if (matchAndConsume(OPERATOR, ":")) {
             if (matchAndConsume(KEYWORD, "mut"))
                 return new RParserError("Global variables cannot be mutable", file, line).raise();
-            type = parseType();
+            type = parseType(false);
         }
 
         if (!matchAndConsume(OPERATOR, "=")) {
@@ -969,11 +973,11 @@ public class ASTParser {
 
         List<RFunction> functions = new ArrayList<>();
         do {
-            TypeRef type = parseType();
+            TypeRef type = parseType(false);
             String funcName = identifier();
-            var params = parseParamsDeclare();
+            var params = parseParamsDeclare(false);
 
-            functions.add(new RFunction(funcName, funcName, type, params));
+            functions.add(new RDefFunction(funcName, funcName, type, params));
         } while (matchAndConsume(OPERATOR, "and"));
 
         return new NativeCPPNode(line, name, functions);
@@ -1082,7 +1086,7 @@ public class ASTParser {
         }
 
         if (matchAndConsume(KEYWORD, "is")) {
-            TypeRef type = parseType();
+            TypeRef type = parseType(false);
             return new IsNode(line, node, type);
         }
 
@@ -1139,7 +1143,7 @@ public class ASTParser {
         TypeRef returnType;
 
         if (matchAndConsume(DIVIDER, "(")) {
-            returnType = parseType();
+            returnType = parseType(false);
             if (!matchAndConsume(DIVIDER, ")")) {
                 return new RParserError("Expected ')' for async function declaration", file, line).raise();
             }
@@ -1160,11 +1164,47 @@ public class ASTParser {
         return new AsyncDeclarationNode(line, returnType, block);
     }
 
+    private @SubFunc ASTNode parseGenericKeyword() {
+        int line = line();
+
+        if (!matchAndConsume(KEYWORD, "func")) {
+            return new RParserError("Expected 'func' for generic function declaration", file, line).raise();
+        }
+
+        String name = identifier();
+        List<String> typeParameters = new ArrayList<>();
+
+        if (!matchAndConsume(OPERATOR, "<")) {
+            return new RParserError("Expected '<' for generic function declaration", file, line).raise();
+        }
+        if (!match(OPERATOR, ">")) {
+            do {
+                typeParameters.add(identifier());
+            } while (matchAndConsume(OPERATOR, ","));
+        }
+
+        if (!matchAndConsume(OPERATOR, ">")) {
+            return new RParserError("Expected '>' for generic function declaration", file, line).raise();
+        }
+
+        var params = parseParamsDeclare(true);
+
+        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : NoneBuiltinType.INSTANCE;
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for function declaration", file, line).raise();
+        }
+
+        BlockNode block = parseBlock();
+
+        return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block);
+    }
+
     /*
     general utils
      */
 
-    private @SubFunc TypeRef parseType() {
+    private @SubFunc TypeRef parseType(final boolean generics) {
         if (!match(IDENTIFIER) && !match(KEYWORD)) {
             return new RParserError("Expected type name", file, line()).raise();
         }
@@ -1189,6 +1229,7 @@ public class ASTParser {
         TypeRef type = BuiltinTypes.getByName(typeName);
 
         if (type == null) {
+            if (generics) return new GenericType(typeName);
             return new RParserError("Unknown type: " + typeName, file, line).raise();
         }
 
@@ -1201,7 +1242,7 @@ public class ASTParser {
         if (!matchAndConsume(OPERATOR, "->"))
             return new RParserError("Expected \"->\" for pointer type declaration", file, line).raise();
 
-        TypeRef inner = parseType();
+        TypeRef inner = parseType(false);
         if (inner instanceof NoneBuiltinType)
             return new RParserError("You can't declare a void pointer, please use 'anyptr' instead", file, line).raise();
         return new PointerType(inner);
@@ -1212,7 +1253,7 @@ public class ASTParser {
             return new RParserError("Expected \"->\" for array type declaration", file, line).raise();
         }
 
-        TypeRef inner = parseType();
+        TypeRef inner = parseType(false);
 
         if (inner instanceof NoneBuiltinType) {
             return new RArrayTypeIsNoneError(line).raise();
@@ -1221,7 +1262,7 @@ public class ASTParser {
         return new ArrayType(ArrayType.UNKNOWN_SIZE, inner);
     }
 
-    private @SubFunc List<FunctionParameter> parseParamsDeclare() {
+    private @SubFunc List<FunctionParameter> parseParamsDeclare(final boolean generics) {
         if (!matchAndConsume(DIVIDER, "(")) {
             return new RParserError("Expected '(' for parameters declaration", file, line()).raise();
         }
@@ -1240,7 +1281,7 @@ public class ASTParser {
 
             boolean mutable = matchAndConsume(KEYWORD, "mut");
 
-            TypeRef type = parseType();
+            TypeRef type = parseType(generics);
 
             var param = new FunctionParameter(name, mutable, type);
 

@@ -3,6 +3,7 @@ package me.kuwg.re.ast.nodes.function;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.error.errors.function.RFunctionAlreadyExistError;
 import me.kuwg.re.type.TypeRef;
@@ -36,7 +37,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
 
     @Override
     public void compile(final CompilationContext cctx) {
-        RFunction fnObj = new RFunction(llvmName, name, returnType, parameters);
+        RFunction fnObj = new RDefFunction(llvmName, name, returnType, parameters);
 
 
         StringBuilder func = new StringBuilder();

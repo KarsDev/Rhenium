@@ -37,4 +37,5 @@ public final class ErrorCodes {
     public static final int INCOMPATIBLE_CAST_ERROR = 33;
     public static final int ARRAY_TYPE_IS_NONE_ERROR = 34;
     public static final int DEREFERENCE_ANYPTR_ERROR = 35;
+    public static final int FUNCTION_GENERICS_ERROR = 36;
 }

@@ -52,7 +52,7 @@ public class BlockNode implements Writeable, Compilable, GlobalNode {
     public String compileAndGet(TypeRef type, CompilationContext cctx) {
         String name = "\"BlockCompilationFunction" + cctx.nextRegister().substring(1) + "\"";
 
-        var fdn = new FunctionDeclarationNode(0, true, name, new ArrayList<>(), type, this);
+        var fdn = new FunctionDeclarationNode(0, false,true, name, new ArrayList<>(), type, this);
         fdn.compile(cctx);
 
         var fcn = new FunctionCallNode(0, name, new ArrayList<>());

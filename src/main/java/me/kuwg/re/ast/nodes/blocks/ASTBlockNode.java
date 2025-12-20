@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.function.FunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.generics.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
 import me.kuwg.re.compiler.CompilationContext;
 
@@ -28,6 +29,8 @@ public class ASTBlockNode extends ASTNode {
             ASTNode node = iterator.next();
             if (node instanceof FunctionDeclarationNode fdn) {
                 fdn.register(cctx);
+            } else if (node instanceof GenFunctionDeclarationNode gfdn) {
+                gfdn.register(cctx);
             } else if (node instanceof StructDeclarationNode sdn) {
                 sdn.compile(cctx);
                 iterator.remove();

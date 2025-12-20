@@ -5,6 +5,7 @@ import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionAlreadyExistError;
@@ -13,12 +14,14 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.builtin.StrBuiltinType;
+import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlockContainer {
+    private final boolean isGeneric;
     private final String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
@@ -27,10 +30,11 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     private boolean registered = false;
 
-    public FunctionDeclarationNode(final int line, final boolean keepName, final String name,
+    public FunctionDeclarationNode(final int line, final boolean isGeneric, final boolean keepName, final String name,
                                    final List<FunctionParameter> parameters,
                                    final TypeRef returnType, final BlockNode block) {
         super(line);
+        this.isGeneric = isGeneric;
         this.llvmName = keepName ? name : RFunction.makeUnique(name);
         this.name = name;
         this.parameters = parameters;
@@ -120,14 +124,14 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         if (registered) return;
 
-        if (cctx.getFunction(name, types) != null) {
-            String paramsToString = types.toString().replace("[", "(").replace("]", ")");
-            String error = "While compiling a function, a function with the same name and parameters was found existing: "
-                    + name + paramsToString;
-            new RFunctionAlreadyExistError(error, line).raise();
+        var oldFunc = cctx.getFunction(name, types);
+
+        if (oldFunc != null && !(isGeneric && oldFunc.parameters.stream().anyMatch(p -> p.type() instanceof GenericType))) {
+            new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: "
+                    + name + types.toString().replace("[", "(").replace("]", ")"), line).raise();
         }
 
-        RFunction fnObj = new RFunction(llvmName, name, returnType, parameters);
+        RFunction fnObj = new RDefFunction(llvmName, name, returnType, parameters);
         cctx.addFunction(fnObj);
         registered = true;
     }
@@ -144,7 +148,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     public void register(final CompilationContext cctx) {
         if (registered) return;
-        RFunction fnObj = new RFunction(llvmName, name, returnType, parameters);
+        RFunction fnObj = new RDefFunction(llvmName, name, returnType, parameters);
         cctx.addFunction(fnObj);
         registered = true;
     }

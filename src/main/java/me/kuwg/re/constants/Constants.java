@@ -16,7 +16,7 @@ public abstract class Constants {
                 "for", "if", "else", "while", "do", "break", "continue",
                 "_Builtin", "_IR", "_NativeCPP",
                 "range", "len", "sizeof", "cast", "_Typeof", "_TypeofLLVM",
-                "func", "return",
+                "generic", "func", "return",
                 "none", "null", "anyptr",
                 "byte", "short", "int", "long",
                 "float", "double",
