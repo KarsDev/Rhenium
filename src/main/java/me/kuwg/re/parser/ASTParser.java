@@ -620,7 +620,13 @@ public class ASTParser {
 
     private @SubFunc ASTNode parseReturnKeyword() {
         int line = line();
-        ValueNode value = matchAndConsume(KEYWORD, "none") ? null : parseValue();
+
+        if (match(KEYWORD, "none") || match(NEWLINE)) {
+            consume();
+            return new ReturnNode(line, null);
+        }
+
+        ValueNode value = parseValue();
         return new ReturnNode(line, value);
     }
 

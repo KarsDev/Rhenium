@@ -3,8 +3,9 @@ _NativeCPP("thread") _Builtin
 
 // Declare the external join function for the IR to use
 _IR """
-declare void @rhenium_run(i8*)   ; run the thread
-declare i8* @rhenium_await(i8*)  ; awaits the result
+declare void @rhenium_run(i8*)     ; run the thread
+declare i8* @rhenium_await(i8*)    ; awaits the result
+declare i8* @rhenium_destroy(i8*)  ; destroys the thread handle
 """
 
 // Declare struct Thread used by the compiler
@@ -52,11 +53,11 @@ impl Thread:
 
     // Runs the thread and destroys safely
     func runAndDestroy() -> none:
-        run()
-        destroy()
+        (@self).run()
+        (@self).destroy()
 
     // Awaits the thread and destroys safely
     func awaitAndDestroy() -> anyptr:
-        res = await()
-        destroy()
+        res = (@self).await()
+        (@self).destroy()
         return res
