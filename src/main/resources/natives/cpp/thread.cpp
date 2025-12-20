@@ -1,6 +1,5 @@
 #include <thread>
 #include <iostream>
-#include <cstdlib>
 #include <atomic>
 
 struct RheniumThread {
@@ -12,6 +11,9 @@ struct RheniumThread {
 
     std::atomic<bool> started;
     std::atomic<bool> finished;
+
+    RheniumThread() : func(nullptr), arg(nullptr), result(nullptr),
+                      started(false), finished(false) {}
 };
 
 extern "C" {
@@ -20,9 +22,6 @@ void* rhenium_spawn(void* (*func)(void*), void* arg) {
     auto* handle = new RheniumThread();
     handle->func = func;
     handle->arg = arg;
-    handle->result = nullptr;
-    handle->started.store(false, std::memory_order_relaxed);
-    handle->finished.store(false, std::memory_order_relaxed);
     return handle;
 }
 
@@ -30,8 +29,15 @@ void rhenium_run(void* thread_handle) {
     auto* handle = static_cast<RheniumThread*>(thread_handle);
     if (!handle) return;
 
-    if (handle->started.exchange(true, std::memory_order_acq_rel))
+    bool expected = false;
+    if (!handle->started.compare_exchange_strong(expected, true, std::memory_order_acq_rel))
         return;
+
+    if (handle->th.joinable())
+        handle->th.join();
+
+    handle->finished.store(false, std::memory_order_relaxed);
+    handle->result = nullptr;
 
     handle->th = std::thread([handle]() {
         handle->result = handle->func(handle->arg);
@@ -49,9 +55,18 @@ void* rhenium_await(void* thread_handle) {
     if (handle->th.joinable())
         handle->th.join();
 
-    void* result = handle->result;
+    handle->started.store(false, std::memory_order_release); // allow rerun
+    return handle->result;
+}
+
+void rhenium_destroy(void* thread_handle) {
+    auto* handle = static_cast<RheniumThread*>(thread_handle);
+    if (!handle) return;
+
+    if (handle->th.joinable())
+        handle->th.join();
+
     delete handle;
-    return result;
 }
 
 }

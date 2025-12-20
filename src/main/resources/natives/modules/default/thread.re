@@ -37,3 +37,26 @@ impl Thread:
         ; 3. Return the result
         ret i8* %result
     """
+
+    // Destroyes the thread, call this to not have code leaks
+    _Builtin func destroy() -> none = """
+        ; 1. Load the 'handle' field.
+        %handle_ptr = getelementptr %struct.Thread, %struct.Thread* %self, i32 0, i32 0
+        %handle = load i8*, i8** %handle_ptr
+
+        ; 2. Call the C++ backend
+        call void @rhenium_destroy(i8* %handle)
+
+        ret void
+    """
+
+    // Runs the thread and destroys safely
+    func runAndDestroy() -> none:
+        run()
+        destroy()
+
+    // Awaits the thread and destroys safely
+    func awaitAndDestroy() -> anyptr:
+        res = await()
+        destroy()
+        return res
