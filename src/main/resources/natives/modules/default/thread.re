@@ -3,7 +3,8 @@ _NativeCPP("thread") _Builtin
 
 // Declare the external join function for the IR to use
 _IR """
-declare i8* @rhenium_join(i8*) ; join a rhenium thread
+declare void @rhenium_run(i8*)   ; run the thread
+declare i8* @rhenium_await(i8*)  ; awaits the result
 """
 
 // Declare struct Thread used by the compiler
@@ -12,14 +13,26 @@ _Builtin struct Thread:
 
 impl Thread:
     // Executes the thread
-    _Builtin func join() -> anyptr = """
+    // Please remember that if the program stops after calling run() it probably won't execute the thread
+    _Builtin func run() -> none = """
         ; 1. Load the 'handle' field.
-        ; Index 0, 0 gets the first field of the %struct.Thread (the i8*)
         %handle_ptr = getelementptr %struct.Thread, %struct.Thread* %self, i32 0, i32 0
         %handle = load i8*, i8** %handle_ptr
 
         ; 2. Call the C++ backend
-        %result = call i8* @rhenium_join(i8* %handle)
+        call void @rhenium_run(i8* %handle)
+
+        ret void
+    """
+
+    // Runs and awaits for the result
+    _Builtin func await() -> anyptr = """
+        ; 1. Load the 'handle' field.
+        %handle_ptr = getelementptr %struct.Thread, %struct.Thread* %self, i32 0, i32 0
+        %handle = load i8*, i8** %handle_ptr
+
+        ; 2. Call the C++ backend
+        %result = call i8* @rhenium_await(i8* %handle)
 
         ; 3. Return the result
         ret i8* %result

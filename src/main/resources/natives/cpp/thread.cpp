@@ -1,37 +1,56 @@
 #include <thread>
 #include <iostream>
 #include <cstdlib>
+#include <atomic>
+
+struct RheniumThread {
+    void* (*func)(void*);
+    void* arg;
+
+    std::thread th;
+    void* result;
+
+    std::atomic<bool> started;
+    std::atomic<bool> finished;
+};
 
 extern "C" {
 
-struct RheniumThread {
-    std::thread th;
-    void* result;
-};
-
 void* rhenium_spawn(void* (*func)(void*), void* arg) {
-    RheniumThread* handle = new RheniumThread();
+    auto* handle = new RheniumThread();
+    handle->func = func;
+    handle->arg = arg;
     handle->result = nullptr;
-
-    handle->th = std::thread([func, arg, handle]() {
-        handle->result = func(arg);
-    });
-
+    handle->started.store(false, std::memory_order_relaxed);
+    handle->finished.store(false, std::memory_order_relaxed);
     return handle;
 }
 
-// Join function
-void* rhenium_join(void* thread_handle) {
-    RheniumThread* handle = static_cast<RheniumThread*>(thread_handle);
+void rhenium_run(void* thread_handle) {
+    auto* handle = static_cast<RheniumThread*>(thread_handle);
+    if (!handle) return;
 
-    if (handle->th.joinable()) {
+    if (handle->started.exchange(true, std::memory_order_acq_rel))
+        return;
+
+    handle->th = std::thread([handle]() {
+        handle->result = handle->func(handle->arg);
+        handle->finished.store(true, std::memory_order_release);
+    });
+}
+
+void* rhenium_await(void* thread_handle) {
+    auto* handle = static_cast<RheniumThread*>(thread_handle);
+    if (!handle) return nullptr;
+
+    if (!handle->started.load(std::memory_order_acquire))
+        rhenium_run(thread_handle);
+
+    if (handle->th.joinable())
         handle->th.join();
-    }
 
     void* result = handle->result;
-
     delete handle;
-
     return result;
 }
 

@@ -289,6 +289,10 @@ struct Vec2:
     x: int
     y: int
 
+// Builtin structs cannot be initialized and are usually used by the compiler
+_Builtin struct NotInit:
+    handle: anyptr
+
 /*
 Struct initialization
 */
@@ -335,6 +339,12 @@ Reference creation
 
 rp = ptr(v)
 
+// Type anyptr: pointer to any object
+// anyptr is the C++ equivalent to void*
+intptr = ptr(0x01C433)
+
+
+
 /*
 Dereference
 */
@@ -378,6 +388,28 @@ try:
     raise "error"
 catch:
     println("caught error")
+
+// Async blocks
+
+t = async:
+  b = 12
+  println("b = " + b)
+
+// Runs the block asynchronously
+t.run()
+
+// Async blocks with return type anyptr, implicitly ptr -> str
+t2 = async(str):
+  return "Hello World!"
+
+// Waits for the thread to run and get the result asynchronously
+result = t2.await()
+
+
+strPtr = cast<ptr -> str>(result)
+
+// Prints "Hello World!"
+println(@strPtr)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
