@@ -1,4 +1,4 @@
-package me.kuwg.re.ast.nodes.function;
+package me.kuwg.re.ast.nodes.function.call;
 
 import me.kuwg.re.ast.nodes.struct.StructImplNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;

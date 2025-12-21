@@ -1,8 +1,8 @@
 package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.nodes.function.FunctionDeclarationNode;
-import me.kuwg.re.ast.nodes.function.generics.GenFunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
 import me.kuwg.re.compiler.CompilationContext;
 

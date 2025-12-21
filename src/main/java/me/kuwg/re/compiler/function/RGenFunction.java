@@ -1,7 +1,7 @@
 package me.kuwg.re.compiler.function;
 
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
-import me.kuwg.re.ast.nodes.function.FunctionParameter;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.HashMap;

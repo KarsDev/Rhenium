@@ -4,7 +4,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.nodes.constants.NumberNode;
 import me.kuwg.re.ast.nodes.constants.StringNode;
-import me.kuwg.re.ast.nodes.function.FunctionCallNode;
+import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.compiler.CompilationContext;
 
 import java.util.List;

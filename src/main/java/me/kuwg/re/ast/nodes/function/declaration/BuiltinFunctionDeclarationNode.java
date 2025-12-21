@@ -1,4 +1,4 @@
-package me.kuwg.re.ast.nodes.function;
+package me.kuwg.re.ast.nodes.function.declaration;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;

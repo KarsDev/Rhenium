@@ -1,6 +1,6 @@
 package me.kuwg.re.compiler.function;
 
-import me.kuwg.re.ast.nodes.function.FunctionParameter;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.type.TypeRef;
 import org.jetbrains.annotations.NotNull;
 

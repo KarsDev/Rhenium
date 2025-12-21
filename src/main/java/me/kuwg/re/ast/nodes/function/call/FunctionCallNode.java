@@ -1,6 +1,8 @@
-package me.kuwg.re.ast.nodes.function;
+package me.kuwg.re.ast.nodes.function.call;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;

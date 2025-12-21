@@ -1,8 +1,8 @@
 package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.nodes.function.FunctionCallNode;
-import me.kuwg.re.ast.nodes.function.FunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
