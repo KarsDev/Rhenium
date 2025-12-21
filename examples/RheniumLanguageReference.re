@@ -411,6 +411,20 @@ strPtr = cast<ptr -> str>(result)
 // Prints "Hello World!"
 println(@strPtr)
 
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
+  GENERICS
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+// Declare a generic function with type 'T'
+// T can be any type, 
+generic func swap<T>(a: mut T, b: mut T):
+    tmp = @a
+    @a = @b
+    @b = tmp
+
 /*
 <=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT
