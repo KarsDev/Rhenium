@@ -642,25 +642,6 @@ public class ASTParser {
         int line = line();
         String name = identifier();
 
-        //StructType inherited;
-
-        //if (matchAndConsume(KEYWORD, "inherits")) {
-        //    return new RParserError("Inheritance is still unsupported", file, line).raise();
-        //    /*
-        //    This works, but struct constructor implementation is needed before.
-
-        //    String inheritedName = identifier();
-
-        //    TypeRef tmp = typeMap.get(inheritedName);
-        //    if (!(tmp instanceof StructType st)) {
-        //        return new RParserError("Expected struct type for inheriting", file, line).raise();
-        //    }
-        //    inherited = st;
-        //    */
-        //} else {
-        //    inherited = null;
-        //}
-
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for struct declaration", file, line()).raise();
         }
@@ -709,7 +690,7 @@ public class ASTParser {
             types.add(fieldType);
         }
 
-        var type = new StructType(name, types, null);
+        var type = new StructType(name, types);
 
         typeMap.put(name, type);
         return new StructDeclarationNode(line, builtin, name, type, fields);

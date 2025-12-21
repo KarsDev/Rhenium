@@ -12,7 +12,7 @@ import me.kuwg.re.type.struct.StructType;
 import java.util.List;
 
 public class AsyncDeclarationNode extends ValueNode {
-    private static final TypeRef THREAD_TYPE = new StructType("Thread", List.of(BuiltinTypes.ANYPTR.getType()), null);
+    private static final TypeRef THREAD_TYPE = new StructType("Thread", List.of(BuiltinTypes.ANYPTR.getType()));
 
     private final TypeRef returnType;
     private final BlockNode block;

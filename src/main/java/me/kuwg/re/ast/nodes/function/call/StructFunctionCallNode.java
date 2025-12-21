@@ -49,66 +49,56 @@ public class StructFunctionCallNode extends ValueNode {
         RFunction fn;
         String mangled;
 
-        StructType current = structType;
+        List<String> llvmArgs = new ArrayList<>();
+        List<TypeRef> argTypes = new ArrayList<>();
 
-        while (true) {
-            List<String> llvmArgs = new ArrayList<>();
-            List<TypeRef> argTypes = new ArrayList<>();
+        llvmArgs.add(selfVar.valueReg());
+        argTypes.add(new PointerType(structType));
 
-            // self pointer
-            llvmArgs.add(selfVar.valueReg());
-            argTypes.add(new PointerType(current));
-
-            // parameters
-            for (ValueNode p : params) {
-                llvmArgs.add(p.compileAndGet(cctx));
-                argTypes.add(p.getType());
-            }
-
-            mangled = StructImplNode.generateName(current.name(), name);
-            fn = cctx.getFunction(mangled, argTypes);
-
-            if (fn != null) {
-                setType(fn.returnType());
-
-                StringBuilder call = new StringBuilder();
-                call.append("call ")
-                        .append(fn.returnType().getLLVMName())
-                        .append(" @")
-                        .append(mangled)
-                        .append("(");
-
-                for (int i = 0; i < llvmArgs.size(); i++) {
-                    call.append(argTypes.get(i).getLLVMName())
-                            .append(" ")
-                            .append(llvmArgs.get(i));
-                    if (i < llvmArgs.size() - 1) call.append(", ");
-                }
-
-                call.append(")");
-
-                if (fn.returnType() instanceof NoneBuiltinType) {
-                    cctx.emit(call.toString());
-                    return "";
-                }
-
-                String result = cctx.nextRegister();
-                cctx.emit(result + " = " + call);
-                return result;
-            }
-
-            if (current.inherited() == null) {
-                StringBuilder sig = new StringBuilder("(");
-                for (int i = 0; i < argTypes.size(); i++) {
-                    sig.append(argTypes.get(i).getName());
-                    if (i < argTypes.size() - 1) sig.append(", ");
-                }
-                sig.append(")");
-                return new RFunctionNotFoundError(name, sig.toString(), line).raise();
-            }
-
-            current = current.inherited();
+        for (ValueNode p : params) {
+            llvmArgs.add(p.compileAndGet(cctx));
+            argTypes.add(p.getType());
         }
+
+        mangled = StructImplNode.generateName(structType.name(), name);
+        fn = cctx.getFunction(mangled, argTypes);
+
+        if (fn != null) {
+            setType(fn.returnType());
+
+            StringBuilder call = new StringBuilder();
+            call.append("call ")
+                    .append(fn.returnType().getLLVMName())
+                    .append(" @")
+                    .append(mangled)
+                    .append("(");
+
+            for (int i = 0; i < llvmArgs.size(); i++) {
+                call.append(argTypes.get(i).getLLVMName())
+                        .append(" ")
+                        .append(llvmArgs.get(i));
+                if (i < llvmArgs.size() - 1) call.append(", ");
+            }
+
+            call.append(")");
+
+            if (fn.returnType() instanceof NoneBuiltinType) {
+                cctx.emit(call.toString());
+                return "";
+            }
+
+            String result = cctx.nextRegister();
+            cctx.emit(result + " = " + call);
+            return result;
+        }
+
+        StringBuilder sig = new StringBuilder("(");
+        for (int i = 0; i < argTypes.size(); i++) {
+            sig.append(argTypes.get(i).getName());
+            if (i < argTypes.size() - 1) sig.append(", ");
+        }
+        sig.append(")");
+        return new RFunctionNotFoundError(name, sig.toString(), line).raise();
     }
 
     @Override
