@@ -129,7 +129,8 @@ task = async(str):
     return "Hello"
 
 result = task.await()
-println(@cast<ptr -> str>(result))
+castResult = cast<ptr -> str>(result)
+println(@castResult)
 ```
 
 ## Project Status
