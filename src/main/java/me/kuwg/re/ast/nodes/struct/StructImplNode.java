@@ -11,17 +11,18 @@ import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.StructType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class StructImplNode extends ASTNode implements GlobalNode {
-    private final String name;
+    private final StructType struct;
     private final List<ASTNode> functions;
 
-    public StructImplNode(final int line, final String name, final List<ASTNode> functions) {
+    public StructImplNode(final int line, final StructType struct, final List<ASTNode> functions) {
         super(line);
-        this.name = name;
+        this.struct = struct;
         this.functions = functions;
     }
 
@@ -37,10 +38,10 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        RStruct struct = cctx.getStruct(name);
+        RStruct cctxStruct = cctx.getStruct(struct.name());
 
-        if (struct == null) {
-            new RStructUndefinedError(name, line).raise();
+        if (cctxStruct == null) {
+            new RStructUndefinedError(struct.name(), line).raise();
             return;
         }
 
@@ -48,20 +49,20 @@ public class StructImplNode extends ASTNode implements GlobalNode {
             RFunction compiled;
 
             if (fn instanceof FunctionDeclarationNode dec)
-                compiled = compileFunction(cctx, struct, dec);
+                compiled = compileFunction(cctx, cctxStruct, dec);
             else if (fn instanceof BuiltinFunctionDeclarationNode blt)
-                compiled = compileBuiltin(cctx, struct, blt);
+                compiled = compileBuiltin(cctx, cctxStruct, blt);
             else
                 throw new RInternalError("internal error: not function declaration");
 
-            struct.functions().add(compiled);
+            cctxStruct.functions().add(compiled);
         }
     }
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Struct Impl: ").append(NEWLINE)
-                .append(TAB).append("Name: ").append(name).append(NEWLINE)
+                .append(TAB).append("Name: ").append(struct.name()).append(NEWLINE)
                 .append(TAB).append("Functions:").append(NEWLINE);
         functions.forEach(f -> f.write(sb, indent + TAB + TAB));
     }

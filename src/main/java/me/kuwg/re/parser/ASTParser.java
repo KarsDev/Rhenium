@@ -865,6 +865,12 @@ public class ASTParser {
 
         String name = identifier();
 
+        TypeRef tmp = typeMap.get(name);
+
+        if (!(tmp instanceof StructType struct)) {
+            return new RParserError("Struct not found: '" + name + "' for impl declaration", file, line()).raise();
+        }
+
         if (!matchAndConsume(OPERATOR, ":"))
             return new RParserError("Expected ':' for impl declaration", file, line()).raise();
 
@@ -875,7 +881,7 @@ public class ASTParser {
             return new RImplNotFunctionError(line()).raise();
         }
 
-        return new StructImplNode(line, name, block.getNodes());
+        return new StructImplNode(line, struct, block.getNodes());
     }
 
     private @SubFunc ASTNode parseGlobal() {
