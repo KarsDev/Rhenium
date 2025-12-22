@@ -1,11 +1,11 @@
 package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
-import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
+import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
+import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.function.RGenFunction;

@@ -1,9 +1,9 @@
 package me.kuwg.re.ast.nodes.function.declaration;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
+import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
