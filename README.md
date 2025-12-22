@@ -121,6 +121,15 @@ generic func swap<T>(a: mut T, b: mut T):
     @b = tmp
 ```
 
+Generic structs allow type-agnostic data layouts.
+```python
+generic struct Box<T>:
+    value: T
+
+b1 = init Box("Hello World")
+b2 = init Box(10)
+```
+
 ### Async Execution
 Async blocks run concurrently and can return values.
 
