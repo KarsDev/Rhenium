@@ -15,6 +15,8 @@ public interface TypeRef {
 
     String getLLVMName();
 
+    String getMangledName();
+
     boolean equals(TypeRef other);
 
     default boolean isPointer() {

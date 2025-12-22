@@ -37,10 +37,7 @@ import me.kuwg.re.ast.nodes.range.RangeNode;
 import me.kuwg.re.ast.nodes.sizeof.SizeofNode;
 import me.kuwg.re.ast.nodes.statement.IfStatementNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
-import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
-import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
-import me.kuwg.re.ast.nodes.struct.StructImplNode;
-import me.kuwg.re.ast.nodes.struct.StructInitNode;
+import me.kuwg.re.ast.nodes.struct.*;
 import me.kuwg.re.ast.nodes.ternary.TernaryOperatorNode;
 import me.kuwg.re.ast.nodes.type.TypeofNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
@@ -65,6 +62,7 @@ import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.ArrayList;
@@ -208,10 +206,7 @@ public class ASTParser {
         }
         if (!previous().matches(DEDENT)) {
             if (!match(NEWLINE)) {
-                return new RParserError(
-                        "Expected newline after statement, got " + current().value(),
-                        file, line()
-                ).raise();
+                return new RParserError("Expected newline after statement, got " + current().value(), file, line()).raise();
             }
             consume();
         }
@@ -867,6 +862,10 @@ public class ASTParser {
 
         TypeRef tmp = typeMap.get(name);
 
+        if (tmp instanceof GenStructType genStruct) {
+            return parseGenStructImpl(genStruct);
+        }
+
         if (!(tmp instanceof StructType struct)) {
             return new RParserError("Struct not found: '" + name + "' for impl declaration", file, line()).raise();
         }
@@ -877,7 +876,7 @@ public class ASTParser {
         BlockNode block = parseBlock();
 
         for (final ASTNode node : block.getNodes()) {
-            if (node instanceof FunctionDeclarationNode || node instanceof BuiltinFunctionDeclarationNode) continue;
+            if (node.getClass().getSimpleName().contains("Function")) continue;
             return new RImplNotFunctionError(line()).raise();
         }
 
@@ -1145,8 +1144,7 @@ public class ASTParser {
         if (!matchAndConsume(OPERATOR, ":"))
             return new RParserError("Expected ':' for async declaration", file, line).raise();
 
-        if (!match(NEWLINE))
-            new RParserError("Expected newline after async declaration", file, line).raise();
+        if (!match(NEWLINE)) new RParserError("Expected newline after async declaration", file, line).raise();
 
         consume();
 
@@ -1157,6 +1155,10 @@ public class ASTParser {
 
     private @SubFunc ASTNode parseGenericKeyword() {
         int line = line();
+
+        if (matchAndConsume(KEYWORD, "struct")) {
+            return parseGenericStruct();
+        }
 
         if (!matchAndConsume(KEYWORD, "func")) {
             return new RParserError("Expected 'func' for generic function declaration", file, line).raise();
@@ -1189,6 +1191,143 @@ public class ASTParser {
         BlockNode block = parseBlock();
 
         return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block);
+    }
+
+    private @SubFunc ASTNode parseGenericStruct() {
+        int line = line();
+
+        List<String> genericTypes = new ArrayList<>();
+
+        if (!matchAndConsume(OPERATOR, "<")) {
+            return new RParserError("Expected '<' for generic struct declaration", file, line).raise();
+        }
+
+        if (!match(OPERATOR, ">")) {
+            do {
+                genericTypes.add(identifier());
+            } while (matchAndConsume(OPERATOR, ","));
+        }
+
+        if (!matchAndConsume(OPERATOR, ">")) {
+            return new RParserError("Expected '>' for generic struct declaration", file, line).raise();
+        }
+
+        String name = identifier();
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for struct declaration", file, line()).raise();
+        }
+        if (!match(NEWLINE)) {
+            return new RParserError("Expected newline after struct declaration", file, line()).raise();
+        }
+        consume();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indent for struct field declaration", file, line()).raise();
+        }
+        consume();
+
+        List<RStructField> fields = new ArrayList<>();
+        List<TypeRef> types = new ArrayList<>();
+
+        while (!match(EOF)) {
+            removeNewlines();
+            if (match(DEDENT)) {
+                consume();
+
+                if (match(INDENT)) {
+                    consume();
+                    continue;
+                } else {
+                    break;
+                }
+            }
+
+            String fieldName = identifier();
+
+            if (!matchAndConsume(OPERATOR, ":")) {
+                return new RParserError("Expected ':' for struct field declaration", file, line()).raise();
+            }
+
+            if (match(KEYWORD, "mut")) {
+                return new RParserError("You can't declare fields as mutable", file, line()).raise();
+            }
+
+            TypeRef fieldType = parseType(true);
+
+            ValueNode defaultValue = matchAndConsume(OPERATOR, "=") ? parseValue() : null;
+
+
+            fields.add(new RStructField(fieldName, fieldType, defaultValue));
+            types.add(fieldType);
+        }
+
+        var type = new GenStructType(genericTypes, name, types);
+
+        typeMap.put(name, type);
+        return new GenStructDeclarationNode(line, genericTypes, name, type, fields);
+    }
+
+    private @SubFunc ASTNode parseGenStructImpl(GenStructType genStruct) {
+        int line = line();
+
+        if (!matchAndConsume(OPERATOR, ":"))
+            return new RParserError("Expected ':' for impl declaration", file, line()).raise();
+
+        removeNewlines();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indented block", file, line()).raise();
+        }
+
+        consume();
+
+        List<GenFunctionDeclarationNode> statements = new ArrayList<>();
+
+        while (!match(EOF) && !match(DEDENT)) {
+            removeNewlines();
+
+            if (match(EOF) || match(DEDENT)) break;
+
+            GenFunctionDeclarationNode stmt = parseGSIFunc(genStruct.genericTypes());
+            if (stmt == null) break;
+            statements.add(stmt);
+        }
+
+        if (!match(EOF)) {
+            if (match(DEDENT)) {
+                consume();
+            } else {
+                return new RParserError("Expected dedent to close block", file, line()).raise();
+            }
+        }
+
+        return new GenStructImplNode(line, genStruct, statements);
+    }
+
+    private @SubFunc GenFunctionDeclarationNode parseGSIFunc(List<String> genericTypes) {
+        int line = line();
+        if (match(KEYWORD, "_Builtin"))
+            return new RParserError("You can't declare a builtin function in a generic struct impl", file, line).raise();
+
+        matchAndConsume(KEYWORD, "generic");
+
+        if (!matchAndConsume(KEYWORD, "func"))
+            return new RParserError("Expected a function declaration", file, line).raise();
+
+        String name = identifier();
+
+        var params = parseParamsDeclare(true);
+
+        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : NoneBuiltinType.INSTANCE;
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for function declaration", file, line).raise();
+        }
+
+        BlockNode block = parseBlock();
+
+        return new GenFunctionDeclarationNode(line, name, genericTypes, params, returnType, block);
     }
 
     /*

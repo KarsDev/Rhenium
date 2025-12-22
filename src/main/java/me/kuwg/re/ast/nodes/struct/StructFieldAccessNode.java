@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
@@ -33,6 +34,7 @@ public class StructFieldAccessNode extends VariableReference {
         }
 
         TypeRef structType = structVar.type();
+
         if (!(structType instanceof StructType st)) {
             return new RVariableTypeError("struct", structType.getName(), line).raise();
         }
@@ -40,6 +42,10 @@ public class StructFieldAccessNode extends VariableReference {
         RStruct structV = cctx.getStruct(st.name());
         if (structV == null) {
             return new RStructUndefinedError(st.name(), line).raise();
+        }
+
+        if (structV instanceof RGenStruct gen) {
+            structV = gen.getInstantiation(st.fieldTypes());
         }
 
         var structFields = structV.fields();

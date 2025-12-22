@@ -1,6 +1,8 @@
 package me.kuwg.re.compiler;
 
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.struct.RDefStruct;
+import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.compiler.variable.RVariable;
@@ -36,6 +38,7 @@ final class CompilationContext {
     private final Stack<String> catchScopeStack = new Stack<>();
     private final List<Path> nativeCPPModules = new ArrayList<>();
     private final Set<String> declaredIR = new LinkedHashSet<>();
+    private final Set<String> declaredStructs = new LinkedHashSet<>();
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -121,7 +124,11 @@ final class CompilationContext {
     }
 
     public void addStruct(boolean builtin, String name, TypeRef type, List<RStructField> fields) {
-        structs.put(name, new RStruct(builtin, type, fields, new ArrayList<>()));
+        structs.put(name, new RDefStruct(builtin, type, fields));
+    }
+
+    public void addGenStruct(String name, TypeRef type, List<RStructField> fields) {
+        structs.put(name, new RGenStruct(type, fields));
     }
 
     public RStruct getStruct(String name) {
@@ -176,6 +183,14 @@ final class CompilationContext {
 
     public void addTypes(Map<String, TypeRef> typeMap) {
         this.typeMap.putAll(typeMap);
+    }
+
+    public boolean isStructDeclared(String struct) {
+        return declaredStructs.contains(struct);
+    }
+
+    public void markStructDeclared(String struct) {
+        declaredStructs.add(struct);
     }
 
     public String compileAndGet(File output, List<String> clangArgs) throws IOException {

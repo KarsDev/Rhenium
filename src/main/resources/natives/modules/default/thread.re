@@ -17,7 +17,7 @@ impl Thread:
     // Please remember that if the program stops after calling run() it probably won't execute the thread
     _Builtin func run() -> none = """
         ; 1. Load the 'handle' field.
-        %handle_ptr = getelementptr %struct.Thread, %struct.Thread* %self, i32 0, i32 0
+        %handle_ptr = getelementptr %struct.Thread_anyptr, %struct.Thread_anyptr* %self, i32 0, i32 0
         %handle = load i8*, i8** %handle_ptr
 
         ; 2. Call the C++ backend
@@ -29,7 +29,7 @@ impl Thread:
     // Runs and awaits for the result
     _Builtin func await() -> anyptr = """
         ; 1. Load the 'handle' field.
-        %handle_ptr = getelementptr %struct.Thread, %struct.Thread* %self, i32 0, i32 0
+        %handle_ptr = getelementptr %struct.Thread_anyptr, %struct.Thread_anyptr* %self, i32 0, i32 0
         %handle = load i8*, i8** %handle_ptr
 
         ; 2. Call the C++ backend
@@ -42,7 +42,7 @@ impl Thread:
     // Destroyes the thread, call this to not have code leaks
     _Builtin func destroy() -> none = """
         ; 1. Load the 'handle' field.
-        %handle_ptr = getelementptr %struct.Thread, %struct.Thread* %self, i32 0, i32 0
+        %handle_ptr = getelementptr %struct.Thread_anyptr, %struct.Thread_anyptr* %self, i32 0, i32 0
         %handle = load i8*, i8** %handle_ptr
 
         ; 2. Call the C++ backend

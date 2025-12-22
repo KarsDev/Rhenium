@@ -34,6 +34,11 @@ public final class NullType implements TypeRef {
     }
 
     @Override
+    public String getMangledName() {
+        return getName();
+    }
+
+    @Override
     public boolean equals(final TypeRef other) {
         return other instanceof NullType;
     }

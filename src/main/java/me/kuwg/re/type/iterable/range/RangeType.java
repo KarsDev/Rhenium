@@ -1,6 +1,7 @@
 package me.kuwg.re.type.iterable.range;
 
 import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.IterableTypeRef;
@@ -29,8 +30,13 @@ public record RangeType(ValueNode start, ValueNode end, ValueNode step) implemen
     }
 
     @Override
+    public String getMangledName() {
+        throw new RInternalError();
+    }
+
+    @Override
     public String getLLVMName() {
-        return "";
+        throw new RInternalError();
     }
 
     @Override

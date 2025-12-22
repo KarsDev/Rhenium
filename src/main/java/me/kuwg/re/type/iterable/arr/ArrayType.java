@@ -37,6 +37,11 @@ public record ArrayType(int size, TypeRef inner) implements IterableTypeRef {
     }
 
     @Override
+    public String getMangledName() {
+        return "arr" + size() + "_" + inner().getMangledName();
+    }
+
+    @Override
     public boolean equals(final TypeRef o) {
         if (!(o instanceof final ArrayType arrayType)) return false;
 

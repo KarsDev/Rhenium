@@ -30,6 +30,11 @@ public record GenericType(String name) implements TypeRef {
     }
 
     @Override
+    public String getMangledName() {
+        throw new RInternalError();
+    }
+
+    @Override
     public boolean equals(final TypeRef other) {
         throw new RInternalError();
     }

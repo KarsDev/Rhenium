@@ -31,6 +31,11 @@ public record PointerType(TypeRef inner) implements TypeRef {
     }
 
     @Override
+    public String getMangledName() {
+        return "ptr_" + inner().getMangledName();
+    }
+
+    @Override
     public boolean equals(final TypeRef o) {
         if (!(o instanceof final PointerType that)) return false;
 

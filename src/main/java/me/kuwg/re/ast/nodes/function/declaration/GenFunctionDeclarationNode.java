@@ -49,4 +49,24 @@ public class GenFunctionDeclarationNode extends ASTNode {
         sb.append(indent).append(TAB).append("Return Type: ").append(returnType.getName()).append(NEWLINE);
         block.write(sb, indent + TAB);
     }
+
+    public BlockNode getBlock() {
+        return block;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<FunctionParameter> getParams() {
+        return params;
+    }
+
+    public TypeRef getReturnType() {
+        return returnType;
+    }
+
+    public List<String> getTypeParameters() {
+        return typeParameters;
+    }
 }

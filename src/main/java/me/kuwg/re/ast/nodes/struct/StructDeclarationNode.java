@@ -4,6 +4,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RStructField;
+import me.kuwg.re.error.errors.struct.RStructAlreadyExistsError;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.List;
@@ -24,11 +25,18 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        if (cctx.getStruct(name) != null) {
+            new RStructAlreadyExistsError(name, line).raise();
+            return;
+        }
+
         cctx.addStruct(builtin, name, type, fields);
+
+        String mangledName = cctx.getStruct(name).type().getMangledName();
 
         StringBuilder sb = new StringBuilder();
         sb.append("; Struct declaration\n");
-        sb.append("%struct.").append(name).append(" = type { ");
+        sb.append("%struct.").append(mangledName).append(" = type { ");
 
         for (int i = 0; i < fields.size(); i++) {
             sb.append(fields.get(i).type().getLLVMName());

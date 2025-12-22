@@ -1,12 +1,15 @@
 package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.function.RGenFunction;
+import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
@@ -42,6 +45,11 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
         if (cctxStruct == null) {
             new RStructUndefinedError(struct.name(), line).raise();
+            return;
+        }
+
+        if (cctxStruct instanceof RGenStruct gen) {
+            compileGeneric(cctx, gen);
             return;
         }
 
@@ -115,5 +123,22 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         renamed.compile(cctx);
 
         return cctx.getFunction(mangledName, extractTypes(newParams));
+    }
+
+    private void compileGeneric(CompilationContext cctx, RGenStruct gen) {
+        for (ASTNode fn : functions) {
+            if (!(fn instanceof GenFunctionDeclarationNode gfn)) {
+                throw new RInternalError("Expected GenFunctionDeclarationNode in generic struct impl");
+            }
+
+            gfn.register(cctx);
+
+            RFunction rfn = cctx.getFunction(gfn.getName(), gfn.getParams().stream().map(FunctionParameter::type).toList());
+            if (!(rfn instanceof RGenFunction genFn)) {
+                throw new RInternalError("Expected RGenFunction after registration");
+            }
+
+            gen.functions().add(genFn);
+        }
     }
 }

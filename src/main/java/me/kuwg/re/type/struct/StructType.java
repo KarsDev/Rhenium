@@ -34,7 +34,20 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
 
     @Override
     public String getLLVMName() {
-        return "%struct." + name;
+        return "%struct." + getMangledName();
+    }
+
+    @Override
+    public String getMangledName() {
+        if (fieldTypes().isEmpty()) {
+            return name();
+        }
+
+        StringBuilder sb = new StringBuilder(name());
+        for (TypeRef t : fieldTypes()) {
+            sb.append("_").append(t.getMangledName());
+        }
+        return sb.toString();
     }
 
     @Override

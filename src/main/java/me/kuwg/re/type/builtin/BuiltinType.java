@@ -9,6 +9,11 @@ abstract class BuiltinType implements TypeRef {
     }
 
     @Override
+    public String getMangledName() {
+        return getName();
+    }
+
+    @Override
     public String toString() {
         return getName();
     }
