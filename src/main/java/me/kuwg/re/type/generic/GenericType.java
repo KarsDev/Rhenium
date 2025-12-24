@@ -15,7 +15,7 @@ public record GenericType(String name) implements TypeRef {
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
         throw new RInternalError();
     }
 

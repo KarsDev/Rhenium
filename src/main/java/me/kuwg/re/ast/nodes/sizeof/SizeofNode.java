@@ -24,10 +24,10 @@ public class SizeofNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        if (type != null) return Integer.toString(type.getSize());
+        if (type != null) return Long.toString(type.getSize());
 
         value.compileAndGet(cctx);
-        return Integer.toString(value.getType().getSize());
+        return Long.toString(value.getType().getSize());
     }
 
     @Override

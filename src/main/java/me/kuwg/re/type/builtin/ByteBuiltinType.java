@@ -14,7 +14,7 @@ public final class ByteBuiltinType extends BuiltinType {
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
         return 1;
     }
 

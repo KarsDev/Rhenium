@@ -14,7 +14,7 @@ public class NoneBuiltinType extends BuiltinType {
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
         return 0;
     }
 

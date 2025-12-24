@@ -9,7 +9,7 @@ public interface TypeRef {
 
     boolean isCompatibleWith(TypeRef other);
 
-    int getSize();
+    long getSize();
 
     String getName();
 

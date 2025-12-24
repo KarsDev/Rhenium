@@ -79,7 +79,7 @@ public class FunctionCallNode extends ValueNode {
         RFunction existing = genFn.getInstantiation(callTypes);
         if (existing == null) {
             FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(
-                    line, true, false, genFn.name(), concreteParams, concreteReturnType, genFn.block()
+                    line, true, genFn.name(), concreteParams, concreteReturnType, genFn.block()
             );
 
 

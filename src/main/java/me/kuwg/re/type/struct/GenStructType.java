@@ -20,8 +20,8 @@ public record GenStructType(List<String> genericTypes, String name, List<TypeRef
     }
 
     @Override
-    public int getSize() {
-        int size = 0;
+    public long getSize() {
+        long size = 0;
         for (TypeRef t : fieldTypes) {
             size += t.getSize();
         }

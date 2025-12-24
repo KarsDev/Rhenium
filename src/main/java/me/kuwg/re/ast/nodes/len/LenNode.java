@@ -26,8 +26,13 @@ public class LenNode extends ValueNode {
         if (valueType instanceof StrBuiltinType) {
             cctx.emit(longReg + " = call i64 @strlen(i8* " + valReg + ") ; compute string length");
         } else if (valueType instanceof ArrayType arrType) {
-            int size = arrType.size();
-            cctx.emit(longReg + " = add i64 0, " + size + " ; array length");
+            long size = arrType.size();
+
+            if (size == ArrayType.UNKNOWN_SIZE) {
+                new RInvalidLenError("unknown size", line).raise();
+            } else {
+                cctx.emit(longReg + " = add i64 0, " + size + " ; array length");
+            }
         } else {
             return new RInvalidLenError(valueType.getName(), line).raise();
         }

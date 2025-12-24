@@ -19,8 +19,8 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
     }
 
     @Override
-    public int getSize() {
-        int size = 0;
+    public long getSize() {
+        long size = 0;
         for (TypeRef t : fieldTypes) {
             size += t.getSize();
         }

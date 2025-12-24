@@ -55,7 +55,7 @@ public class ArrayNode extends PointerValueNode {
         inferAndSetType();
         ArrayType arrType = (ArrayType) getType();
         TypeRef elementType = arrType.inner();
-        int size = arrType.size();
+        long size = arrType.size();
 
         String llvmElemType = elementType.getLLVMName();
         String llvmArrType = "[" + size + " x " + llvmElemType + "]";
@@ -73,7 +73,7 @@ public class ArrayNode extends PointerValueNode {
             );
 
             if (elementType instanceof ArrayType innerArr) {
-                int bytes = innerArr.size() * innerArr.inner().getSize();
+                long bytes = innerArr.size() * innerArr.inner().getSize();
 
                 cctx.emit(
                         "call void @llvm.memcpy.p0.p0.i64(" +

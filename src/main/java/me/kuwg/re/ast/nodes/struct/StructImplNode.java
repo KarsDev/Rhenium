@@ -95,7 +95,6 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         FunctionDeclarationNode renamed = new FunctionDeclarationNode(
                 original.getLine(),
                 false,
-                true,
                 mangledName,
                 newParams,
                 original.getReturnType(),

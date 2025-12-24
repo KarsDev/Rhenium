@@ -19,7 +19,7 @@ public final class NullType implements TypeRef {
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
         return 8;
     }
 

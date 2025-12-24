@@ -141,10 +141,21 @@ public class VariableDeclarationNode extends ValueNode {
         cctx.emit(varReg + " = alloca " + varType.getLLVMName() + " ; allocate variable");
 
         if (varType instanceof ArrayType arrType) {
-            String sizeConst = Integer.toString(arrType.size() * arrType.inner().getSize());
-            cctx.emit("call void @llvm.memcpy.p0.p0.i64(ptr " + varReg + ", ptr " + valueReg + ", i64 " + sizeConst + ", i1 false)");
-        } else if (varType instanceof StructType) {
-            cctx.emit("call void @llvm.memcpy.p0.p0.i64(ptr " + varReg + ", ptr " + valueReg + ", i64 8, i1 false)");
+            if (arrType.size() == ArrayType.UNKNOWN_SIZE) {
+                cctx.emit(
+                        "store " + arrType.inner().getLLVMName() + "* " +
+                                valueReg + ", " +
+                                arrType.inner().getLLVMName() + "** " + varReg +
+                                " ; store dynamic array pointer"
+                );
+            } else {
+                String sizeConst = Long.toString(arrType.size() * arrType.inner().getSize());
+                cctx.emit("call void @memcpy(ptr " + varReg + ", ptr " + valueReg + ", i64 " + sizeConst + ", i1 false)");
+            }
+        } else if (varType instanceof StructType structType) {
+            long size = structType.getSize();
+            cctx.emit("call void @memcpy(ptr " + varReg + ", ptr " + valueReg +
+                    ", i64 " + size + ", i1 false)");
         } else {
             cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", " + varType.getLLVMName() + "* " + varReg);
         }

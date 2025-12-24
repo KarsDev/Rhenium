@@ -123,6 +123,10 @@ final class CompilationContext {
         return functions.get(name);
     }
 
+    public void writeAllFunctions() {
+        functions.writeAll();
+    }
+
     public void addStruct(boolean builtin, String name, TypeRef type, List<RStructField> fields) {
         structs.put(name, new RDefStruct(builtin, type, fields));
     }

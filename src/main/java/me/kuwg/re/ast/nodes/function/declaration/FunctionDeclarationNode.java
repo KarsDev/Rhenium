@@ -30,18 +30,25 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     private boolean registered = false;
 
-    public FunctionDeclarationNode(final int line, final boolean isGeneric, final boolean keepName, final String name,
+    public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name,
                                    final List<FunctionParameter> parameters,
                                    final TypeRef returnType, final BlockNode block) {
         super(line);
         this.isGeneric = isGeneric;
-        this.llvmName = keepName ? name : RFunction.makeUnique(name);
         this.name = name;
+
+
+        if (name.startsWith("\"") && name.endsWith("\"")) {
+            String cleanName = name.startsWith("\"") ? name.substring(1, name.length() - 1) : name;
+            this.llvmName = "\"" + RFunction.makeUnique(cleanName) + "\"";
+        } else {
+            this.llvmName = RFunction.makeUnique(name);
+        }
+
         this.parameters = parameters;
         this.returnType = returnType;
         this.block = block;
     }
-
     private static boolean appendMainReturn(StringBuilder sb) {
         String[] lines = sb.toString().split("\\r?\\n");
         for (int i = lines.length - 1; i >= 0; i--) {

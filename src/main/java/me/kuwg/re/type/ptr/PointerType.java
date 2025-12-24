@@ -16,7 +16,7 @@ public record PointerType(TypeRef inner) implements TypeRef {
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
         return 8;
     }
 

@@ -70,7 +70,7 @@ public class StructFunctionCallNode extends ValueNode {
             call.append("call ")
                     .append(fn.returnType().getLLVMName())
                     .append(" @")
-                    .append(mangled)
+                    .append(fn.llvmName())
                     .append("(");
 
             for (int i = 0; i < llvmArgs.size(); i++) {

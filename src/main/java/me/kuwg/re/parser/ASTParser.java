@@ -3,6 +3,7 @@ package me.kuwg.re.parser;
 import me.kuwg.re.ast.AST;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.array.ArrayAccessNode;
+import me.kuwg.re.ast.nodes.array.ArrayCreationNode;
 import me.kuwg.re.ast.nodes.array.ArrayNode;
 import me.kuwg.re.ast.nodes.array.ArraySetNode;
 import me.kuwg.re.ast.nodes.async.AsyncDeclarationNode;
@@ -558,7 +559,7 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        return new FunctionDeclarationNode(line, false, false, name, params, returnType, block);
+        return new FunctionDeclarationNode(line, false,  name, params, returnType, block);
     }
 
     private @SubFunc ASTNode parseForKeyword() {
@@ -693,6 +694,39 @@ public class ASTParser {
 
     private @SubFunc ASTNode parseInitKeyword() {
         int line = line();
+
+        int preIndex = tokenIndex;
+        TypeRef type;
+
+        LABEL_TYPE:
+        {
+            String typeName = consume().value();
+
+            switch (typeName) {
+                case "ptr" -> {
+                    type = parsePointerType(line);
+                    break LABEL_TYPE;
+                }
+                case "arr" -> {
+                    type = parseArrayType(line);
+                    break LABEL_TYPE;
+                }
+            }
+
+            if (typeMap.containsKey(typeName)) {
+                type = typeMap.get(typeName);
+                break LABEL_TYPE;
+            }
+
+            type = BuiltinTypes.getByName(typeName);
+        }
+
+        if (type != null) {
+            return parseArrayCreation(type);
+        }
+
+        tokenIndex = preIndex;
+
         String name = identifier();
 
         if (!match(DIVIDER, "(")) {
@@ -1328,6 +1362,19 @@ public class ASTParser {
         BlockNode block = parseBlock();
 
         return new GenFunctionDeclarationNode(line, name, genericTypes, params, returnType, block);
+    }
+
+    private @SubFunc ValueNode parseArrayCreation(TypeRef type) {
+        int line = line();
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for array creation", file, line()).raise();
+
+        ValueNode size = parseValue();
+
+        if (!matchAndConsume(DIVIDER, ")"))
+            return new RParserError("Expected ')' for array creation", file, line()).raise();
+
+        return new ArrayCreationNode(line, type, size);
     }
 
     /*

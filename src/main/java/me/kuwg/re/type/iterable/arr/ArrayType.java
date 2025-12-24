@@ -5,7 +5,7 @@ import me.kuwg.re.type.iterable.IterableTypeRef;
 
 import java.util.Objects;
 
-public record ArrayType(int size, TypeRef inner) implements IterableTypeRef {
+public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
     public static final int UNKNOWN_SIZE = -1;
 
     @Override
@@ -21,7 +21,7 @@ public record ArrayType(int size, TypeRef inner) implements IterableTypeRef {
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
         return size * inner.getSize();
     }
 
@@ -50,8 +50,8 @@ public record ArrayType(int size, TypeRef inner) implements IterableTypeRef {
 
     @Override
     public int hashCode() {
-        int result = size;
+        long result = size;
         result = 31 * result + Objects.hashCode(inner);
-        return result;
+        return (int) result;
     }
 }

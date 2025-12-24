@@ -171,7 +171,9 @@ public class StructInitNode extends ValueNode {
             }
 
             String newReg = cctx.nextRegister();
-            String base = (aggReg == null) ? "undef" : aggReg;
+            String base = (aggReg == null)
+                    ? "zeroinitializer"
+                    : aggReg;
 
             cctx.emit(newReg + " = insertvalue " + llvmStructName + " " + base + ", " +
                     field.type().getLLVMName() + " " + valueReg + ", " + i);

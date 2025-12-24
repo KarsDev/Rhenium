@@ -20,6 +20,10 @@ final class RFunctions {
         functions.add(function);
     }
 
+    void writeAll() {
+        System.out.println(functions);
+    }
+
     RFunction get(String name, List<TypeRef> parameters) {
         RFunction compatible = null;
 

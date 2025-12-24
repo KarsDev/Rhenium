@@ -20,7 +20,7 @@ public record RangeType(ValueNode start, ValueNode end, ValueNode step) implemen
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
         return BuiltinTypes.INT.getType().getSize() * 3;
     }
 
