@@ -504,10 +504,10 @@ public class ASTParser {
 
     private @SubFunc ValueNode parseDereferenceOperator() {
         int line = line();
-        VariableReference vr = new DirectVariableReferenceNode(line, matchAndConsume(KEYWORD, "self") ? "self" : identifier());
+        VariableReference holder = new DirectVariableReferenceNode(line, matchAndConsume(KEYWORD, "self") ? "self" : identifier());
 
         if (match(OPERATOR, ".")) {
-            return parseSubExpr(line, false, null, vr);
+            return parseSubExpr(line, false, null, holder);
         }
 
         if (match(OPERATOR, ":")) {
@@ -516,10 +516,10 @@ public class ASTParser {
 
         if (matchAndConsume(OPERATOR, "=")) {
             ValueNode v2 = parseValue();
-            return new DereferenceAssignNode(line, vr, v2);
+            return new DereferenceAssignNode(line, holder, v2);
         }
 
-        return new DereferenceNode(line, vr);
+        return new DereferenceNode(line, holder);
     }
 
     private @SubFunc ASTNode parseWhileKeyword() {
@@ -695,37 +695,12 @@ public class ASTParser {
     private @SubFunc ASTNode parseInitKeyword() {
         int line = line();
 
-        int preIndex = tokenIndex;
-        TypeRef type;
-
-        LABEL_TYPE:
-        {
-            String typeName = consume().value();
-
-            switch (typeName) {
-                case "ptr" -> {
-                    type = parsePointerType(line);
-                    break LABEL_TYPE;
-                }
-                case "arr" -> {
-                    type = parseArrayType(line);
-                    break LABEL_TYPE;
-                }
+        if (matchAndConsume(KEYWORD, "arr")) {
+            if (!matchAndConsume(OPERATOR, "->")) {
+                return new RParserError("Expected '->' for array type declaration", file, line()).raise();
             }
-
-            if (typeMap.containsKey(typeName)) {
-                type = typeMap.get(typeName);
-                break LABEL_TYPE;
-            }
-
-            type = BuiltinTypes.getByName(typeName);
+            return parseArrayCreation(parseType(false));
         }
-
-        if (type != null) {
-            return parseArrayCreation(type);
-        }
-
-        tokenIndex = preIndex;
 
         String name = identifier();
 

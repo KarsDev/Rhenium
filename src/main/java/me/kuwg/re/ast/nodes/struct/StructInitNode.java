@@ -114,7 +114,10 @@ public class StructInitNode extends ValueNode {
         String hReg = cctx.nextRegister();
         cctx.emit(hReg + " = alloca " + structLLVM);
         cctx.emit("store " + structLLVM + " " + aggReg + ", " + structLLVM + "* " + hReg);
-        return hReg;
+
+        String valReg = cctx.nextRegister();
+        cctx.emit(valReg + " = load " + structLLVM + ", " + structLLVM + "* " + hReg);
+        return valReg;
     }
 
     private String compileGenericStruct(CompilationContext cctx, RGenStruct genStruct) {
@@ -183,11 +186,11 @@ public class StructInitNode extends ValueNode {
 
         String hReg = cctx.nextRegister();
         cctx.emit(hReg + " = alloca " + llvmStructName);
-
         cctx.emit("store " + llvmStructName + " " + aggReg + ", " + llvmStructName + "* " + hReg);
 
-        return hReg;
-
+        String valReg = cctx.nextRegister();
+        cctx.emit(valReg + " = load " + llvmStructName + ", " + llvmStructName + "* " + hReg);
+        return valReg;
     }
 
     private TypeRef substituteGeneric(TypeRef type, TypeRef concrete) {

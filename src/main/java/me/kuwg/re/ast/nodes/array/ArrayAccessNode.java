@@ -6,6 +6,8 @@ import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.cast.CastManager;
+import me.kuwg.re.type.TypeRef;
 
 public class ArrayAccessNode extends ValueNode {
     private final ValueNode array;
@@ -34,18 +36,28 @@ public class ArrayAccessNode extends ValueNode {
             return new RVariableTypeError("arr", array.getType().getName(), line).raise();
         }
 
-
-        var elementType = arrType.inner();
+        TypeRef elementType = arrType.inner();
         String llvmElemType = elementType.getLLVMName();
 
+        String index64Reg = indexReg;
+        if (arrType.size() == ArrayType.UNKNOWN_SIZE && !index.getType().equals(BuiltinTypes.LONG.getType())) {
+            index64Reg = CastManager.executeCast(line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
+        }
+
         String elemPtrReg = cctx.nextRegister();
-        String llvmArrType = "[" + arrType.size() + " x " + llvmElemType + "]";
-        cctx.emit(elemPtrReg + " = getelementptr " +
-                llvmArrType + ", " + llvmArrType + "* " + arrayReg +
-                ", i32 0, i32 " + indexReg + " ; index array");
+        if (arrType.size() == ArrayType.UNKNOWN_SIZE) {
+            cctx.emit(elemPtrReg + " = getelementptr " +
+                    llvmElemType + ", " + llvmElemType + "* " + arrayReg +
+                    ", i64 " + index64Reg);
+        } else {
+            String llvmArrType = "[" + arrType.size() + " x " + llvmElemType + "]";
+            cctx.emit(elemPtrReg + " = getelementptr inbounds " +
+                    llvmArrType + ", " + llvmArrType + "* " + arrayReg +
+                    ", i32 0, i32 " + indexReg);
+        }
 
         String loadReg = cctx.nextRegister();
-        cctx.emit(loadReg + " = load " + llvmElemType + ", " + llvmElemType + "* " + elemPtrReg + " ; load array element");
+        cctx.emit(loadReg + " = load " + llvmElemType + ", " + llvmElemType + "* " + elemPtrReg);
 
         setType(elementType);
         return loadReg;
@@ -58,10 +70,10 @@ public class ArrayAccessNode extends ValueNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Array Access:").append(NEWLINE).append(indent).append(TAB).append("Array: ").append(NEWLINE);
-        array.write(sb, indent + TAB + TAB);
-        sb.append(indent).append(TAB).append("Index: ").append(NEWLINE);
-        index.write(sb, indent + TAB + TAB);
+        sb.append(indent).append("Array Access:").append(NEWLINE).append(indent).append("\tArray: ").append(NEWLINE);
+        array.write(sb, indent + "\t\t");
+        sb.append(indent).append("\tIndex: ").append(NEWLINE);
+        index.write(sb, indent + "\t\t");
     }
 
     private String compileStringAccess(CompilationContext cctx, String arrayReg, String indexReg) {

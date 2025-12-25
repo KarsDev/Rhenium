@@ -29,6 +29,8 @@ public final class CastManager {
         if (from instanceof AnyPointerType) return fromAnyPointer(line, valReg, type, cctx);
         if (from instanceof PointerType ptr) return fromPointer(line, ptr.inner(), valReg, type, cctx);
 
+        if (from.equals(type)) return valReg;
+
         return new RIncompatibleCastError(from, type, line).raise();
     }
 

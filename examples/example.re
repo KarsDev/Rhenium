@@ -4,7 +4,7 @@ using string
 
 struct Person:
     name: str
-    age: mut int
+    age: int
     active: bool
 
 func create_person(name: str, age: int) -> Person:

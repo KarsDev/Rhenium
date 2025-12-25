@@ -45,7 +45,7 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
     public boolean equals(final TypeRef o) {
         if (!(o instanceof final ArrayType arrayType)) return false;
 
-        return size == arrayType.size && Objects.equals(inner, arrayType.inner);
+        return (size == -1 || arrayType.size == -1 || size == arrayType.size) && Objects.equals(inner, arrayType.inner);
     }
 
     @Override
