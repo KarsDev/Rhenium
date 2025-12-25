@@ -1372,6 +1372,13 @@ public class ASTParser {
             case "arr" -> {
                 return parseArrayType(line);
             }
+            case "struct" -> {
+                var type = typeMap.get(typeName);
+                if (!(type instanceof StructType)) {
+                    return new RParserError("Expected struct type", file, line()).raise();
+                }
+                return type;
+            }
         }
 
         if (typeMap.containsKey(typeName)) {
