@@ -22,27 +22,24 @@ public class ArrayNode extends PointerValueNode {
         this.values = values;
     }
 
-    private void inferAndSetType() {
+    private TypeRef inferType() {
         if (values.isEmpty()) {
-            new RArrayTypesMismatchError(line).raise();
-            return;
+            return new RArrayTypesMismatchError(line).raise();
         }
         TypeRef type = values.get(0).getType();
 
         for (ValueNode v : values) {
             if (type.isCompatibleWith(v.getType())) continue;
-            new RArrayTypesMismatchError(v.getType().getName(), type.getName(), line).raise();
-            return;
+            return new RArrayTypesMismatchError(v.getType().getName(), type.getName(), line).raise();
         }
 
         var arr = new ArrayType(values.size(), values.get(0).getType());
 
         if (arr.inner() instanceof NoneBuiltinType) {
-            new RArrayTypeIsNoneError(line).raise();
-            return;
+            return new RArrayTypeIsNoneError(line).raise();
         }
 
-        setType(arr);
+        return arr;
     }
 
     @Override
@@ -52,7 +49,7 @@ public class ArrayNode extends PointerValueNode {
                 regs.add(i, values.get(i).compileAndGet(cctx))
         );
 
-        inferAndSetType();
+        setType(inferType());
         ArrayType arrType = (ArrayType) getType();
         TypeRef elementType = arrType.inner();
         long size = arrType.size();
@@ -90,7 +87,6 @@ public class ArrayNode extends PointerValueNode {
             }
 
         }
-
 
         return arrReg;
     }

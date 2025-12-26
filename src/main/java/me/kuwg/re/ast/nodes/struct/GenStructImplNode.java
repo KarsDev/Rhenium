@@ -29,7 +29,7 @@ public class GenStructImplNode extends ASTNode {
     public void compile(final CompilationContext cctx) {
         RStruct genStruct = cctx.getStruct(struct.name());
 
-        if (genStruct == null || !genStruct.builtin()) {
+        if (genStruct == null) {
             new RStructUndefinedError(struct.name(), line).raise();
             return;
         }

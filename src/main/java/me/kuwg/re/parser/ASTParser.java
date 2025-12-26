@@ -264,9 +264,9 @@ public class ASTParser {
             }
             case BOOLEAN -> {
                 if (matchAndConsume(BOOLEAN, "true")) {
-                    return new BooleanNode(line(), true);
+                    return new BooleanNode(previous().line(), true);
                 } else if (matchAndConsume(BOOLEAN, "false")) {
-                    return new BooleanNode(line(), false);
+                    return new BooleanNode(previous().line(), false);
                 } else {
                     return new RParserError("Expected boolean value", file, line()).raise();
                 }
@@ -778,11 +778,17 @@ public class ASTParser {
 
             switch (typeName) {
                 case "ptr" -> {
-                    type = parsePointerType(line);
+                    type = parsePointerType(line, false);
                     break LABEL_TYPE;
                 }
                 case "arr" -> {
-                    type = parseArrayType(line);
+                    type = parseArrayType(line, false);
+                    break LABEL_TYPE;
+                }
+                case "struct" -> {
+                    type = typeMap.get(typeName);
+                    if (!(type instanceof StructType))
+                        return new RParserError("Expected struct type", file, line()).raise();
                     break LABEL_TYPE;
                 }
             }
@@ -1203,6 +1209,12 @@ public class ASTParser {
     }
 
     private @SubFunc ASTNode parseGenericStruct() {
+        final boolean IMPLEMENTED_GENERIC = false;
+
+        if (!IMPLEMENTED_GENERIC) {
+            return new RParserError("Generic structs are not implemented yet", file, line()).raise();
+        }
+
         int line = line();
 
         List<String> genericTypes = new ArrayList<>();
@@ -1367,10 +1379,10 @@ public class ASTParser {
 
         switch (typeName) {
             case "ptr" -> {
-                return parsePointerType(line);
+                return parsePointerType(line, generics);
             }
             case "arr" -> {
-                return parseArrayType(line);
+                return parseArrayType(line, generics);
             }
             case "struct" -> {
                 var type = typeMap.get(typeName);
@@ -1397,22 +1409,22 @@ public class ASTParser {
         return type;
     }
 
-    private @SubFunc TypeRef parsePointerType(int line) {
+    private @SubFunc TypeRef parsePointerType(int line, boolean generics) {
         if (!matchAndConsume(OPERATOR, "->"))
             return new RParserError("Expected \"->\" for pointer type declaration", file, line).raise();
 
-        TypeRef inner = parseType(false);
+        TypeRef inner = parseType(generics);
         if (inner instanceof NoneBuiltinType)
             return new RParserError("You can't declare a void pointer, please use 'anyptr' instead", file, line).raise();
         return new PointerType(inner);
     }
 
-    private @SubFunc TypeRef parseArrayType(int line) {
+    private @SubFunc TypeRef parseArrayType(int line, boolean generics) {
         if (!matchAndConsume(OPERATOR, "->")) {
             return new RParserError("Expected \"->\" for array type declaration", file, line).raise();
         }
 
-        TypeRef inner = parseType(false);
+        TypeRef inner = parseType(generics);
 
         if (inner instanceof NoneBuiltinType) {
             return new RArrayTypeIsNoneError(line).raise();

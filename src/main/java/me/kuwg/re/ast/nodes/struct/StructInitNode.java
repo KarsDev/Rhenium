@@ -132,6 +132,8 @@ public class StructInitNode extends ValueNode {
                 return new RStructInitParamsError(name, values.size(), genStruct.fields().size(), line).raise();
             }
 
+            valueNode.compileAndGet(cctx);
+
             TypeRef resolvedType = valueNode.getType();
             TypeRef concreteType = substituteGeneric(field.type(), resolvedType);
 

@@ -1,6 +1,7 @@
 package me.kuwg.re.type.iterable.arr;
 
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.IterableTypeRef;
 
 import java.util.Objects;
@@ -16,6 +17,7 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
     @Override
     public boolean isCompatibleWith(final TypeRef other) {
         if (!(other instanceof ArrayType arr)) return false;
+        if (arr.inner instanceof GenericType || inner instanceof GenericType) return false;
         if (!arr.inner.isCompatibleWith(inner)) return false;
         return arr.size == UNKNOWN_SIZE || size == UNKNOWN_SIZE || arr.size == size;
     }

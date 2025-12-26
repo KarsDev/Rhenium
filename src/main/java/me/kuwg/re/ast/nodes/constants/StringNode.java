@@ -76,6 +76,10 @@ public class StringNode extends ConstantNode {
         return sb.toString();
     }
 
+    public String getValue() {
+        return value;
+    }
+
     @Override
     public void compile(final CompilationContext cctx) {
         new RValueMustBeUsedError("String", line).raise();
