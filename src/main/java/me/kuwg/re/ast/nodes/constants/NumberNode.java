@@ -10,8 +10,8 @@ public class NumberNode extends ConstantNode {
     private final Number value;
 
     public NumberNode(final int line, String literal) {
-        super(line, inferType(literal));
-        this.value = parseNumber(literal);
+        super(line, inferType(literal.replace("_", "")));
+        this.value = parseNumber(literal.replace("_", ""));
     }
 
     private static TypeRef inferType(String literal) {
