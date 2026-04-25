@@ -15,6 +15,7 @@ import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.StructType;
 
 import java.util.*;
 
@@ -113,15 +114,28 @@ public class FunctionCallNode extends ValueNode {
 
         for (int i = 0; i < parameters.size(); i++) {
             TypeRef expected = fn.parameters().get(i).type();
+            TypeRef actual   = callTypes.get(i);
 
             if (containsGeneric(expected)) {
-                return new RFunctionGenericsError("Generic type leaked into concrete call", line).raise();
+                return new RFunctionGenericsError(
+                        "Generic type leaked into concrete call", line
+                ).raise();
             }
 
-            if (!callTypes.get(i).equals(expected)) {
+            if (!actual.equals(expected)) {
                 CastNode cast = new CastNode(line, expected, parameters.get(i));
                 argRegs.set(i, cast.compileAndGet(cctx));
+                actual = expected;
                 callTypes.set(i, expected);
+            }
+
+            if (actual instanceof StructType) {
+                String loaded = cctx.nextRegister();
+                cctx.emit(loaded + " = load " +
+                        actual.getLLVMName() + "*, " +
+                        actual.getLLVMName() + "** " +
+                        argRegs.get(i));
+                argRegs.set(i, loaded);
             }
         }
 

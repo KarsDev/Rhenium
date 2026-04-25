@@ -8,6 +8,7 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.variable.RGlobalVariableScopeError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.struct.StructType;
 
 public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
@@ -37,7 +38,26 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
         String llvmDecl = "@" + name + " = global " + varType.getLLVMName() + " " + initialValue;
         cctx.declare(llvmDecl + " ; Global variable " + name);
 
-        RVariable globalVar = new RVariable(name, false, varType, "@" + name);
+        String valueReg;
+
+        if (varType instanceof StructType) {
+            valueReg = "@" + name;
+        } else {
+            valueReg = "%" + name + "_global_load";
+            cctx.emit(valueReg + " = load "
+                    + varType.getLLVMName() + ", "
+                    + varType.getLLVMName() + "* @" + name);
+        }
+
+        RVariable globalVar = new RVariable(
+                name,
+                false,
+                true,
+                varType,
+                "@" + name,
+                valueReg
+        );
+
         cctx.addGlobal(globalVar);
     }
 

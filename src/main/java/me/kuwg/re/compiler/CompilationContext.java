@@ -1,8 +1,6 @@
 package me.kuwg.re.compiler;
 
 import me.kuwg.re.compiler.function.RFunction;
-import me.kuwg.re.compiler.struct.RDefStruct;
-import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.compiler.variable.RVariable;
@@ -63,7 +61,7 @@ final class CompilationContext {
     }
 
     public void emit(String s) {
-        if (s.contains("ret %struct.Person_str_int_bool %15 ; return statement")) throw new RuntimeException();
+        if (s.contains("store i32* %a_0097_3, i32** %a_ptra_ptr_3024_4")) throw new RuntimeException();
         if (s.strip().matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
         Objects.requireNonNull(codeStack.peek()).append(TAB.repeat(indentLevel)).append(s).append('\n');
     }
@@ -129,11 +127,7 @@ final class CompilationContext {
     }
 
     public void addStruct(boolean builtin, String name, TypeRef type, List<RStructField> fields) {
-        structs.put(name, new RDefStruct(builtin, type, fields));
-    }
-
-    public void addGenStruct(String name, TypeRef type, List<RStructField> fields) {
-        structs.put(name, new RGenStruct(type, fields));
+        structs.put(name, new RStruct(builtin, type, fields));
     }
 
     public RStruct getStruct(String name) {

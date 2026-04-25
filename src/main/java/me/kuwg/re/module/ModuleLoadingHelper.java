@@ -13,6 +13,7 @@ import me.kuwg.re.type.TypeRef;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ModuleLoadingHelper {
@@ -79,5 +80,66 @@ public class ModuleLoadingHelper {
         AST ast = parser.parse();
 
         ast.compile(cctx);
+    }
+
+    public static Map<String, TypeRef> collectModuleTypes(
+            int line,
+            String sourceFile,
+            String name,
+            String pkg
+    ) {
+        if (pkg == null) {
+            return collectNativeModuleTypes(line, name);
+        }
+
+        final Path srcPath = Path.of(sourceFile);
+        Path base = pkg.equals("self") ? srcPath.getParent() : Path.of(pkg);
+
+        if (pkg.equals("..")) {
+            Path sourcePath = srcPath.getParent();
+            if (sourcePath != null) {
+                base = sourcePath.getParent();
+            }
+        }
+
+        if (base == null) {
+            new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            return Map.of();
+        }
+
+        Path file = base.resolve(name + ".re");
+
+        if (!Files.exists(file)) {
+            new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            return Map.of();
+        }
+
+        String src;
+        try {
+            src = Files.readString(file);
+        } catch (IOException e) {
+            new RModuleCouldNotBeLoadedError(pkg + "->" + name, line).raise();
+            return Map.of();
+        }
+
+        return collectTypes(name, src);
+    }
+
+    private static Map<String, TypeRef> collectNativeModuleTypes(int line, String name) {
+        String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
+        if (src == null) {
+            new RModuleNotFoundError(name, line).raise();
+            return Map.of();
+        }
+
+        return collectTypes(name, src);
+    }
+
+    private static Map<String, TypeRef> collectTypes(String module, String src) {
+        var tokens = Tokenizer.tokenize(src);
+        ASTParser parser = new ASTParser(module, tokens, new HashMap<>());
+
+        parser.collectTypesOnly();
+        return parser.typeMap;
     }
 }

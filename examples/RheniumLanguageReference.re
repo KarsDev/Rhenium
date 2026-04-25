@@ -313,6 +313,11 @@ Use self.<var> to access the struct variable
 */
 
 impl Vec2:
+    // Constructors are optional, in this case it's redundant, but it's still a good practice
+    init(x: int, y: int):
+      this.x = x
+      this.y = y
+
     func length() -> int:
         return self.x * self.x + self.y * self.y
 

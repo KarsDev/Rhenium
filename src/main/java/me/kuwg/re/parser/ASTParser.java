@@ -16,10 +16,7 @@ import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
 import me.kuwg.re.ast.nodes.extern.NativeCPPNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
-import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
-import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
-import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
-import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.declaration.*;
 import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
 import me.kuwg.re.ast.nodes.instance.IsNode;
 import me.kuwg.re.ast.nodes.ir.IRDeclarationNode;
@@ -47,11 +44,13 @@ import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.struct.RConstructor;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.expr.RImplNotFunctionError;
 import me.kuwg.re.error.errors.parser.RParserError;
+import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.operator.BinaryOperators;
 import me.kuwg.re.operator.ops.add.AddBO;
 import me.kuwg.re.operator.ops.add.SubBO;
@@ -285,37 +284,38 @@ public class ASTParser {
             }
         }
 
+        int line = outOfBounds(0) ? 0 : line();
+
         while (true) {
             if (match(DIVIDER, "(")) {
-                int line = line();
                 var args = parseParamsCall();
                 if (!(node instanceof DirectVariableReferenceNode vr)) {
-                    return new RParserError("Expected reference for function call", file, line()).raise();
+                    return new RParserError("Expected reference for function call", file, line).raise();
                 }
                 node = new FunctionCallNode(line, vr.getSimpleName(), args);
             } else if (match(DIVIDER, "[")) {
                 consume();
                 ValueNode index = parseValue();
                 if (!matchAndConsume(DIVIDER, "]")) {
-                    return new RParserError("Expected ']'", file, line()).raise();
+                    return new RParserError("Expected ']'", file, line).raise();
                 }
 
                 if (matchAndConsume(OPERATOR, "=")) {
                     ValueNode value = parseValue();
-                    node = new ArraySetNode(line(), node, index, value);
+                    node = new ArraySetNode(line, node, index, value);
                 } else {
-                    node = new ArrayAccessNode(line(), node, index);
+                    node = new ArrayAccessNode(line, node, index);
                 }
             } else if (match(OPERATOR, "@")) {
                 consume();
                 if (matchAndConsume(OPERATOR, "=")) {
                     ValueNode value = parseValue();
-                    node = new DereferenceAssignNode(line(), node, value);
+                    node = new DereferenceAssignNode(line, node, value);
                 } else {
                     if (!(node instanceof VariableReference vr)) {
                         return new RParserError("Expected any type of variable reference for pointer type declaration", file, line()).raise();
                     }
-                    node = new DereferenceNode(line(), vr);
+                    node = new DereferenceNode(line, vr);
                 }
             } else {
                 break;
@@ -361,6 +361,7 @@ public class ASTParser {
             case "null" -> parseNullKeyword();
             case "async" -> parseAsyncKeyword();
             case "generic" -> parseGenericKeyword();
+            case "this" -> parseThisKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -480,6 +481,8 @@ public class ASTParser {
             pkg = null;
         }
 
+        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg).forEach(typeMap::putIfAbsent);
+
         return new UsingNode(line, file, name.toString(), pkg);
     }
 
@@ -504,7 +507,20 @@ public class ASTParser {
 
     private @SubFunc ValueNode parseDereferenceOperator() {
         int line = line();
-        VariableReference holder = new DirectVariableReferenceNode(line, matchAndConsume(KEYWORD, "self") ? "self" : identifier());
+        VariableReference holder;
+
+        if (matchAndConsume(KEYWORD, "self")) {
+            holder = new DirectVariableReferenceNode(line, "self");
+        } else if (matchAndConsume(KEYWORD, "this")) {
+            holder = new DereferenceNode(line, new DirectVariableReferenceNode(line, "self"));
+        } else if (matchAndConsume(DIVIDER, "(")) {
+            ASTNode v = parseValue();
+            if (!(v instanceof VariableReference vr)) return new RParserError("Expected variable reference for dereference operator", file, line).raise();
+            holder = vr;
+            if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')'", file, line).raise();
+        } else {
+            holder = new DirectVariableReferenceNode(line, identifier());
+        }
 
         if (match(OPERATOR, ".")) {
             return parseSubExpr(line, false, null, holder);
@@ -679,10 +695,7 @@ public class ASTParser {
 
             TypeRef fieldType = parseType(false);
 
-            ValueNode defaultValue = matchAndConsume(OPERATOR, "=") ? parseValue() : null;
-
-
-            fields.add(new RStructField(fieldName, fieldType, defaultValue));
+            fields.add(new RStructField(fieldName, fieldType));
             types.add(fieldType);
         }
 
@@ -700,6 +713,17 @@ public class ASTParser {
                 return new RParserError("Expected '->' for array type declaration", file, line()).raise();
             }
             return parseArrayCreation(parseType(false));
+        }
+
+        if (match(DIVIDER, "(")) {
+            var params = parseParamsDeclare(false);
+
+            if (!matchAndConsume(OPERATOR, ":")) {
+                new RParserError("Expected ':' for function declaration", file, line()).raise();
+            }
+
+            BlockNode block = parseBlock();
+            return new ConstructorDeclarationNode(line, file, params, block);
         }
 
         String name = identifier();
@@ -877,10 +901,6 @@ public class ASTParser {
 
         TypeRef tmp = typeMap.get(name);
 
-        if (tmp instanceof GenStructType genStruct) {
-            return parseGenStructImpl(genStruct);
-        }
-
         if (!(tmp instanceof StructType struct)) {
             return new RParserError("Struct not found: '" + name + "' for impl declaration", file, line()).raise();
         }
@@ -890,12 +910,24 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        for (final ASTNode node : block.getNodes()) {
-            if (node.getClass().getSimpleName().contains("Function")) continue;
-            return new RImplNotFunctionError(line()).raise();
+        var iterator = block.getNodes().iterator();
+
+        List<RConstructor> constructors = new ArrayList<>();
+
+        while (iterator.hasNext()) {
+            var next = iterator.next();
+
+            if (next.getClass().getSimpleName().contains("FunctionDeclarationNode")) continue;
+            if (!(next instanceof ConstructorDeclarationNode cdn)) return new RImplNotFunctionError(next.getLine()).raise();
+
+            iterator.remove();
+
+            String constructorName = "constructor." + constructors.size();
+            RConstructor constructor = new RConstructor(constructorName, cdn.getParameters(), cdn.getBlock());
+            constructors.add(constructor);
         }
 
-        return new StructImplNode(line, struct, block.getNodes());
+        return new StructImplNode(line, struct, constructors, block.getNodes());
     }
 
     private @SubFunc ASTNode parseGlobal() {
@@ -926,14 +958,12 @@ public class ASTParser {
     private @SubFunc ASTNode parseRaise() {
         int line = line();
 
-        String value;
+        ValueNode value;
 
         if (matchAndConsume(KEYWORD, "none")) {
             value = null;
         } else {
-            if (!match(STRING))
-                return new RParserError("Expected string literal or none after raise", file, line).raise();
-            value = consume().value();
+            value = parseValue();
         }
 
         return new RaiseNode(line, value);
@@ -1171,10 +1201,6 @@ public class ASTParser {
     private @SubFunc ASTNode parseGenericKeyword() {
         int line = line();
 
-        if (matchAndConsume(KEYWORD, "struct")) {
-            return parseGenericStruct();
-        }
-
         if (!matchAndConsume(KEYWORD, "func")) {
             return new RParserError("Expected 'func' for generic function declaration", file, line).raise();
         }
@@ -1208,149 +1234,6 @@ public class ASTParser {
         return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block);
     }
 
-    private @SubFunc ASTNode parseGenericStruct() {
-        final boolean IMPLEMENTED_GENERIC = false;
-
-        if (!IMPLEMENTED_GENERIC) {
-            return new RParserError("Generic structs are not implemented yet", file, line()).raise();
-        }
-
-        int line = line();
-
-        List<String> genericTypes = new ArrayList<>();
-
-        if (!matchAndConsume(OPERATOR, "<")) {
-            return new RParserError("Expected '<' for generic struct declaration", file, line).raise();
-        }
-
-        if (!match(OPERATOR, ">")) {
-            do {
-                genericTypes.add(identifier());
-            } while (matchAndConsume(OPERATOR, ","));
-        }
-
-        if (!matchAndConsume(OPERATOR, ">")) {
-            return new RParserError("Expected '>' for generic struct declaration", file, line).raise();
-        }
-
-        String name = identifier();
-
-        if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for struct declaration", file, line()).raise();
-        }
-        if (!match(NEWLINE)) {
-            return new RParserError("Expected newline after struct declaration", file, line()).raise();
-        }
-        consume();
-
-        if (!match(INDENT)) {
-            return new RParserError("Expected indent for struct field declaration", file, line()).raise();
-        }
-        consume();
-
-        List<RStructField> fields = new ArrayList<>();
-        List<TypeRef> types = new ArrayList<>();
-
-        while (!match(EOF)) {
-            removeNewlines();
-            if (match(DEDENT)) {
-                consume();
-
-                if (match(INDENT)) {
-                    consume();
-                    continue;
-                } else {
-                    break;
-                }
-            }
-
-            String fieldName = identifier();
-
-            if (!matchAndConsume(OPERATOR, ":")) {
-                return new RParserError("Expected ':' for struct field declaration", file, line()).raise();
-            }
-
-            if (match(KEYWORD, "mut")) {
-                return new RParserError("You can't declare fields as mutable", file, line()).raise();
-            }
-
-            TypeRef fieldType = parseType(true);
-
-            ValueNode defaultValue = matchAndConsume(OPERATOR, "=") ? parseValue() : null;
-
-
-            fields.add(new RStructField(fieldName, fieldType, defaultValue));
-            types.add(fieldType);
-        }
-
-        var type = new GenStructType(genericTypes, name, types);
-
-        typeMap.put(name, type);
-        return new GenStructDeclarationNode(line, genericTypes, name, type, fields);
-    }
-
-    private @SubFunc ASTNode parseGenStructImpl(GenStructType genStruct) {
-        int line = line();
-
-        if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for impl declaration", file, line()).raise();
-
-        removeNewlines();
-
-        if (!match(INDENT)) {
-            return new RParserError("Expected indented block", file, line()).raise();
-        }
-
-        consume();
-
-        List<GenFunctionDeclarationNode> statements = new ArrayList<>();
-
-        while (!match(EOF) && !match(DEDENT)) {
-            removeNewlines();
-
-            if (match(EOF) || match(DEDENT)) break;
-
-            GenFunctionDeclarationNode stmt = parseGSIFunc(genStruct.genericTypes());
-            if (stmt == null) break;
-            statements.add(stmt);
-        }
-
-        if (!match(EOF)) {
-            if (match(DEDENT)) {
-                consume();
-            } else {
-                return new RParserError("Expected dedent to close block", file, line()).raise();
-            }
-        }
-
-        return new GenStructImplNode(line, genStruct, statements);
-    }
-
-    private @SubFunc GenFunctionDeclarationNode parseGSIFunc(List<String> genericTypes) {
-        int line = line();
-        if (match(KEYWORD, "_Builtin"))
-            return new RParserError("You can't declare a builtin function in a generic struct impl", file, line).raise();
-
-        matchAndConsume(KEYWORD, "generic");
-
-        if (!matchAndConsume(KEYWORD, "func"))
-            return new RParserError("Expected a function declaration", file, line).raise();
-
-        String name = identifier();
-
-        var params = parseParamsDeclare(true);
-
-        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : NoneBuiltinType.INSTANCE;
-
-        if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for function declaration", file, line).raise();
-        }
-
-        BlockNode block = parseBlock();
-
-        return new GenFunctionDeclarationNode(line, name, genericTypes, params, returnType, block);
-    }
-
     private @SubFunc ValueNode parseArrayCreation(TypeRef type) {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
@@ -1362,6 +1245,16 @@ public class ASTParser {
             return new RParserError("Expected ')' for array creation", file, line()).raise();
 
         return new ArrayCreationNode(line, type, size);
+    }
+
+    private @SubFunc ValueNode parseThisKeyword() {
+        int line = line();
+
+        ValueNode node = new DereferenceNode(line, new DirectVariableReferenceNode(line, "self"));
+
+        node = parseSubExpr(line, false, null, node);
+
+        return node;
     }
 
     /*
@@ -1387,6 +1280,7 @@ public class ASTParser {
             case "struct" -> {
                 var type = typeMap.get(typeName);
                 if (!(type instanceof StructType)) {
+                    System.out.println(typeMap);
                     return new RParserError("Expected struct type", file, line()).raise();
                 }
                 return type;
@@ -1584,5 +1478,110 @@ public class ASTParser {
         }
 
         return false;
+    }
+
+    /*
+    external utilities
+     */
+
+    public void collectTypesOnly() {
+        tokenIndex = 0;
+
+        while (!match(EOF)) {
+            removeNewlines();
+
+            if (match(KEYWORD, "generic")) {
+                consume();
+
+                if (match(KEYWORD, "struct")) {
+                    consume();
+                    collectStructType(true);
+                    continue;
+                }
+            }
+
+            if (match(KEYWORD, "_Builtin")) {
+                consume();
+
+                if (match(KEYWORD, "struct")) {
+                    consume();
+                    collectStructType(false);
+                    continue;
+                }
+            }
+
+            if (match(KEYWORD, "struct")) {
+                consume();
+                collectStructType(false);
+                continue;
+            }
+
+            if (outOfBounds(0)) return;
+            consume();
+        }
+    }
+
+    private void collectStructType(boolean generic) {
+        if (!match(IDENTIFIER)) {
+            return;
+        }
+
+        String name = consume().value();
+
+        if (generic && match(OPERATOR, "<")) {
+            do {
+                consume();
+            } while (!match(OPERATOR, ">") && !match(EOF));
+            matchAndConsume(OPERATOR, ">");
+        }
+
+        while (!match(OPERATOR, ":") && !match(EOF)) {
+            consume();
+        }
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return;
+        }
+
+        removeNewlines();
+        if (!match(INDENT)) {
+            return;
+        }
+        consume();
+
+        List<TypeRef> fieldTypes = new ArrayList<>();
+
+        while (!match(DEDENT) && !match(EOF)) {
+            removeNewlines();
+
+            if (match(DEDENT)) break;
+
+            if (!match(IDENTIFIER)) {
+                consume();
+                continue;
+            }
+            consume();
+
+            if (!matchAndConsume(OPERATOR, ":")) {
+                continue;
+            }
+
+            TypeRef fieldType = parseType(generic);
+            fieldTypes.add(fieldType);
+
+            if (match(OPERATOR, "=")) {
+                do {
+                    consume();
+                } while (!match(NEWLINE) && !match(DEDENT) && !match(EOF));
+            }
+        }
+
+        if (match(DEDENT)) consume();
+
+        TypeRef type = generic
+                ? new GenStructType(List.of(), name, fieldTypes)
+                : new StructType(name, fieldTypes);
+
+        typeMap.put(name, type);
     }
 }

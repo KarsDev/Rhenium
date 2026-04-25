@@ -14,6 +14,7 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.IterableTypeRef;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
+import me.kuwg.re.type.struct.StructType;
 
 public class ForLoopNode extends ASTNode implements IBlockContainer {
     private final String variable;
@@ -86,7 +87,19 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         cctx.emit(startLoaded + " = load i32, i32* " + startReg);
         cctx.emit("store i32 " + startLoaded + ", i32* %" + llvmVariable);
 
-        cctx.addVariable(new RVariable(variable, true, BuiltinTypes.INT.getType(), "%" + llvmVariable));
+        String loopVarAddr = "%" + llvmVariable;
+
+        String loopVarValue = cctx.nextRegister();
+        cctx.emit(loopVarValue + " = load i32, i32* " + loopVarAddr);
+
+        cctx.addVariable(new RVariable(
+                variable,
+                true,
+                true,
+                BuiltinTypes.INT.getType(),
+                loopVarAddr,
+                loopVarValue
+        ));
 
         String startLabel = cctx.nextLabel("for_start");
         String bodyLabel = cctx.nextLabel("for_body");
@@ -137,7 +150,28 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
         String elemTypeLLVM = arr.inner().getLLVMName();
         cctx.emit('%' + llvmVariable + " = alloca " + elemTypeLLVM);
-        cctx.addVariable(new RVariable(variable, true, arr.inner(), "%" + llvmVariable));
+        String loopVarAddr = "%" + llvmVariable;
+
+        String loopVarValue;
+
+        if (arr.inner() instanceof StructType) {
+            loopVarValue = loopVarAddr;
+        } else {
+            loopVarValue = cctx.nextRegister();
+            cctx.emit(loopVarValue + " = load "
+                    + arr.inner().getLLVMName() + ", "
+                    + arr.inner().getLLVMName() + "* "
+                    + loopVarAddr);
+        }
+
+        cctx.addVariable(new RVariable(
+                variable,
+                true,
+                true,
+                arr.inner(),
+                loopVarAddr,
+                loopVarValue
+        ));
 
         String startLabel = cctx.nextLabel("for_start");
         String bodyLabel = cctx.nextLabel("for_body");

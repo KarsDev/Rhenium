@@ -53,11 +53,11 @@ impl Thread:
 
     // Runs the thread and destroys safely
     func runAndDestroy() -> none:
-        (@self).run()
-        (@self).destroy()
+        this.run()
+        this.destroy()
 
     // Awaits the thread and destroys safely
     func awaitAndDestroy() -> anyptr:
-        res = (@self).await()
-        (@self).destroy()
+        res = this.await()
+        this.destroy()
         return res

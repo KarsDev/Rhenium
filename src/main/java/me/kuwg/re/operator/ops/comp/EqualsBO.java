@@ -5,10 +5,8 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.DoubleBuiltinType;
-import me.kuwg.re.type.builtin.FloatBuiltinType;
-import me.kuwg.re.type.builtin.StrBuiltinType;
+import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.ptr.NullType;
 
 public class EqualsBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new EqualsBO();
@@ -27,6 +25,30 @@ public class EqualsBO extends BinaryOperator {
 
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(resReg + " = call i1 @strEquals(i8* " + c.leftReg() + ", i8* " + c.rightReg() + ")");
+            return res(resReg, BuiltinTypes.BOOL.getType());
+        }
+
+        if (leftType instanceof AnyPointerType && rightType instanceof AnyPointerType) {
+            String resReg = c.cctx().nextRegister();
+            c.cctx().emit(
+                    resReg + " = icmp eq ptr " + c.leftReg() + ", " + c.rightReg()
+            );
+            return res(resReg, BuiltinTypes.BOOL.getType());
+        }
+
+        if (leftType instanceof AnyPointerType && rightType instanceof NullType) {
+            String resReg = c.cctx().nextRegister();
+            c.cctx().emit(
+                    resReg + " = icmp eq ptr " + c.leftReg() + ", null"
+            );
+            return res(resReg, BuiltinTypes.BOOL.getType());
+        }
+
+        if (leftType instanceof NullType && rightType instanceof AnyPointerType) {
+            String resReg = c.cctx().nextRegister();
+            c.cctx().emit(
+                    resReg + " = icmp eq ptr null, " + c.rightReg()
+            );
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 

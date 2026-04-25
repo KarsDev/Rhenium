@@ -2,7 +2,6 @@ package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
@@ -24,66 +23,50 @@ public class StructFieldAccessNode extends VariableReference {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String structPtr = struct.getVariable(cctx).valueReg();
-
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
-            return new RStructAccessError(
-                    "Struct access on non-variable: " + struct.getCompleteName(), line
-            ).raise();
+            return new RStructAccessError("Struct access on non-variable: " + struct.getCompleteName(), line).raise();
         }
 
         TypeRef structType = structVar.type();
-
         if (!(structType instanceof StructType st)) {
             return new RVariableTypeError("struct", structType.getName(), line).raise();
         }
 
-        RStruct structV = cctx.getStruct(st.name());
-        if (structV == null) {
+        RStruct structDef = cctx.getStruct(st.name());
+        if (structDef == null) {
             return new RStructUndefinedError(st.name(), line).raise();
         }
-
-        if (structV instanceof RGenStruct gen) {
-            structV = gen.getInstantiation(st.fieldTypes());
-        }
-
-        var structFields = structV.fields();
 
         int index = -1;
         TypeRef fieldType = null;
 
-        for (int i = 0; i < structFields.size(); i++) {
-            if (structFields.get(i).name().equals(fieldName)) {
+        var fields = structDef.fields();
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).name().equals(fieldName)) {
                 index = i;
-                fieldType = structFields.get(i).type();
+                fieldType = fields.get(i).type();
                 break;
             }
         }
 
         if (index == -1) {
-            return new RStructAccessError(
-                    "Struct '" + st.name() + "' has no field '" + fieldName +
-                            "'", line
-            ).raise();
+            return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
         }
+
+        String structPtr = structVar.valueReg();
+
+        String fieldPtr = cctx.nextRegister();
+        cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);
 
         setType(fieldType);
 
-        String gepReg = cctx.nextRegister();
-        cctx.emit("; Get pointer to struct field '" + fieldName + "'");
-        cctx.emit(gepReg + " = getelementptr " +
-                st.getLLVMName() + ", " +
-                st.getLLVMName() + "* " + structPtr +
-                ", i32 0, i32 " + index
-        );
+        if (fieldType instanceof StructType) {
+            return fieldPtr;
+        }
 
         String loadReg = cctx.nextRegister();
-        cctx.emit("; Load struct field '" + fieldName + "'");
-        cctx.emit(loadReg + " = load " +
-                fieldType.getLLVMName() + ", " +
-                fieldType.getLLVMName() + "* " + gepReg
-        );
+        cctx.emit(loadReg + " = load " + fieldType.getLLVMName() + ", " + fieldType.getLLVMName() + "* " + fieldPtr);
 
         return loadReg;
     }
@@ -94,63 +77,47 @@ public class StructFieldAccessNode extends VariableReference {
     }
 
     @Override
-    public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Struct Field Access: ").append(NEWLINE);
-        sb.append(indent).append(TAB).append("Struct: ").append(NEWLINE);
-        struct.write(sb, indent + TAB + TAB);
-        sb.append(indent).append(TAB).append("Field: ").append(fieldName).append(NEWLINE);
-    }
-
-    @Override
     public RVariable getVariable(final CompilationContext cctx) {
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
-            return new RStructAccessError(
-                    "Struct access on non-variable: " + struct.getCompleteName(), line
-            ).raise();
+            return new RStructAccessError("Struct access on non-variable: " + struct.getCompleteName(), line).raise();
         }
 
         TypeRef structType = structVar.type();
         if (!(structType instanceof StructType st)) {
-            return new RVariableTypeError(
-                    "struct", structType.getName(), line
-            ).raise();
+            return new RVariableTypeError("struct", structType.getName(), line).raise();
         }
 
-        RStruct structV = cctx.getStruct(st.name());
-        if (structV == null) {
+        RStruct structDef = cctx.getStruct(st.name());
+        if (structDef == null) {
             return new RStructUndefinedError(st.name(), line).raise();
         }
-
-        var structFields = structV.fields();
 
         int index = -1;
         TypeRef fieldType = null;
 
-        for (int i = 0; i < structFields.size(); i++) {
-            if (structFields.get(i).name().equals(fieldName)) {
+        var fields = structDef.fields();
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).name().equals(fieldName)) {
                 index = i;
-                fieldType = structFields.get(i).type();
+                fieldType = fields.get(i).type();
                 break;
             }
         }
 
         if (index == -1) {
-            return new RStructAccessError(
-                    "Struct '" + st.name() + "' has no field '" + fieldName +
-                            "'", line
-            ).raise();
+            return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
         }
 
-        String gepReg = cctx.nextRegister();
-        cctx.emit("; Get pointer to struct field '" + fieldName + "'");
-        cctx.emit(gepReg + " = getelementptr " +
-                st.getLLVMName() + ", " +
-                st.getLLVMName() + "* " + structVar.valueReg() +
-                ", i32 0, i32 " + index
-        );
+        String structPtr = structVar.valueReg();
 
-        return new RVariable(fieldName, true, fieldType, gepReg);
+        String fieldPtr = cctx.nextRegister();
+        cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);
+
+        String loaded = cctx.nextRegister();
+        cctx.emit(loaded + " = load " + fieldType.getLLVMName() + ", " + fieldType.getLLVMName() + "* " + fieldPtr);
+
+        return new RVariable(fieldName, true, true, fieldType, fieldPtr, loaded);
     }
 
     @Override
@@ -162,4 +129,14 @@ public class StructFieldAccessNode extends VariableReference {
     public String getSimpleName() {
         return fieldName;
     }
+
+    @Override
+    public void write(final StringBuilder sb, final String indent) {
+        sb.append(indent).append("Struct Field Access: ").append(NEWLINE);
+        sb.append(indent).append(TAB).append("Struct: ").append(NEWLINE);
+        struct.write(sb, indent + TAB + TAB);
+        sb.append(indent).append(TAB).append("Field: ").append(fieldName).append(NEWLINE);
+    }
+
+
 }

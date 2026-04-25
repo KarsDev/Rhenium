@@ -5,7 +5,6 @@ import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
-import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StructFunctionCallNode extends ValueNode {
-
     private final ValueNode struct;
     private final String name;
     private final List<ValueNode> params;
@@ -32,27 +30,28 @@ public class StructFunctionCallNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        if (!(struct instanceof VariableReference vr)) {
-            return new RVariableTypeError("struct", struct.getType().getName(), line).raise();
-        }
-
-        RVariable selfVar = vr.getVariable(cctx);
-        if (selfVar == null) {
-            return new RVariableTypeError("struct", "unknown", line).raise();
-        }
-
-        TypeRef selfVarType = selfVar.type();
-        if (!(selfVarType instanceof StructType structType)) {
-            return new RVariableTypeError("struct", selfVarType.getName(), line).raise();
-        }
-
         RFunction fn;
         String mangled;
+
+        String selfValue = struct.compileAndGet(cctx);
+        TypeRef selfType = struct.getType();
+
+        if (!(selfType instanceof StructType structType)) {
+            return new RVariableTypeError("struct", selfType.getName(), line).raise();
+        }
+
+        if (!(struct instanceof VariableReference)) {
+            String addr = cctx.nextRegister();
+            cctx.emit(addr + " = alloca " + structType.getLLVMName());
+            cctx.emit("store " + structType.getLLVMName() + " " + selfValue +
+                    ", " + structType.getLLVMName() + "* " + addr);
+            selfValue = addr;
+        }
 
         List<String> llvmArgs = new ArrayList<>();
         List<TypeRef> argTypes = new ArrayList<>();
 
-        llvmArgs.add(selfVar.valueReg());
+        llvmArgs.add(selfValue);
         argTypes.add(new PointerType(structType));
 
         for (ValueNode p : params) {

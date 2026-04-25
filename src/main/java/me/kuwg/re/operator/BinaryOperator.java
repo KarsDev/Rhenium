@@ -3,6 +3,8 @@ package me.kuwg.re.operator;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.ptr.NullType;
+import me.kuwg.re.type.ptr.PointerType;
 
 public abstract class BinaryOperator {
     private final int precedence;
@@ -39,6 +41,12 @@ public abstract class BinaryOperator {
     }
 
     public static TypeRef promoteNumeric(TypeRef a, TypeRef b) {
+        if (a instanceof AnyPointerType || b instanceof AnyPointerType) return null;
+        if (a instanceof NullType) if (b instanceof PointerType) return b;
+        if (b instanceof NullType) if (a instanceof PointerType) return a;
+
+        if (a instanceof PointerType && b instanceof PointerType) return a;
+
         if (a instanceof DoubleBuiltinType || b instanceof DoubleBuiltinType) return BuiltinTypes.DOUBLE.getType();
         if (a instanceof FloatBuiltinType || b instanceof FloatBuiltinType) return BuiltinTypes.FLOAT.getType();
         if (a instanceof LongBuiltinType || b instanceof LongBuiltinType) return BuiltinTypes.LONG.getType();
@@ -46,7 +54,8 @@ public abstract class BinaryOperator {
         if (a instanceof ShortBuiltinType || b instanceof ShortBuiltinType) return BuiltinTypes.SHORT.getType();
         if (a instanceof ByteBuiltinType || b instanceof ByteBuiltinType) return BuiltinTypes.BYTE.getType();
         if (a instanceof CharBuiltinType || b instanceof CharBuiltinType) return BuiltinTypes.BYTE.getType();
-        if (a instanceof BoolBuiltinType || b instanceof BoolBuiltinType) return BuiltinTypes.BOOL.getType();
+        if (a instanceof BoolBuiltinType && b instanceof BoolBuiltinType) return BuiltinTypes.BOOL.getType();
+
         return null;
     }
 
@@ -74,16 +83,4 @@ public abstract class BinaryOperator {
 
         return newReg;
     }
-
-    //        "!", "~" -> 13
-    //        "<<", ">>", ">>>" -> 10
-    //        "is" -> 9
-    //        "&" -> 7
-    //        "^" -> 6
-    //        "|" -> 5
-    //        "and" -> 4
-    //        "or" -> 3
-    //        "?:" -> 2
-    //        "=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>=", ">>>=" -> 1
-    //        -> -1
 }

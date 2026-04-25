@@ -36,7 +36,7 @@ public class ArrayCreationNode extends ValueNode {
             }
         }
 
-        if (sizeLong <= 0) {
+        if (sizeLong < 0) {
             return new RVariableTypeError("positive int or long", size.getType().getName(), line).raise();
         }
 

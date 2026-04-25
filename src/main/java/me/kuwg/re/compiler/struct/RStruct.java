@@ -3,14 +3,14 @@ package me.kuwg.re.compiler.struct;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.struct.GenStructType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class RStruct {
+public class RStruct {
     private final boolean builtin;
+    private final List<RFunction> constructors = new ArrayList<>();
     private final TypeRef type;
     private final List<RStructField> fields;
     private final List<RFunction> functions = new ArrayList<>();
@@ -29,16 +29,16 @@ public abstract class RStruct {
         return type;
     }
 
+    public List<RFunction> constructors() {
+        return constructors;
+    }
+
     public List<RStructField> fields() {
         return fields;
     }
 
     public List<RFunction> functions() {
         return functions;
-    }
-
-    public boolean isGeneric() {
-        return type instanceof GenStructType;
     }
 
     @Override

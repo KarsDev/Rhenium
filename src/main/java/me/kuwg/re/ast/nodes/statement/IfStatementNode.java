@@ -81,7 +81,19 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-
+        sb.append(indent).append("If Statement:").append(NEWLINE)
+                .append(indent).append(TAB).append("Condition: ").append(NEWLINE);
+        condition.write(sb, indent + TAB + TAB);
+        sb.append(indent).append(TAB).append("Block: ").append(NEWLINE);
+        block.write(sb, indent + TAB + TAB);
+        if (elseIfNode != null) {
+            sb.append(indent).append(TAB).append("Else If: ").append(NEWLINE);
+            elseIfNode.write(sb, indent + TAB + TAB);
+        }
+        if (elseNode != null) {
+            sb.append(indent).append(TAB).append("Else: ").append(NEWLINE);
+            elseNode.write(sb, indent + TAB + TAB);
+        }
     }
 
     @Override

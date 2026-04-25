@@ -4,6 +4,7 @@ import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.error.errors.deref.RNotAddressableError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.ptr.PointerType;
@@ -23,9 +24,13 @@ public class ReferenceNode extends ValueNode {
             return new RVariableNotFoundError(value.getCompleteName(), line).raise();
         }
 
+        if (var.addrReg() == null) {
+            new RNotAddressableError("Cannot take reference of non-addressable value: " + value.getCompleteName(), line);
+        }
+
         cctx.emit(" ; Pointer address of");
         setType(new PointerType(var.type()));
-        return var.valueReg();
+        return var.addrReg();
     }
 
     @Override

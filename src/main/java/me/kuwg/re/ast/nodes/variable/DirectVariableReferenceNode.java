@@ -1,12 +1,10 @@
-
 package me.kuwg.re.ast.nodes.variable;
 
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
-import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.struct.StructType;
 
 public class DirectVariableReferenceNode extends VariableReference {
     private final String name;
@@ -18,25 +16,28 @@ public class DirectVariableReferenceNode extends VariableReference {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        RVariable variable = cctx.getVariable(name);
+        RVariable var = cctx.getVariable(name);
 
-        if (variable == null) {
+        if (var == null) {
             return new RVariableNotFoundError(name, line).raise();
         }
 
-        TypeRef type = variable.type();
-        setType(type);
+        setType(var.type());
 
-        String resultReg;
-
-        if (type instanceof ArrayType) {
-            resultReg = variable.valueReg();
-        } else {
-            resultReg = cctx.nextRegister();
-            cctx.emit(resultReg + " = load " + type.getLLVMName() + ", " + type.getLLVMName() + "* " + variable.valueReg() + " ; load variable " + name);
+        if (var.addrReg() != null) {
+            String elemLLVM = var.type().getLLVMName();
+            String tmp = cctx.nextRegister();
+            if (var.type() instanceof StructType) {
+                cctx.emit(tmp + " = load " + elemLLVM + "*, " + elemLLVM + "** " + var.addrReg());
+            } else {
+                cctx.emit(tmp + " = load " + elemLLVM + ", " + elemLLVM + "* " + var.addrReg());
+            }
+            return tmp;
         }
 
-        return resultReg;
+
+
+        return var.valueReg();
     }
 
     @Override
@@ -51,7 +52,9 @@ public class DirectVariableReferenceNode extends VariableReference {
 
     @Override
     public RVariable getVariable(final CompilationContext cctx) {
-        return cctx.getVariable(name);
+        var v = cctx.getVariable(name);
+        if (v != null) setType(v.type());
+        return v;
     }
 
     @Override
@@ -66,8 +69,6 @@ public class DirectVariableReferenceNode extends VariableReference {
 
     @Override
     public String toString() {
-        return "DirectVariableReferenceNode{" +
-                "name='" + name + '\'' +
-                '}';
+        return "DirectVariableReferenceNode{" + "name='" + name + '\'' + '}';
     }
 }

@@ -78,10 +78,6 @@ public class NumberNode extends ConstantNode {
                 && (literal.contains(".") || literal.contains("e"));
     }
 
-    public Number getValue() {
-        return value;
-    }
-
     @Override
     public String compileToConstant(final CompilationContext cctx) {
         return formatLLVMValue();

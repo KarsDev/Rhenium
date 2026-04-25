@@ -16,6 +16,7 @@ import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,17 +75,20 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             types.add(i, p.type());
         }
 
+        String funcName = main ? "main" : llvmName;
+
         StringBuilder func = new StringBuilder();
         func.append("define ").append(returnType.getLLVMName()).append(" @")
-                .append(main ? "main" : llvmName).append("(");
+                .append(funcName).append("(");
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
+
             func.append(param.type().getLLVMName()).append(" %").append(param.name());
             if (i < parameters.size() - 1) func.append(", ");
         }
 
-        func.append(") { ; Function declaration\n");
+        func.append(") {\n");
         func.append("entry:\n");
 
         cctx.pushIndent();
@@ -92,11 +96,32 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         cctx.pushFunctionBody();
 
         for (FunctionParameter param : parameters) {
+            if (param.type() instanceof PointerType) {
+                RVariable paramVar = new RVariable(
+                        param.name(),
+                        false,
+                        false,
+                        param.type(),
+                        null,
+                        "%" + param.name()
+                );
+                cctx.addVariable(paramVar);
+                continue;
+            }
+
             String paramPtr = "%" + param.name() + ".addr";
-            cctx.emit(paramPtr + " = alloca " + param.type().getLLVMName() + " ; allocate parameter");
+            cctx.emit(paramPtr + " = alloca " + param.type().getLLVMName());
             cctx.emit("store " + param.type().getLLVMName() + " %" + param.name() + ", "
-                    + param.type().getLLVMName() + "* " + paramPtr + " ; store parameter value");
-            RVariable paramVar = new RVariable(param.name(), param.mutable(), param.type(), paramPtr);
+                    + param.type().getLLVMName() + "* " + paramPtr);
+
+            RVariable paramVar = new RVariable(
+                    param.name(),
+                    param.mutable(),
+                    true,
+                    param.type(),
+                    paramPtr,
+                    "%" + param.name()
+            );
             cctx.addVariable(paramVar);
         }
 

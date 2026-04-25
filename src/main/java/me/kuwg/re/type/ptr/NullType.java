@@ -30,7 +30,7 @@ public final class NullType implements TypeRef {
 
     @Override
     public String getLLVMName() {
-        return "null";
+        return "i8*";
     }
 
     @Override

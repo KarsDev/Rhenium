@@ -1,12 +1,14 @@
 package me.kuwg.re.ast.nodes.sizeof;
 
+import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
+import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
-public class SizeofNode extends ValueNode {
+public class SizeofNode extends ConstantNode {
     private final TypeRef type;
     private final ValueNode value;
 
@@ -20,6 +22,12 @@ public class SizeofNode extends ValueNode {
         super(line, BuiltinTypes.INT.getType());
         this.type = type;
         this.value = null;
+    }
+
+    @Override
+    public String compileToConstant(final CompilationContext cctx) {
+        if (value != null) return new RVariableTypeError("constant", "runtime", line).raise();
+        return Long.toString(type.getSize());
     }
 
     @Override
