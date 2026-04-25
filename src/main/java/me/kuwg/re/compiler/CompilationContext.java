@@ -252,9 +252,13 @@ final class CompilationContext {
             writer.write(finalOutput.toString());
         }
     }
+    public Map<String, RVariable> getVariables() {
+        return variables;
+    }
 
     private String getCompilationCommand(String name, List<String> clangArgs) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
+
         final String extraClangArgs =
                 (clangArgs == null || clangArgs.isEmpty())
                         ? ""
@@ -275,7 +279,7 @@ final class CompilationContext {
             String src = p.toString();
             String bc = src + ".bc";
 
-            cmd.append("clang++ -O2 -c -emit-llvm -std=c++17")
+            cmd.append("clang++ -O3 -march=native -mtune=native -flto -c -emit-llvm -std=c++17")
                     .append(extraClangArgs)
                     .append(" ")
                     .append(quote.apply(src))
@@ -299,38 +303,43 @@ final class CompilationContext {
             }
 
             cmd.append(and);
+        } else {
+            linked = name;
+        }
 
-            cmd.append("clang++")
-                    .append(extraClangArgs)
-                    .append(" ")
-                    .append(quote.apply(linked))
-                    .append(" -o ")
-                    .append(quote.apply(finalExe))
-                    .append(and);
+        String optimized = exeBase + ".opt.bc";
 
-            cmd.append(deleteCmd).append(quote.apply(linked)).append(" ");
+        cmd.append("opt  -passes=\"default<O3>\" ")
+                .append(quote.apply(linked))
+                .append(" -o ")
+                .append(quote.apply(optimized))
+                .append(and);
+
+        cmd.append("clang++ ")
+                .append("-O3 ")
+                .append("-march=native ")
+                .append("-mtune=native ")
+                .append("-funroll-loops ")
+                .append("-fomit-frame-pointer ")
+                .append("-flto -fuse-ld=lld ")
+                .append("-fno-exceptions ")
+                .append("-fno-rtti ")
+                .append(extraClangArgs)
+                .append(" ")
+                .append(quote.apply(optimized))
+                .append(" -o ")
+                .append(quote.apply(finalExe))
+                .append(and);
+
+        cmd.append(deleteCmd).append(quote.apply(optimized)).append(" ");
+
+        if (!bcFiles.isEmpty()) {
+            cmd.append(quote.apply(linked)).append(" ");
             for (String bc : bcFiles) {
                 cmd.append(quote.apply(bc)).append(" ");
             }
-
-        } else {
-            // Direct compile
-            cmd.append("clang++")
-                    .append(extraClangArgs)
-                    .append(" ")
-                    .append(quote.apply(name))
-                    .append(" -o ")
-                    .append(quote.apply(finalExe))
-                    .append(and);
-
-            String bc = name.replace(".ll", ".bc");
-            cmd.append(deleteCmd).append(quote.apply(bc));
         }
 
         return cmd.toString().trim();
-    }
-
-    public Map<String, RVariable> getVariables() {
-        return variables;
     }
 }
