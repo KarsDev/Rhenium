@@ -424,11 +424,19 @@ println(@strPtr)
 */
 
 // Declare a generic function with type 'T'
-// T can be any type, 
+// T can be any type
 generic func swap<T>(a: mut T, b: mut T):
     tmp = @a
     @a = @b
     @b = tmp
+
+// Declare a generic struct with type 'T'
+// T can be any type just like in functions
+generic struct Box<T>:
+    content: T
+
+// Now just initialize the Box with the generic type <..>
+b = init Box<int>(12)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
