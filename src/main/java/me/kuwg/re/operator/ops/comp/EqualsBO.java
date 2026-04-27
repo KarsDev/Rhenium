@@ -7,6 +7,9 @@ import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.*;
 import me.kuwg.re.type.ptr.NullType;
+import me.kuwg.re.type.struct.StructType;
+
+import java.util.Objects;
 
 public class EqualsBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new EqualsBO();
@@ -50,6 +53,70 @@ public class EqualsBO extends BinaryOperator {
                     resReg + " = icmp eq ptr null, " + c.rightReg()
             );
             return res(resReg, BuiltinTypes.BOOL.getType());
+        }
+
+        if (leftType instanceof StructType lt && rightType instanceof StructType rt) {
+            if (!lt.name().equals(rt.name())) {
+                return res("false", BuiltinTypes.BOOL.getType());
+            }
+
+            var structDef = c.cctx().getStruct(lt.name());
+            if (structDef == null) {
+                return new RUnsupportedBinaryExpressionError(
+                        leftType.getName(), getSymbol(), rightType.getName(), c.line()
+                ).raise();
+            }
+
+            String result = null;
+
+            for (int i = 0; i < structDef.fields().size(); i++) {
+                var field = structDef.fields().get(i);
+                TypeRef fieldType = field.type();
+
+                String leftFieldPtr = c.cctx().nextRegister();
+                String rightFieldPtr = c.cctx().nextRegister();
+
+                c.cctx().emit(leftFieldPtr + " = getelementptr "
+                        + lt.getLLVMName() + ", "
+                        + lt.getLLVMName() + "* " + c.leftReg()
+                        + ", i32 0, i32 " + i);
+
+                c.cctx().emit(rightFieldPtr + " = getelementptr "
+                        + rt.getLLVMName() + ", "
+                        + rt.getLLVMName() + "* " + c.rightReg()
+                        + ", i32 0, i32 " + i);
+
+                String leftVal = c.cctx().nextRegister();
+                String rightVal = c.cctx().nextRegister();
+
+                c.cctx().emit(leftVal + " = load " + fieldType.getLLVMName()
+                        + ", " + fieldType.getLLVMName() + "* " + leftFieldPtr);
+
+                c.cctx().emit(rightVal + " = load " + fieldType.getLLVMName()
+                        + ", " + fieldType.getLLVMName() + "* " + rightFieldPtr);
+
+                String fieldEq = c.cctx().nextRegister();
+
+                if (fieldType instanceof FloatBuiltinType || fieldType instanceof DoubleBuiltinType) {
+                    c.cctx().emit(fieldEq + " = fcmp oeq "
+                            + fieldType.getLLVMName() + " "
+                            + leftVal + ", " + rightVal);
+                } else {
+                    c.cctx().emit(fieldEq + " = icmp eq "
+                            + fieldType.getLLVMName() + " "
+                            + leftVal + ", " + rightVal);
+                }
+
+                if (result == null) {
+                    result = fieldEq;
+                } else {
+                    String andReg = c.cctx().nextRegister();
+                    c.cctx().emit(andReg + " = and i1 " + result + ", " + fieldEq);
+                    result = andReg;
+                }
+            }
+
+            return res(Objects.requireNonNullElse(result, "true"), BuiltinTypes.BOOL.getType());
         }
 
         TypeRef resultType = promoteNumeric(leftType, rightType);
