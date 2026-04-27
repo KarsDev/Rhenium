@@ -1,6 +1,8 @@
 package me.kuwg.re.compiler;
 
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.struct.RDefaultStruct;
+import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.compiler.variable.RVariable;
@@ -9,6 +11,7 @@ import me.kuwg.re.error.errors.function.RMainFunctionError;
 import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+import me.kuwg.re.type.struct.GenStructType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -32,7 +35,7 @@ final class CompilationContext {
     private final List<String> includedModules = new ArrayList<>();
     private final Stack<LoopContext> loopStack = new Stack<>();
     private final Stack<Map<String, RVariable>> scopeStack = new Stack<>();
-    private final Map<String, RStruct> structs = new HashMap<>();
+    private final Map<String, RDefaultStruct> structs = new HashMap<>();
     private final Stack<String> catchScopeStack = new Stack<>();
     private final List<Path> nativeCPPModules = new ArrayList<>();
     private final Set<String> declaredIR = new LinkedHashSet<>();
@@ -61,7 +64,7 @@ final class CompilationContext {
     }
 
     public void emit(String s) {
-        if (s.contains("store i32* %a_0097_3, i32** %a_ptra_ptr_3024_4")) throw new RuntimeException();
+        if (s.contains("store %struct.Box_int %6")) throw new RuntimeException();
         if (s.strip().matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
         Objects.requireNonNull(codeStack.peek()).append(TAB.repeat(indentLevel)).append(s).append('\n');
     }
@@ -127,10 +130,14 @@ final class CompilationContext {
     }
 
     public void addStruct(boolean builtin, String name, TypeRef type, List<RStructField> fields) {
-        structs.put(name, new RStruct(builtin, type, fields));
+        if (type instanceof GenStructType) {
+            structs.put(name, new RGenStruct(type, fields));
+        } else {
+            structs.put(name, new RStruct(builtin, type, fields));
+        }
     }
 
-    public RStruct getStruct(String name) {
+    public RDefaultStruct getStruct(String name) {
         return structs.get(name);
     }
 

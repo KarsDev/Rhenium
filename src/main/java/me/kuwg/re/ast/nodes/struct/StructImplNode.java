@@ -8,7 +8,7 @@ import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RConstructor;
-import me.kuwg.re.compiler.struct.RStruct;
+import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.type.TypeRef;
@@ -41,7 +41,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        RStruct cctxStruct = cctx.getStruct(struct.name());
+        RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
 
 
         if (cctxStruct == null) {
@@ -69,7 +69,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
     }
 
     private void compileConstructor(RConstructor constructor, CompilationContext cctx) {
-        RStruct structCtx = cctx.getStruct(struct.name());
+        RDefaultStruct structCtx = cctx.getStruct(struct.name());
         if (structCtx == null) {
             new RStructUndefinedError(struct.name(), line).raise();
             return;
@@ -87,7 +87,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         structCtx.constructors().add(compiledCtor);
     }
 
-    private List<FunctionParameter> addSelfParam(RStruct struct, List<FunctionParameter> original) {
+    private List<FunctionParameter> addSelfParam(RDefaultStruct struct, List<FunctionParameter> original) {
         List<FunctionParameter> newParams = new ArrayList<>(original.size() + 1);
         newParams.add(new FunctionParameter("self", false, new PointerType(struct.type())));
         newParams.addAll(original);
@@ -98,7 +98,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         return params.stream().map(FunctionParameter::type).toList();
     }
 
-    private RFunction compileFunction(CompilationContext cctx, RStruct struct, FunctionDeclarationNode original) {
+    private RFunction compileFunction(CompilationContext cctx, RDefaultStruct struct, FunctionDeclarationNode original) {
 
         String mangledName = generateName(struct.type().getName(), original.getName());
 
@@ -111,7 +111,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         return cctx.getFunction(mangledName, extractTypes(newParams));
     }
 
-    private RFunction compileBuiltin(CompilationContext cctx, RStruct struct, BuiltinFunctionDeclarationNode original) {
+    private RFunction compileBuiltin(CompilationContext cctx, RDefaultStruct struct, BuiltinFunctionDeclarationNode original) {
         String mangledName = generateName(struct.type().getName(), original.getName());
         List<FunctionParameter> newParams = addSelfParam(struct, original.getParameters());
 

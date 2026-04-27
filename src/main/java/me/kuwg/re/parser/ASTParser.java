@@ -36,6 +36,8 @@ import me.kuwg.re.ast.nodes.sizeof.SizeofNode;
 import me.kuwg.re.ast.nodes.statement.IfStatementNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.nodes.struct.*;
+import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
+import me.kuwg.re.ast.nodes.struct.gen.GenStructInitNode;
 import me.kuwg.re.ast.nodes.ternary.TernaryOperatorNode;
 import me.kuwg.re.ast.nodes.type.TypeofNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
@@ -728,6 +730,10 @@ public class ASTParser {
 
         String name = identifier();
 
+        if (matchAndConsume(OPERATOR, "<")) {
+            return parseGenStructInit(name);
+        }
+
         if (!match(DIVIDER, "(")) {
             return new RParserError("Expected '(' for struct initialization", file, line()).raise();
         }
@@ -811,7 +817,7 @@ public class ASTParser {
                 }
                 case "struct" -> {
                     type = typeMap.get(typeName);
-                    if (!(type instanceof StructType))
+                    if (!(type instanceof StructType || type instanceof GenStructType))
                         return new RParserError("Expected struct type", file, line()).raise();
                     break LABEL_TYPE;
                 }
@@ -1201,10 +1207,16 @@ public class ASTParser {
     private @SubFunc ASTNode parseGenericKeyword() {
         int line = line();
 
-        if (!matchAndConsume(KEYWORD, "func")) {
-            return new RParserError("Expected 'func' for generic function declaration", file, line).raise();
+        if (matchAndConsume(KEYWORD, "func")) {
+            return parseGenericFunc(line);
+        } else if (matchAndConsume(KEYWORD, "struct")) {
+            return parseGenericStruct(line);
         }
 
+        return new RParserError("Expected 'func' or 'struct' for generic function declaration", file, line).raise();
+    }
+
+    private @SubFunc ASTNode parseGenericFunc(int line) {
         String name = identifier();
         List<String> typeParameters = new ArrayList<>();
 
@@ -1234,6 +1246,73 @@ public class ASTParser {
         return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block);
     }
 
+    private @SubFunc ASTNode parseGenericStruct(int line) {
+        String name = identifier();
+
+        List<String> typeParameters = new ArrayList<>();
+
+        if (!matchAndConsume(OPERATOR, "<")) {
+            return new RParserError("Expected '<' for generic struct declaration", file, line).raise();
+        }
+
+        if (!match(OPERATOR, ">")) {
+            do {
+                typeParameters.add(identifier());
+            } while (matchAndConsume(OPERATOR, ","));
+        }
+
+        if (!matchAndConsume(OPERATOR, ">")) {
+            return new RParserError("Expected '>' for generic struct declaration", file, line).raise();
+        }
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for struct declaration", file, line).raise();
+        }
+
+        if (!match(NEWLINE)) {
+            return new RParserError("Expected newline after struct declaration", file, line).raise();
+        }
+        consume();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indent for struct field declaration", file, line).raise();
+        }
+        consume();
+
+        List<RStructField> fields = new ArrayList<>();
+        List<TypeRef> fieldTypes = new ArrayList<>();
+
+        while (!match(EOF)) {
+            removeNewlines();
+
+            if (match(DEDENT)) {
+                consume();
+                break;
+            }
+
+            String fieldName = identifier();
+
+            if (!matchAndConsume(OPERATOR, ":")) {
+                return new RParserError("Expected ':' for struct field declaration", file, line).raise();
+            }
+
+            if (match(KEYWORD, "mut")) {
+                return new RParserError("You can't declare fields as mutable", file, line).raise();
+            }
+
+            TypeRef fieldType = parseType(true);
+
+            fields.add(new RStructField(fieldName, fieldType));
+            fieldTypes.add(fieldType);
+        }
+
+        GenStructType type = new GenStructType(typeParameters, name, fieldTypes);
+
+        typeMap.put(name, type);
+
+        return new GenStructDeclarationNode(line, name, type, fields);
+    }
+
     private @SubFunc ValueNode parseArrayCreation(TypeRef type) {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
@@ -1255,6 +1334,47 @@ public class ASTParser {
         node = parseSubExpr(line, false, null, node);
 
         return node;
+    }
+
+    private @SubFunc ValueNode parseGenStructInit(String name) {
+        int line = line();
+
+        List<TypeRef> genericTypes = new ArrayList<>();
+        if (!matchAndConsume(OPERATOR, ">")) {
+            do {
+                genericTypes.add(parseType(false));
+            } while (matchAndConsume(DIVIDER, ","));
+            if (!matchAndConsume(OPERATOR, ">")) {
+                return new RParserError("Expected '>' for generic struct initialization", file, line).raise();
+            }
+        }
+
+        if (!matchAndConsume(DIVIDER, "(")) {
+            return new RParserError("Expected '(' for parameters call", file, line()).raise();
+        }
+
+        if (matchAndConsume(DIVIDER, ")")) {
+            return new GenStructInitNode(line, name, genericTypes, List.of());
+        }
+
+        List<RParamValue> args = new ArrayList<>();
+
+        do {
+            String paramName;
+            if (match(IDENTIFIER) && next().matches(OPERATOR, "=")) {
+                paramName = identifier();
+                consume();
+            } else {
+                paramName = null;
+            }
+            args.add(new RParamValue(paramName, parseValue()));
+        } while (matchAndConsume(DIVIDER, ","));
+
+        if (!matchAndConsume(DIVIDER, ")")) {
+            return new RParserError("Expected ')' for parameters call", file, line()).raise();
+        }
+
+        return new GenStructInitNode(line, name, genericTypes, args);
     }
 
     /*

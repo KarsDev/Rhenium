@@ -17,7 +17,7 @@ public abstract class ValueNode extends ASTNode {
         this(line, null);
     }
 
-    protected void setType(final TypeRef type) {
+    public void setType(final TypeRef type) {
         assert this.type == null;
         this.type = type;
     }

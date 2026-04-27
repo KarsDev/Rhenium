@@ -2,7 +2,7 @@ package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.compiler.struct.RStruct;
+import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
@@ -33,7 +33,7 @@ public class StructFieldAccessNode extends VariableReference {
             return new RVariableTypeError("struct", structType.getName(), line).raise();
         }
 
-        RStruct structDef = cctx.getStruct(st.name());
+        RDefaultStruct structDef = cctx.getStruct(st.name());
         if (structDef == null) {
             return new RStructUndefinedError(st.name(), line).raise();
         }
@@ -88,7 +88,7 @@ public class StructFieldAccessNode extends VariableReference {
             return new RVariableTypeError("struct", structType.getName(), line).raise();
         }
 
-        RStruct structDef = cctx.getStruct(st.name());
+        RDefaultStruct structDef = cctx.getStruct(st.name());
         if (structDef == null) {
             return new RStructUndefinedError(st.name(), line).raise();
         }
