@@ -33,12 +33,41 @@ public class StructFunctionCallNode extends ValueNode {
         RFunction fn;
         String mangled;
 
-        String selfValue = struct.compileAndGet(cctx);
-        TypeRef selfType = struct.getType();
+        String selfValue;
+        TypeRef selfType;
 
-        if (!(selfType instanceof StructType structType)) {
-            return new RVariableTypeError("struct", selfType.getName(), line).raise();
+        if (struct instanceof VariableReference vr) {
+            var var = vr.getVariable(cctx);
+
+            if (var == null) {
+                return new RVariableTypeError("struct", "null", line).raise();
+            }
+
+            selfType = var.type();
+
+            if (!(selfType instanceof StructType)) {
+                return new RVariableTypeError("struct", selfType.getName(), line).raise();
+            }
+
+            selfValue = var.addrReg();
+
+        } else {
+            String tmpVal = struct.compileAndGet(cctx);
+            selfType = struct.getType();
+
+            if (!(selfType instanceof StructType structType)) {
+                return new RVariableTypeError("struct", selfType.getName(), line).raise();
+            }
+
+            String addr = cctx.nextRegister();
+            cctx.emit(addr + " = alloca " + structType.getLLVMName());
+            cctx.emit("store " + structType.getLLVMName() + " " + tmpVal +
+                    ", " + structType.getLLVMName() + "* " + addr);
+
+            selfValue = addr;
         }
+
+        StructType structType = (StructType) selfType;
 
         if (!(struct instanceof VariableReference)) {
             String addr = cctx.nextRegister();

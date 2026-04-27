@@ -70,13 +70,15 @@ public class VariableDeclarationNode extends ValueNode {
             valueReg = castNode.compileAndGet(cctx);
         }
 
-        String targetAddr = oldVar.addrReg() != null ? oldVar.addrReg() : oldVar.valueReg();
-
-        if (varType instanceof StructType) {
-            String structPtrType = varType.getLLVMName() + "*";
-            cctx.emit("store " + structPtrType + " " + valueReg + ", " + structPtrType + "* " + targetAddr);
-            return valueReg;
+        if (varType instanceof StructType && value instanceof VariableReference) {
+            String loaded = cctx.nextRegister();
+            cctx.emit(loaded + " = load "
+                    + varType.getLLVMName() + ", "
+                    + varType.getLLVMName() + "* "
+                    + valueReg);
+            valueReg = loaded;
         }
+        String targetAddr = oldVar.addrReg() != null ? oldVar.addrReg() : oldVar.valueReg();
 
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
         cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + varType.getLLVMName() + "* " + targetAddr + " ; Reassign variable " + variable.getCompleteName());
@@ -113,18 +115,14 @@ public class VariableDeclarationNode extends ValueNode {
             return valueReg;
         }
 
-        if (varType instanceof StructType) {
-            String structPtrType = varType.getLLVMName() + "*";
-            cctx.emit(addrReg + " = alloca " + structPtrType + " ; allocate struct reference");
-            cctx.emit("store " + structPtrType + " " + valueReg + ", " + structPtrType + "* " + addrReg);
-            String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
-            cctx.emit(loaded + " = load " + structPtrType + ", " + structPtrType + "* " + addrReg);
-
-            RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded);
-            cctx.addVariable(v);
-            return valueReg;
+        if (varType instanceof StructType && value instanceof VariableReference) {
+            String loaded = cctx.nextRegister();
+            cctx.emit(loaded + " = load "
+                    + varType.getLLVMName() + ", "
+                    + varType.getLLVMName() + "* "
+                    + valueReg);
+            valueReg = loaded;
         }
-
         cctx.emit(addrReg + " = alloca " + varType.getLLVMName());
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
         cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + varType.getLLVMName() + "* " + addrReg);

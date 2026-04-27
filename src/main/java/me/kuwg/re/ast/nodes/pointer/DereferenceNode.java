@@ -32,7 +32,6 @@ public class DereferenceNode extends VariableReference {
 
         String ptrValueReg;
 
-        // Load the pointer itself from a stack slot if needed
         if (var.addrReg() != null) {
             ptrValueReg = cctx.nextRegister();
             cctx.emit(ptrValueReg + " = load "
@@ -43,14 +42,10 @@ public class DereferenceNode extends VariableReference {
             ptrValueReg = var.valueReg();
         }
 
-        // CRITICAL FIX:
-        // If this is a pointer-to-struct, DO NOT load the struct.
-        // Method calls expect the pointer, not the value.
         if (ptr.inner() instanceof StructType) {
             return ptrValueReg;
         }
 
-        // Normal primitive dereference
         String destReg = cctx.nextRegister();
         cctx.emit(destReg + " = load "
                 + ptr.inner().getLLVMName() + ", "
@@ -103,6 +98,8 @@ public class DereferenceNode extends VariableReference {
                     + ptr.inner().getLLVMName() + "* "
                     + ptrValueReg);
         }
+
+        setType(ptr.inner());
 
         return new RVariable(
                 value.getSimpleName(),

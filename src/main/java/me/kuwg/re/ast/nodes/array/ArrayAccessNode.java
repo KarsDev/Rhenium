@@ -87,17 +87,11 @@ public class ArrayAccessNode extends VariableReference {
             if (arrVar == null) {
                 return new RVariableTypeError("array or pointer", "null", line).raise();
             }
-            if (arrVar.addrReg() != null) {
-                String loaded = cctx.nextRegister();
-                cctx.emit(loaded + " = load "
-                        + arrVar.type().getLLVMName() + ", "
-                        + arrVar.type().getLLVMName() + "* "
-                        + arrVar.addrReg());
-
-                arrayAddr = loaded;
-            } else {
-                arrayAddr = arrVar.valueReg();
+            if (arrVar.addrReg() == null) {
+                return new RVariableTypeError("addressable array", "temporary value", line).raise();
             }
+
+            arrayAddr = arrVar.addrReg();
         } else {
             arrayAddr = array.compileAndGet(cctx);
         }

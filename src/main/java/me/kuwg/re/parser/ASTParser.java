@@ -167,7 +167,7 @@ public class ASTParser {
             if (op == null) break;
 
             if (op.getPrecedence() < minPrecedence) break;
-            consume(); // consume operator token
+            consume();
             ValueNode right = parseExpression(op.getPrecedence() + 1);
 
             left = new BinaryExpressionNode(line, left, op, right);

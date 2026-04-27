@@ -56,8 +56,11 @@ public final class StructCompiler {
 
         cctx.emit("call void @" + constructor.llvmName + "(" + String.join(", ", args) + ")");
 
+        String loaded = cctx.nextRegister();
+        cctx.emit(loaded + " = load " + struct.type().getLLVMName() + ", " + struct.type().getLLVMName() + "* " + structPtr);
+
         node.setType(struct.type());
-        return structPtr;
+        return loaded;
     }
 
     private static String compileNoConstructor(int line, RDefaultStruct struct, List<String> valueRegs, List<RParamValue> values, CompilationContext cctx, ValueNode node) {
@@ -85,7 +88,10 @@ public final class StructCompiler {
             cctx.emit("store " + field.type().getLLVMName() + " " + valueReg + ", " + field.type().getLLVMName() + "* " + fieldPtr);
         }
 
+        String loaded = cctx.nextRegister();
+        cctx.emit(loaded + " = load " + struct.type().getLLVMName() + ", " + struct.type().getLLVMName() + "* " + structPtr);
+
         node.setType(struct.type());
-        return structPtr;
+        return loaded;
     }
 }

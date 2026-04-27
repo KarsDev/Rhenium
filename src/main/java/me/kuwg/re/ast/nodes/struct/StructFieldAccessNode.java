@@ -54,7 +54,7 @@ public class StructFieldAccessNode extends VariableReference {
             return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
         }
 
-        String structPtr = structVar.valueReg();
+        String structPtr = structVar.addrReg();
 
         String fieldPtr = cctx.nextRegister();
         cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);
@@ -109,7 +109,7 @@ public class StructFieldAccessNode extends VariableReference {
             return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
         }
 
-        String structPtr = structVar.valueReg();
+        String structPtr = structVar.addrReg();
 
         String fieldPtr = cctx.nextRegister();
         cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);

@@ -1,5 +1,6 @@
 package me.kuwg.re.ast.nodes.array;
 
+import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.cast.CastManager;
 import me.kuwg.re.compiler.CompilationContext;
@@ -24,7 +25,19 @@ public class ArraySetNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String arrayReg = array.compileAndGet(cctx);
+        String arrayReg;
+
+        if (array instanceof VariableReference vr) {
+            var arrVar = vr.getVariable(cctx);
+            if (arrVar == null || arrVar.addrReg() == null) {
+                return new RVariableTypeError("addressable array", "temporary value", line).raise();
+            }
+
+            arrayReg = arrVar.addrReg();
+        } else {
+            arrayReg = array.compileAndGet(cctx);
+        }
+
         String valueReg = value.compileAndGet(cctx);
         String indexReg = index.compileAndGet(cctx);
 

@@ -1,4 +1,3 @@
-using io
 using string
 
 
@@ -31,7 +30,7 @@ func main() -> int:
     while (x > 0):
         @y = @y - 1
         x = x - 1
-        if x == 5:
+        if (x == 5):
             break
 
     arr_numbers[0] = 42
