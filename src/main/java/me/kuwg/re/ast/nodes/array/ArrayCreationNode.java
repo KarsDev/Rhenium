@@ -81,7 +81,7 @@ public class ArrayCreationNode extends ValueNode {
         String arrReg = cctx.nextRegister();
         cctx.emit(arrReg + " = bitcast i8* " + rawPtr + " to " + llvmElemType + "*");
 
-        setType(new PointerType(new ArrayType(ArrayType.UNKNOWN_SIZE, elementType)));
+        setType(new PointerType(elementType));
 
         return arrReg;
     }

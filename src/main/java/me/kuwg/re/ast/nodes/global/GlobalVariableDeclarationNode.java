@@ -35,19 +35,21 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
             new RVariableTypeError(value.getType().getName(), type.getName(), line).raise();
         }
 
-        String llvmDecl = "@" + name + " = global " + varType.getLLVMName() + " " + initialValue;
+        String llvmDecl;
+
+        if (varType instanceof StructType) {
+            llvmDecl = "@" + name + " = global " + varType.getLLVMName() + " zeroinitializer";
+        } else {
+            llvmDecl = "@" + name + " = global " + varType.getLLVMName() + " " + initialValue;
+        }
+
         cctx.declare(llvmDecl + " ; Global variable " + name);
 
         String valueReg;
 
-        if (varType instanceof StructType) {
-            valueReg = "@" + name;
-        } else {
-            valueReg = "%" + name + "_global_load";
-            cctx.emit(valueReg + " = load "
-                    + varType.getLLVMName() + ", "
-                    + varType.getLLVMName() + "* @" + name);
-        }
+
+        valueReg = "@" + name;
+
 
         RVariable globalVar = new RVariable(
                 name,

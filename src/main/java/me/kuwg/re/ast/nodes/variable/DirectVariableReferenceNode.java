@@ -28,7 +28,7 @@ public class DirectVariableReferenceNode extends VariableReference {
             String elemLLVM = var.type().getLLVMName();
             String tmp = cctx.nextRegister();
             if (var.type() instanceof StructType) {
-                cctx.emit(tmp + " = load " + elemLLVM + "*, " + elemLLVM + "** " + var.addrReg());
+                return var.addrReg();
             } else {
                 cctx.emit(tmp + " = load " + elemLLVM + ", " + elemLLVM + "* " + var.addrReg());
             }

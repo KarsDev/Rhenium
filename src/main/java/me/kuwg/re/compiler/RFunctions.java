@@ -3,6 +3,9 @@ package me.kuwg.re.compiler;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.generic.GenericType;
+import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.AppliedGenStructType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,33 +31,28 @@ final class RFunctions {
         RFunction compatible = null;
 
         for (final RFunction fn : functions) {
-            if (!fn.name().equals(name) || fn.parameters().size() != parameters.size()) continue;
+            if (!fn.name().equals(name) || fn.parameters().size() != parameters.size()) {
+                continue;
+            }
 
             boolean exact = true;
             boolean isCompatible = true;
 
-            var bindings = new HashMap<String, TypeRef>();
+            Map<String, TypeRef> bindings = new HashMap<>();
 
             for (int i = 0; i < parameters.size(); i++) {
-                var fnParamType = fn.parameters().get(i).type();
-                var callParamType = parameters.get(i);
+                TypeRef fnParamType = fn.parameters().get(i).type();
+                TypeRef callParamType = parameters.get(i);
 
-                if (fnParamType instanceof GenericType gen) {
-                    if (!matchGeneric(gen, callParamType, bindings)) {
-                        isCompatible = false;
-                        break;
-                    }
-                    exact = false;
-                    continue;
-                }
+                MatchResult result = matchTypes(fnParamType, callParamType, bindings);
 
-                if (!fnParamType.equals(callParamType)) {
-                    exact = false;
-                }
-
-                if (!fnParamType.isCompatibleWith(callParamType)) {
+                if (!result.matches) {
                     isCompatible = false;
                     break;
+                }
+
+                if (!result.exact) {
+                    exact = false;
                 }
             }
 
@@ -65,16 +63,77 @@ final class RFunctions {
         return compatible;
     }
 
-    private boolean matchGeneric(GenericType generic, TypeRef concrete, Map<String, TypeRef> bindings) {
-        TypeRef bound = bindings.get(generic.name());
-        if (bound == null) {
-            bindings.put(generic.name(), concrete);
-            return true;
+    private MatchResult matchTypes(TypeRef param, TypeRef arg, Map<String, TypeRef> bindings) {
+        if (param instanceof GenericType gen) {
+            TypeRef bound = bindings.get(gen.name());
+
+            if (bound == null) {
+                bindings.put(gen.name(), arg);
+                return new MatchResult(true, false);
+            }
+
+            return new MatchResult(bound.equals(arg), false);
         }
-        return bound.equals(concrete);
+
+        if (param instanceof AppliedGenStructType pStruct &&
+                arg   instanceof AppliedGenStructType aStruct) {
+
+            if (!pStruct.base().getName().equals(aStruct.base().getName())) {
+                return new MatchResult(false, false);
+            }
+
+            if (pStruct.args().size() != aStruct.args().size()) {
+                return new MatchResult(false, false);
+            }
+
+            boolean exact = true;
+
+            for (int i = 0; i < pStruct.args().size(); i++) {
+                MatchResult r = matchTypes(
+                        pStruct.args().get(i),
+                        aStruct.args().get(i),
+                        bindings
+                );
+
+                if (!r.matches) {
+                    return new MatchResult(false, false);
+                }
+
+                if (!r.exact) {
+                    exact = false;
+                }
+            }
+
+            return new MatchResult(true, exact);
+        }
+
+        if (param instanceof ArrayType pArr &&
+                arg   instanceof ArrayType aArr) {
+
+            return matchTypes(pArr.inner(), aArr.inner(), bindings);
+        }
+
+        if (param instanceof PointerType pPtr &&
+                arg   instanceof PointerType aPtr) {
+
+            return matchTypes(pPtr.inner(), aPtr.inner(), bindings);
+        }
+
+        boolean eq = param.equals(arg);
+        return new MatchResult(eq, eq);
     }
 
     List<RFunction> get(String name) {
         return functions.stream().filter(fn -> fn.name().equals(name)).toList();
+    }
+
+    private static class MatchResult {
+        private final boolean matches;
+        private final boolean exact;
+
+        MatchResult(boolean matches, boolean exact) {
+            this.matches = matches;
+            this.exact = exact;
+        }
     }
 }

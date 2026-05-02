@@ -87,7 +87,7 @@ public class VariableDeclarationNode extends ValueNode {
     }
 
     private String compileDeclaration(final CompilationContext cctx, String valueReg, TypeRef valueType) {
-        TypeRef varType = type == null ? valueType : type;
+        TypeRef varType = evalType(type == null ? valueType : type, cctx);
 
         if (valueType instanceof ArrayType arrType) {
             varType = new ArrayType(arrType.size(), arrType.inner());

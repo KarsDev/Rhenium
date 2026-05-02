@@ -15,6 +15,7 @@ import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.*;
@@ -79,9 +80,7 @@ public class FunctionCallNode extends ValueNode {
 
         RFunction existing = genFn.getInstantiation(callTypes);
         if (existing == null) {
-            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(
-                    line, true, genFn.name(), concreteParams, concreteReturnType, genFn.block()
-            );
+            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(line, true, genFn.name(), concreteParams, concreteReturnType, genFn.block());
 
 
             concreteFnNode.compile(cctx);
@@ -114,12 +113,10 @@ public class FunctionCallNode extends ValueNode {
 
         for (int i = 0; i < parameters.size(); i++) {
             TypeRef expected = fn.parameters().get(i).type();
-            TypeRef actual   = callTypes.get(i);
+            TypeRef actual = callTypes.get(i);
 
             if (containsGeneric(expected)) {
-                return new RFunctionGenericsError(
-                        "Generic type leaked into concrete call", line
-                ).raise();
+                return new RFunctionGenericsError("Generic type leaked into concrete call", line).raise();
             }
 
             if (!actual.equals(expected)) {
@@ -129,11 +126,12 @@ public class FunctionCallNode extends ValueNode {
                 callTypes.set(i, expected);
             }
 
-            if (actual instanceof StructType) {
+            if (actual instanceof StructType || actual instanceof AppliedGenStructType) {
                 String loaded = cctx.nextRegister();
+                TypeRef t = evalType(actual, cctx);
                 cctx.emit(loaded + " = load " +
-                        actual.getLLVMName() + "*, " +
-                        actual.getLLVMName() + "** " +
+                        t.getLLVMName() + ", " +
+                        t.getLLVMName() + "* " +
                         argRegs.get(i));
                 argRegs.set(i, loaded);
             }
@@ -150,7 +148,7 @@ public class FunctionCallNode extends ValueNode {
         sb.append("call ").append(fn.returnType().getLLVMName()).append(" @").append(fn.llvmName()).append("(");
 
         for (int i = 0; i < argRegs.size(); i++) {
-            sb.append(callTypes.get(i).getLLVMName()).append(" ").append(argRegs.get(i));
+            sb.append(evalType(callTypes.get(i), cctx).getLLVMName()).append(" ").append(argRegs.get(i));
             if (i < argRegs.size() - 1) sb.append(", ");
         }
 
@@ -175,10 +173,7 @@ public class FunctionCallNode extends ValueNode {
             if (existing == null) {
                 map.put(gen.name(), callType);
             } else if (!existing.equals(callType)) {
-                new RFunctionGenericsError(
-                        "Conflicting types for " + gen.name() + ": " + existing.getName() + " vs " + callType.getName(),
-                        line
-                ).raise();
+                new RFunctionGenericsError("Conflicting types for " + gen.name() + ": " + existing.getName() + " vs " + callType.getName(), line).raise();
             }
         } else if (paramType instanceof ArrayType arr && callType instanceof ArrayType callArr) {
             inferTypeBindings(arr.inner(), callArr.inner(), map);
@@ -243,8 +238,7 @@ public class FunctionCallNode extends ValueNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Function Call: ").append(name).append("\n")
-                .append(indent).append("\t").append("Parameters:").append("\n");
+        sb.append(indent).append("Function Call: ").append(name).append("\n").append(indent).append("\t").append("Parameters:").append("\n");
 
         parameters.forEach(p -> p.write(sb, indent + "\t\t"));
     }

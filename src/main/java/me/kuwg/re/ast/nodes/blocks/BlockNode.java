@@ -4,11 +4,11 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
+import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.compiler.Compilable;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.block.RBlockSyntaxError;
 import me.kuwg.re.error.errors.function.RFunctionReturnTypeMismatchError;
 import me.kuwg.re.type.TypeRef;
@@ -18,7 +18,7 @@ import me.kuwg.re.writer.Writeable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BlockNode implements Writeable, Compilable, GlobalNode {
+public final class BlockNode implements Writeable, Compilable, GlobalNode {
     private final List<ASTNode> nodes;
     private boolean compiled = false;
 
@@ -32,20 +32,23 @@ public class BlockNode implements Writeable, Compilable, GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        nodes.stream()
-            .takeWhile(node -> node instanceof GlobalNode)
-            .forEach(node ->
-                    new RBlockSyntaxError("Block cannot contain global statements: " + node, node.getLine()).raise()
-            );
+        if (compiled) return;
 
-        for (int i = 0; i < nodes.size(); i++) {
-            final ASTNode node = nodes.get(i);
+        boolean terminated = false;
+
+        for (final ASTNode node : nodes) {
+            if (terminated) {
+                new RBlockSyntaxError("Block gets interrupted but continues", node.getLine()).raise();
+                break;
+            }
+
             node.compile(cctx);
 
-            if (node instanceof InterruptNode && i < nodes.size() - 1) {
-                new RBlockSyntaxError("Block gets interrupted but continues", node.getLine()).raise();
+            if (node instanceof InterruptNode) {
+                terminated = true;
             }
         }
+
         compiled = true;
     }
 
@@ -66,14 +69,19 @@ public class BlockNode implements Writeable, Compilable, GlobalNode {
         nodes.forEach(node -> node.write(sb, TAB + indent));
     }
 
-    public void checkTypes(TypeRef returnType, boolean mustReturn) {
-        if (!compiled) throw new RInternalError("Block node has not been compiled yet.");
+    public void checkTypes(CompilationContext cctx, TypeRef returnType, boolean mustReturn) {
+        if (!compiled) compile(cctx);
 
         boolean hasReturn = false;
 
         for (final ASTNode node : nodes) {
+            if (node instanceof TryCatchNode tc) {
+                tc.getTryBlock().checkTypes(cctx, returnType, false);
+                tc.getCatchBlock().checkTypes(cctx, returnType, false);
+                continue;
+            }
             if (node instanceof IBlockContainer bc) {
-                bc.getBlock().checkTypes(returnType, false);
+                bc.getBlock().checkTypes(cctx, returnType, false);
             }
 
             if (node instanceof ReturnNode ret) {

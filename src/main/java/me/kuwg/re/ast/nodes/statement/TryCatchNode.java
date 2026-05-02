@@ -5,9 +5,6 @@ import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.compiler.CompilationContext;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class TryCatchNode extends ASTNode implements IBlockContainer {
     private final BlockNode tryBlock;
     private final BlockNode catchBlock;
@@ -21,11 +18,18 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
     @Override
     public void compile(final CompilationContext cctx) {
         String catchLabel = cctx.nextLabel("catch_label");
+        String endLabel = cctx.nextLabel("try_end");
+
         cctx.pushTryCatchScope(catchLabel);
 
         tryBlock.compile(cctx);
+        cctx.emit("br label %" + endLabel);
+
         cctx.emit(catchLabel + ":");
         catchBlock.compile(cctx);
+        cctx.emit("br label %" + endLabel);
+
+        cctx.emit(endLabel + ":");
     }
 
     @Override
@@ -39,9 +43,14 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
 
     @Override
     public BlockNode getBlock() {
-        List<ASTNode> nodes = new ArrayList<>();
-        nodes.addAll(tryBlock.getNodes());
-        nodes.addAll(catchBlock.getNodes());
-        return new BlockNode(nodes);
+        throw new RuntimeException();
+    }
+
+    public BlockNode getTryBlock() {
+        return tryBlock;
+    }
+
+    public BlockNode getCatchBlock() {
+        return catchBlock;
     }
 }

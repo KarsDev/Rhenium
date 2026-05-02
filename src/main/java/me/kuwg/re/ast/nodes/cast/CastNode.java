@@ -21,7 +21,7 @@ public class CastNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        return CastManager.executeCast(line, value, type, cctx);
+        return CastManager.executeCast(line, value, evalType(type, cctx), cctx);
     }
 
     @Override

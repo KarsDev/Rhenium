@@ -26,6 +26,8 @@ public class DereferenceNode extends VariableReference {
         if (!(var.type() instanceof PointerType ptr))
             return new RDerefNotPointerError(value.getCompleteName(), line).raise();
 
+        ptr = evalType(ptr, cctx);
+
         setType(ptr.inner());
 
         cctx.emit(" ; Pointer dereference");
@@ -74,6 +76,8 @@ public class DereferenceNode extends VariableReference {
 
         if (!(var.type() instanceof PointerType ptr))
             return new RDerefNotPointerError(value.getCompleteName(), line).raise();
+
+        ptr = evalType(ptr, cctx);
 
         String ptrValueReg;
 

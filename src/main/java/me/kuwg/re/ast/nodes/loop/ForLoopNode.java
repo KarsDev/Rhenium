@@ -3,6 +3,7 @@ package me.kuwg.re.ast.nodes.loop;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
+import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.LoopContext;
@@ -38,6 +39,15 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
     @Override
     public void compile(final CompilationContext cctx) {
         String reg = collection.compileAndGet(cctx);
+
+        if (collection.getType() instanceof ArrayType) {
+            if (collection instanceof VariableReference varNode) {
+                reg = cctx.getVariable(varNode.getSimpleName()).addrReg();
+            } else {
+                throw new RuntimeException("Array expression not supported yet (needs pointer)");
+            }
+        }
+
         TypeRef type = collection.getType();
 
         if (!(type instanceof IterableTypeRef)) {

@@ -40,6 +40,7 @@ final class CompilationContext {
     private final List<Path> nativeCPPModules = new ArrayList<>();
     private final Set<String> declaredIR = new LinkedHashSet<>();
     private final Set<String> declaredStructs = new LinkedHashSet<>();
+    private final Set<String> declaredGlobals = new HashSet<>();
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -64,7 +65,7 @@ final class CompilationContext {
     }
 
     public void emit(String s) {
-        if (s.contains("%48 = load %struct")) throw new RuntimeException();
+        if (s.contains("call void @specificTest0_4764_9(%struct.Box$3int_int %aa_0097_43)")) throw new RuntimeException();
         if (s.strip().matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
         Objects.requireNonNull(codeStack.peek()).append(TAB.repeat(indentLevel)).append(s).append('\n');
     }
@@ -154,6 +155,10 @@ final class CompilationContext {
         nativeCPPModules.add(path);
     }
 
+    public boolean declareOnce(String name) {
+        return declaredGlobals.add(name);
+    }
+
     public void addIR(String ir) {
         String[] lines = ir.split("\n");
         for (String line : lines) {
@@ -237,8 +242,12 @@ final class CompilationContext {
             throw new RInternalError("internal error: main function should return int");
         }
 
-        if (!globalCode.isEmpty()) {
-            new RMainFunctionError("You cannot declare code if you declared the main function", -1).raise();
+        if (!globalCode.isEmpty() && containsInvalidGlobalCode(globalCode.toString())) {
+            new RMainFunctionError(
+                    "You cannot declare code if you declared the main function",
+                    -1
+            ).raise();
+            return;
         }
 
         StringBuilder finalOutput = new StringBuilder();
@@ -259,6 +268,17 @@ final class CompilationContext {
             writer.write(finalOutput.toString());
         }
     }
+
+    private boolean containsInvalidGlobalCode(String code) {
+        return Arrays.stream(code.split("\n"))
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .anyMatch(line -> {
+                    String[] parts = line.split("\\s+");
+                    return parts.length == 0 || !parts[0].contains("_global_load");
+                });
+    }
+
     public Map<String, RVariable> getVariables() {
         return variables;
     }

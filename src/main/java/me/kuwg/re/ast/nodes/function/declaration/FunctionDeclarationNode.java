@@ -83,8 +83,9 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
+            var pt = evalType(param.type(), cctx);
 
-            func.append(param.type().getLLVMName()).append(" %").append(param.name());
+            func.append(pt.getLLVMName()).append(" %").append(param.name());
             if (i < parameters.size() - 1) func.append(", ");
         }
 
@@ -110,15 +111,16 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             }
 
             String paramPtr = "%" + param.name() + ".addr";
-            cctx.emit(paramPtr + " = alloca " + param.type().getLLVMName());
-            cctx.emit("store " + param.type().getLLVMName() + " %" + param.name() + ", "
-                    + param.type().getLLVMName() + "* " + paramPtr);
+            TypeRef pt = evalType(param.type(), cctx);
+            cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
+            cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", "
+                    + pt.getLLVMName() + "* " + paramPtr);
 
             RVariable paramVar = new RVariable(
                     param.name(),
                     param.mutable(),
                     true,
-                    param.type(),
+                    pt,
                     paramPtr,
                     "%" + param.name()
             );
@@ -132,7 +134,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         }
 
         if (!main) {
-            block.checkTypes(returnType, true);
+            block.checkTypes(cctx, returnType, true);
         }
 
         String body = cctx.popFunctionBody();

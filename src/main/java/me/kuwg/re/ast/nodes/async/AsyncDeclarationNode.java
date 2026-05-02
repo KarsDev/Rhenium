@@ -25,7 +25,7 @@ public class AsyncDeclarationNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String wrapperName = "_async_wrapper_" + cctx.nextLabel("");
+        String wrapperName = cctx.nextLabel("async$wrapper");
 
         cctx.pushFunctionBody();
         cctx.pushScope();
@@ -46,7 +46,7 @@ public class AsyncDeclarationNode extends ValueNode {
             cctx.emit("ret i8* null");
         }
 
-        block.checkTypes(returnType, true);
+        block.checkTypes(cctx, returnType, true);
 
         String body = cctx.popFunctionBody();
         cctx.popScope();
@@ -59,13 +59,17 @@ public class AsyncDeclarationNode extends ValueNode {
         String rawHandle = cctx.nextRegister();
         cctx.emit(rawHandle + " = call i8* @rhenium_spawn(i8* (i8*)* @" + wrapperName + ", i8* null)");
 
+        String thread = THREAD_TYPE.getMangledName();
+
         String structPtr = cctx.nextRegister();
-        cctx.emit(structPtr + " = alloca %struct.Thread");
+        cctx.emit(structPtr + " = alloca %struct." + thread);
         String fieldPtr = cctx.nextRegister();
-        cctx.emit(fieldPtr + " = getelementptr %struct.Thread, %struct.Thread* " + structPtr + ", i32 0, i32 0");
+        cctx.emit(fieldPtr + " = getelementptr %struct." + thread + ", %struct." + thread + "* " + structPtr + ", i32 0, i32 0");
         cctx.emit("store i8* " + rawHandle + ", i8** " + fieldPtr);
 
-        return structPtr;
+        String structVal = cctx.nextRegister();
+        cctx.emit(structVal + " = load %struct." + thread + ", %struct." + thread + "* " + structPtr);
+        return structVal;
     }
 
     @Override

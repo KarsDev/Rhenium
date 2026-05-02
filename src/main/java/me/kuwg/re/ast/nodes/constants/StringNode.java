@@ -8,49 +8,50 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class StringNode extends ConstantNode {
-    private static int globalNameCounter = 0;
     private static final Map<String, String> valueToGlobalName = new HashMap<>();
-
+    private static int globalNameCounter = 0;
     private final String value;
     private final String globalName;
-    private final boolean firstDeclaration;
 
     public StringNode(final int line, final String value) {
         super(line, BuiltinTypes.STR.getType());
         this.value = value;
 
-        String gb = valueToGlobalName.get(value);
-        if (gb != null) {
-            globalName = gb;
-            firstDeclaration = false;
+        String existing = valueToGlobalName.get(value);
+        if (existing != null) {
+            this.globalName = existing;
         } else {
-            globalName = "@.str." + globalNameCounter++;
-            valueToGlobalName.put(value, globalName);
-            firstDeclaration = true;
+            this.globalName = "@.str." + globalNameCounter++;
+            valueToGlobalName.put(value, this.globalName);
+        }
+    }
+
+    private void ensureDeclared(CompilationContext cctx) {
+        if (cctx.declareOnce(globalName)) {
+            String escaped = escapeForLLVM(value);
+            int length = value.length() + 1;
+
+            cctx.declare(globalName + " = private unnamed_addr constant [" + length + " x i8] c\"" + escaped + "\\00\"");
         }
     }
 
     @Override
     public String compileToConstant(final CompilationContext cctx) {
-        if (firstDeclaration) {
-            String escaped = escapeForLLVM(value);
-            int length = value.length() + 1;
-            cctx.declare(globalName + " = private unnamed_addr constant [" + length + " x i8] c\"" + escaped + "\\00\"");
-        }
+        ensureDeclared(cctx);
 
-        return "getelementptr inbounds ([" + (value.length() + 1) + " x i8], [" + (value.length() + 1) + " x i8]* " + globalName + ", i32 0, i32 0)";
+        int length = value.length() + 1;
+
+        return "getelementptr inbounds ([" + length + " x i8], [" + length + " x i8]* " + globalName + ", i32 0, i32 0)";
     }
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        if (firstDeclaration) {
-            String escaped = escapeForLLVM(value);
-            int length = value.length() + 1;
-            cctx.declare(globalName + " = private unnamed_addr constant [" + length + " x i8] c\"" + escaped + "\\00\"");
-        }
+        ensureDeclared(cctx);
+
+        int length = value.length() + 1;
 
         String reg = cctx.nextRegister();
-        cctx.emit(reg + " = getelementptr inbounds [" + (value.length() + 1) + " x i8], [" + (value.length() + 1) + " x i8]* " + globalName + ", i32 0, i32 0");
+        cctx.emit(reg + " = getelementptr inbounds [" + length + " x i8], [" + length + " x i8]* " + globalName + ", i32 0, i32 0");
 
         return reg;
     }

@@ -56,6 +56,7 @@ import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.operator.BinaryOperators;
 import me.kuwg.re.operator.ops.add.AddBO;
 import me.kuwg.re.operator.ops.add.SubBO;
+import me.kuwg.re.operator.ops.comp.EqualsBO;
 import me.kuwg.re.token.Token;
 import me.kuwg.re.token.TokenType;
 import me.kuwg.re.type.TypeRef;
@@ -64,6 +65,7 @@ import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 
@@ -245,6 +247,10 @@ public class ASTParser {
                     case "~" -> {
                         consume();
                         node = parseBitwiseNotOperator();
+                    }
+                    case "not" -> {
+                        consume();
+                        node = new BinaryExpressionNode(line(), parseValue(), EqualsBO.INSTANCE, new BooleanNode(line(), false));
                     }
                     default -> {
                         return new RParserError("Unexpected operator: " + token.value(), file, line()).raise();
@@ -1127,6 +1133,10 @@ public class ASTParser {
         }
 
         if (matchAndConsume(KEYWORD, "is")) {
+            if (matchAndConsume(OPERATOR, "not")) {
+                TypeRef type = parseType(false);
+                return new BinaryExpressionNode(line, new IsNode(line, node, type), EqualsBO.INSTANCE, new BooleanNode(line, false));
+            }
             TypeRef type = parseType(false);
             return new IsNode(line, node, type);
         }
@@ -1381,7 +1391,7 @@ public class ASTParser {
     general utils
      */
 
-    private @SubFunc TypeRef parseType(final boolean generics) {
+    private @SubFunc TypeRef parseType0(final boolean generics) {
         if (!match(IDENTIFIER) && !match(KEYWORD)) {
             return new RParserError("Expected type name", file, line()).raise();
         }
@@ -1400,7 +1410,6 @@ public class ASTParser {
             case "struct" -> {
                 var type = typeMap.get(typeName);
                 if (!(type instanceof StructType)) {
-                    System.out.println(typeMap);
                     return new RParserError("Expected struct type", file, line()).raise();
                 }
                 return type;
@@ -1421,6 +1430,38 @@ public class ASTParser {
         typeMap.put(typeName, type);
 
         return type;
+    }
+
+    private @SubFunc TypeRef parseType(final boolean generics) {
+        TypeRef t = parseType0(generics);
+
+        if (t instanceof GenStructType gen) {
+            if (!matchAndConsume(OPERATOR, "<")) return t;
+
+            List<TypeRef> genericTypes = new ArrayList<>();
+
+            if (!match(OPERATOR, ">")) {
+                do {
+                    genericTypes.add(parseType(generics));
+                } while (matchAndConsume(OPERATOR, ","));
+            }
+
+            if (!matchAndConsume(OPERATOR, ">")) {
+                return new RParserError("Expected '>' for generic type", file, line()).raise();
+            }
+
+            if (gen.genericTypes().size() != genericTypes.size()) {
+                return new RParserError(
+                        "Expected " + gen.genericTypes().size() + " generic arguments but got " + genericTypes.size(),
+                        file,
+                        line()
+                ).raise();
+            }
+
+            return new AppliedGenStructType(gen, genericTypes);
+        }
+
+        return t;
     }
 
     private @SubFunc TypeRef parsePointerType(int line, boolean generics) {
