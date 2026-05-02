@@ -48,7 +48,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         this.parameters = parameters;
         this.returnType = returnType;
-        this.block = block;
+        this.block = block.clone();
     }
     private static boolean appendMainReturn(StringBuilder sb) {
         String[] lines = sb.toString().split("\\r?\\n");

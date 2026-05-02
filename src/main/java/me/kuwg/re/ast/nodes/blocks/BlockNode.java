@@ -18,7 +18,7 @@ import me.kuwg.re.writer.Writeable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class BlockNode implements Writeable, Compilable, GlobalNode {
+public final class BlockNode implements Writeable, Compilable, GlobalNode, Cloneable {
     private final List<ASTNode> nodes;
     private boolean compiled = false;
 
@@ -105,5 +105,29 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode {
                     nodes.isEmpty() ? -1 : nodes.get(nodes.size() - 1).getLine()
             ).raise();
         }
+    }
+
+    @Override
+    public BlockNode clone() {
+        BlockNode cloned ;
+        try {
+            cloned = (BlockNode) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+        List<ASTNode> clonedNodes = new ArrayList<>(nodes.size());
+
+        for (ASTNode node : nodes) {
+            try {
+                clonedNodes.add((ASTNode) node.clone());
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException("Failed to clone ASTNode: " + node.getClass(), e);
+            }
+        }
+
+        cloned.getNodes().clear();
+        cloned.getNodes().addAll(clonedNodes);
+
+        return cloned;
     }
 }

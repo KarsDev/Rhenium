@@ -43,7 +43,7 @@ public class StructFunctionCallNode extends ValueNode {
                 return new RVariableTypeError("struct", "null", line).raise();
             }
 
-            selfType = var.type();
+            selfType = evalType(var.type(), cctx);
 
             if (!(selfType instanceof StructType)) {
                 return new RVariableTypeError("struct", selfType.getName(), line).raise();

@@ -1,9 +1,17 @@
 package me.kuwg.re.compiler.struct;
 
+import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
+import me.kuwg.re.ast.nodes.struct.StructImplNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
+import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 
@@ -14,9 +22,10 @@ import java.util.Map;
 
 public class RGenStruct extends RDefaultStruct {
     private final Map<List<TypeRef>, RStruct> cache = new HashMap<>();
+    private final List<ImplTemplate> impls = new ArrayList<>();
 
     public RGenStruct(TypeRef type, List<RStructField> fields) {
-       super(false, type, fields);
+        super(false, type, fields);
     }
 
     @Override
@@ -44,10 +53,7 @@ public class RGenStruct extends RDefaultStruct {
 
         String mangledName = mangleName(types);
 
-        TypeRef newType = new StructType(
-                mangledName,
-                newFields.stream().map(RStructField::type).toList()
-        );
+        TypeRef newType = new StructType(mangledName, newFields.stream().map(RStructField::type).toList());
 
         RStruct specialized = new RStruct(false, newType, newFields);
 
@@ -55,6 +61,8 @@ public class RGenStruct extends RDefaultStruct {
         cctx.addStruct(false, mangledName, newType, newFields);
 
         declareStructIfNeeded(cctx, specialized);
+
+        applyImpls(specialized, mapping, cctx);
 
         return specialized;
     }
@@ -69,9 +77,7 @@ public class RGenStruct extends RDefaultStruct {
         StringBuilder sb = new StringBuilder();
         sb.append(name).append(" = type { ");
 
-        List<String> fieldTypes = struct.fields().stream()
-                .map(f -> f.type().getLLVMName())
-                .toList();
+        List<String> fieldTypes = struct.fields().stream().map(f -> f.type().getLLVMName()).toList();
 
         sb.append(String.join(", ", fieldTypes));
         sb.append(" }");
@@ -97,11 +103,7 @@ public class RGenStruct extends RDefaultStruct {
                 replacedFields.add(replace(fieldType, mapping));
             }
 
-            return new GenStructType(
-                    genType.genericTypes(),
-                    genType.getName(),
-                    replacedFields
-            );
+            return new GenStructType(genType.genericTypes(), genType.getName(), replacedFields);
         }
 
         return original;
@@ -139,7 +141,159 @@ public class RGenStruct extends RDefaultStruct {
         return base;
     }
 
+    private void applyImpls(RStruct struct, Map<String, TypeRef> mapping, CompilationContext cctx) {
+        for (ImplTemplate impl : impls) {
+            Map<String, TypeRef> combined = new HashMap<>(mapping);
+            for (String gen : impl.generics) {
+                if (!combined.containsKey(gen)) {
+                    throw new RuntimeException("Unresolved impl generic: " + gen);
+                }
+            }
+
+            for (RConstructor ctor : impl.constructors) {
+
+                List<FunctionParameter> substitutedParams =
+                        substituteParams(ctor.parameters(), combined);
+
+                String mangledName = StructImplNode.generateName(
+                        struct.type().getName(),
+                        ctor.llvmName()
+                );
+
+                List<FunctionParameter> withSelf = new ArrayList<>();
+                withSelf.add(new FunctionParameter(
+                        "self",
+                        false,
+                        new PointerType(struct.type())
+                ));
+                withSelf.addAll(substitutedParams);
+
+                FunctionDeclarationNode fn = new FunctionDeclarationNode(
+                        ctor.block().getNodes().get(0).getLine(),
+                        false,
+                        mangledName,
+                        withSelf,
+                        NoneBuiltinType.INSTANCE,
+                        ctor.block()
+                );
+
+                fn.compile(cctx);
+
+                RFunction compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
+                struct.constructors().add(compiled);
+            }
+
+            for (ASTNode fnNode : impl.functions) {
+
+                RFunction compiled;
+
+                if (fnNode instanceof FunctionDeclarationNode dec) {
+
+                    List<FunctionParameter> params =
+                            substituteParams(dec.getParameters(), combined);
+
+                    List<FunctionParameter> withSelf = new ArrayList<>();
+                    withSelf.add(new FunctionParameter(
+                            "self",
+                            false,
+                            new PointerType(struct.type())
+                    ));
+                    withSelf.addAll(params);
+
+                    TypeRef returnType = replace(dec.getReturnType(), combined);
+
+                    String mangledName = StructImplNode.generateName(
+                            struct.type().getName(),
+                            dec.getName()
+                    );
+
+                    FunctionDeclarationNode renamed = new FunctionDeclarationNode(
+                            dec.getLine(),
+                            false,
+                            mangledName,
+                            withSelf,
+                            returnType,
+                            dec.getBlock()
+                    );
+
+                    renamed.compile(cctx);
+
+                    compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
+
+                } else if (fnNode instanceof BuiltinFunctionDeclarationNode blt) {
+
+                    List<FunctionParameter> params =
+                            substituteParams(blt.getParameters(), combined);
+
+                    List<FunctionParameter> withSelf = new ArrayList<>();
+                    withSelf.add(new FunctionParameter(
+                            "self",
+                            false,
+                            new PointerType(struct.type())
+                    ));
+                    withSelf.addAll(params);
+
+                    TypeRef returnType = replace(blt.getReturnType(), combined);
+
+                    String mangledName = StructImplNode.generateName(
+                            struct.type().getName(),
+                            blt.getName()
+                    );
+
+                    BuiltinFunctionDeclarationNode renamed =
+                            new BuiltinFunctionDeclarationNode(
+                                    blt.getLine(),
+                                    true,
+                                    mangledName,
+                                    withSelf,
+                                    returnType,
+                                    blt.getLlvmBody()
+                            );
+
+                    renamed.compile(cctx);
+
+                    compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
+
+                } else {
+                    throw new RuntimeException("Invalid function node in impl");
+                }
+
+                struct.functions().add(compiled);
+            }
+        }
+    }
+
+    private List<FunctionParameter> substituteParams(List<FunctionParameter> params, Map<String, TypeRef> mapping) {
+        List<FunctionParameter> result = new ArrayList<>();
+
+        for (FunctionParameter p : params) {
+            result.add(new FunctionParameter(p.name(), p.mutable(), replace(p.type(), mapping)));
+        }
+
+        return result;
+    }
+
+    private List<TypeRef> extractTypes(List<FunctionParameter> params) {
+        return params.stream().map(FunctionParameter::type).toList();
+    }
+
     private String sanitize(String s) {
         return s.replaceAll("[^A-Za-z0-9_]", "_");
+    }
+
+    public void addImplTemplate(List<String> generics, List<RConstructor> constructors, List<ASTNode> functions) {
+        impls.add(new ImplTemplate(generics, constructors, functions));
+    }
+
+    private static class ImplTemplate {
+        final List<String> generics;
+        final List<RConstructor> constructors;
+        final List<ASTNode> functions;
+
+        ImplTemplate(List<String> generics, List<RConstructor> constructors, List<ASTNode> functions) {
+            this.generics = generics;
+            this.constructors = constructors;
+            this.functions = functions;
+        }
     }
 }

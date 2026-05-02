@@ -37,6 +37,7 @@ import me.kuwg.re.ast.nodes.statement.IfStatementNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.nodes.struct.*;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
+import me.kuwg.re.ast.nodes.struct.gen.GenStructImplNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructInitNode;
 import me.kuwg.re.ast.nodes.ternary.TernaryOperatorNode;
 import me.kuwg.re.ast.nodes.type.TypeofNode;
@@ -913,12 +914,15 @@ public class ASTParser {
 
         TypeRef tmp = typeMap.get(name);
 
-        if (!(tmp instanceof StructType struct)) {
-            return new RParserError("Struct not found: '" + name + "' for impl declaration", file, line()).raise();
+        if (!matchAndConsume(OPERATOR, ":") && !(tmp instanceof GenStructType)) {
+            return new RParserError("Expected ':' for impl declaration", file, line).raise();
         }
 
-        if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for impl declaration", file, line()).raise();
+        if (tmp instanceof GenStructType gen)
+            return parseGenericImpl(line, gen);
+
+        if (!(tmp instanceof StructType struct))
+            return new RParserError("Struct not found: '" + name + "' for impl declaration", file, line).raise();
 
         BlockNode block = parseBlock();
 
@@ -1236,7 +1240,7 @@ public class ASTParser {
         if (!match(OPERATOR, ">")) {
             do {
                 typeParameters.add(identifier());
-            } while (matchAndConsume(OPERATOR, ","));
+            } while (matchAndConsume(DIVIDER, ","));
         }
 
         if (!matchAndConsume(OPERATOR, ">")) {
@@ -1268,7 +1272,7 @@ public class ASTParser {
         if (!match(OPERATOR, ">")) {
             do {
                 typeParameters.add(identifier());
-            } while (matchAndConsume(OPERATOR, ","));
+            } while (matchAndConsume(DIVIDER, ","));
         }
 
         if (!matchAndConsume(OPERATOR, ">")) {
@@ -1387,6 +1391,111 @@ public class ASTParser {
         return new GenStructInitNode(line, name, genericTypes, args);
     }
 
+    private @SubFunc ASTNode parseGenericImpl(final int line, final GenStructType type) {
+        List<String> implGenerics = new ArrayList<>();
+
+        if (!matchAndConsume(OPERATOR, "<")) {
+            return new RParserError("Expected '<' for generic impl declaration", file, line).raise();
+        }
+
+        if (!match(OPERATOR, ">")) {
+            do {
+                implGenerics.add(identifier());
+            } while (matchAndConsume(DIVIDER, ","));
+        }
+
+        if (!matchAndConsume(OPERATOR, ">")) {
+            return new RParserError("Expected '>' for generic impl declaration", file, line).raise();
+        }
+
+        if (implGenerics.size() != type.genericTypes().size()) {
+            return new RParserError(
+                    "Expected " + type.genericTypes().size() + " generic parameters but got " + implGenerics.size(),
+                    file,
+                    line
+            ).raise();
+        }
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for generic impl declaration", file, line).raise();
+        }
+
+        removeNewlines();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indented block", file, line()).raise();
+        }
+
+        consume();
+
+        List<ASTNode> statements = new ArrayList<>();
+
+        while (!match(EOF) && !match(DEDENT)) {
+            removeNewlines();
+
+            if (match(EOF) || match(DEDENT)) break;
+
+            ASTNode n = matchAndConsume(KEYWORD, "init") ? parseGenConstructor(line, implGenerics) : parseStatement();
+            if (n == null) break;
+            statements.add(n);
+        }
+
+        if (!match(EOF)) {
+            if (match(DEDENT)) {
+                consume();
+            } else {
+                return new RParserError("Expected dedent to close block", file, line()).raise();
+            }
+        }
+
+
+        var iterator = statements.iterator();
+        List<RConstructor> constructors = new ArrayList<>();
+        while (iterator.hasNext()) {
+            var next = iterator.next();
+            if (next.getClass().getSimpleName().contains("FunctionDeclarationNode")) continue;
+
+            if (!(next instanceof ConstructorDeclarationNode cdn))
+                return new RImplNotFunctionError(next.getLine()).raise();
+
+            iterator.remove();
+            String constructorName = "constructor." + constructors.size();
+            constructors.add(new RConstructor(constructorName, cdn.getParameters(), cdn.getBlock()));
+        }
+
+        return new GenStructImplNode(line, type, implGenerics, constructors, statements);
+    }
+
+    private @SubFunc ASTNode parseGenConstructor(final int line, final List<String> implGenerics) {
+        var params = parseParamsDeclare(true);
+
+        for (final FunctionParameter param : params) {
+            TypeRef t = param.type();
+            while (true) {
+                if (t instanceof PointerType ptr) {
+                    t = ptr.inner();
+                    continue;
+                }
+                if (t instanceof ArrayType arr) {
+                    t = arr.inner();
+                    continue;
+                }
+                if (!(t instanceof GenericType gen)) break;
+
+                if (implGenerics.contains(gen.name())) break;
+
+                return new RParserError("Unknown generic type: " + gen.name(), file, line).raise();
+            }
+        }
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            new RParserError("Expected ':' for function declaration", file, line()).raise();
+        }
+
+        BlockNode block = parseBlock();
+        return new ConstructorDeclarationNode(line, file, params, block);
+    }
+
     /*
     general utils
      */
@@ -1443,7 +1552,7 @@ public class ASTParser {
             if (!match(OPERATOR, ">")) {
                 do {
                     genericTypes.add(parseType(generics));
-                } while (matchAndConsume(OPERATOR, ","));
+                } while (matchAndConsume(DIVIDER, ","));
             }
 
             if (!matchAndConsume(OPERATOR, ">")) {
