@@ -263,6 +263,38 @@ r = range(0, 10, 2)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
+  MATCH STATEMENTS
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+tw = 7
+
+// prints 7
+// if 'tw' was not in the range [1,9] it would have went to digit out of bounds
+match (tw):    
+    1:
+      println("one")
+    2:
+      println("two")
+    3:
+      println("three")
+    4:
+      println("four")
+    5:
+      println("five")
+    6:
+      println("six")
+    7:
+      println("seven")
+    8:
+      println("eight")
+    9:
+      println("nine")
+    _:
+      println("Digit out of bounds [1, 9]: " + tw)
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
   ARRAYS
 <=------------------------=>|<=>|<=-----------------------=>
 */
