@@ -98,7 +98,8 @@ final class CompilationContext {
         if (!scopeStack.isEmpty()) {
             scopeStack.peek().put(v.name(), v);
         } else {
-            variables.put(v.name(), v);
+            pushScope();
+            addVariable(v);
         }
     }
 

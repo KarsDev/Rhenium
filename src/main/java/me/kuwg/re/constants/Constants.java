@@ -13,7 +13,7 @@ public abstract class Constants {
         public static final String[] KEYWORDS = {
                 "using",
                 "mut", "const", "global",
-                "for", "if", "else", "while", "do", "break", "continue",
+                "for", "if", "else", "while", "do", "break", "continue", "match",
                 "_Builtin", "_IR", "_NativeCPP",
                 "range", "len", "sizeof", "cast", "_Typeof", "_TypeofLLVM",
                 "generic", "func", "return",
@@ -41,6 +41,7 @@ public abstract class Constants {
                 "^", "<<", ">>", ">>>",
                 ":", "=",
                 "->", "@", ".",
+                "_",
 
                 "<<", ">>", ">>>", "&", "|", "~", "^",
                 "<<=", ">>=", ">>>=", "&=", "|=", "^=",

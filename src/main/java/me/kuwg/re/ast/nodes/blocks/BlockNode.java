@@ -4,6 +4,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
+import me.kuwg.re.ast.nodes.statement.MatchNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
@@ -79,7 +80,10 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
                 tc.getTryBlock().checkTypes(cctx, returnType, false);
                 tc.getCatchBlock().checkTypes(cctx, returnType, false);
                 continue;
+            } else if (node instanceof MatchNode mc) {
+                mc.getCases().forEach(c -> c.block.checkTypes(cctx, returnType, false));
             }
+
             if (node instanceof IBlockContainer bc) {
                 bc.getBlock().checkTypes(cctx, returnType, false);
             }

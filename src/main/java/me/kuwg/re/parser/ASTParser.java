@@ -34,6 +34,7 @@ import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.ast.nodes.range.RangeNode;
 import me.kuwg.re.ast.nodes.sizeof.SizeofNode;
 import me.kuwg.re.ast.nodes.statement.IfStatementNode;
+import me.kuwg.re.ast.nodes.statement.MatchNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.nodes.struct.*;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
@@ -284,7 +285,7 @@ public class ASTParser {
                 if (n2 instanceof ValueNode value) {
                     node = value;
                 } else {
-                    return new RParserError("Expected value", file, line()).raise();
+                    return new RParserError("Expected value", file, n2.getLine()).raise();
                 }
             }
             case CHARACTER -> node = parseCharacter();
@@ -371,6 +372,7 @@ public class ASTParser {
             case "async" -> parseAsyncKeyword();
             case "generic" -> parseGenericKeyword();
             case "this" -> parseThisKeyword();
+            case "match" -> parseMatchKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -1494,6 +1496,70 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
         return new ConstructorDeclarationNode(line, file, params, block);
+    }
+
+    private @SubFunc ASTNode parseMatchKeyword() {
+        int line = line();
+
+        if (!matchAndConsume(DIVIDER, "(")) {
+            return new RParserError("Expected '(' for match declaration", file, line).raise();
+        }
+        ValueNode value = parseValue();
+        if (!matchAndConsume(DIVIDER, ")")) {
+            return new RParserError("Expected ')' for match declaration", file, line).raise();
+        }
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for match declaration", file, line).raise();
+        }
+
+        removeNewlines();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indented block", file, line()).raise();
+        }
+
+        consume();
+
+        List<MatchNode.MatchCase> cases = new ArrayList<>();
+
+        while (!match(EOF) && !match(DEDENT)) {
+            removeNewlines();
+
+            if (match(EOF) || match(DEDENT)) break;
+
+            cases.add(parseMatchCase());
+        }
+
+        if (!match(EOF)) {
+            if (match(DEDENT)) {
+                consume();
+            } else {
+                return new RParserError("Expected dedent to close block", file, line()).raise();
+            }
+        }
+
+        return new MatchNode(line, value, cases);
+    }
+
+    private @SubFunc MatchNode.MatchCase parseMatchCase() {
+        int line = line();
+
+        ValueNode v;
+        if (matchAndConsume(OPERATOR, "_")) v = null;
+        else v = parseValue();
+
+        if (v != null && !(v instanceof ConstantNode)) {
+            return new RParserError("Match cases must have constant values", file, line).raise();
+        }
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for match case declaration", file, line).raise();
+        }
+
+        BlockNode b = parseBlock();
+
+        return new MatchNode.MatchCase((ConstantNode) v, b);
     }
 
     /*
