@@ -205,4 +205,8 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     public TypeRef getReturnType() {
         return returnType;
     }
+
+    public String getLLVMName() {
+        return llvmName;
+    }
 }

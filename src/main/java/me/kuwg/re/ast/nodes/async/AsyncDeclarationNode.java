@@ -1,14 +1,15 @@
 package me.kuwg.re.ast.nodes.async;
 
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.struct.StructType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AsyncDeclarationNode extends ValueNode {
@@ -25,51 +26,50 @@ public class AsyncDeclarationNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String wrapperName = cctx.nextLabel("async$wrapper");
+        final String wrapperName = "AsyncCompilationFunction" + cctx.nextRegister().substring(1);
+        final String innerName = wrapperName + "_inner";
 
-        cctx.pushFunctionBody();
-        cctx.pushScope();
-        cctx.pushIndent();
+        final FunctionDeclarationNode innerFn = new FunctionDeclarationNode(
+                line,
+                false,
+                innerName,
+                new ArrayList<>(),
+                returnType,
+                block.clone()
+        );
+        innerFn.compile(cctx);
 
-        if (!(returnType instanceof NoneBuiltinType)) {
-            String retVal = block.compileAndGet(returnType, cctx);
+        cctx.declare("define i8* @" + wrapperName + "() {");
+        cctx.declare("entry:");
 
-            String resultPtrHeap = cctx.nextRegister();
-            cctx.emit(resultPtrHeap + " = call i8* @malloc(i64 " + returnType.getSize() + ")");
-            String typedPtr = cctx.nextRegister();
-            cctx.emit(typedPtr + " = bitcast i8* " + resultPtrHeap + " to " + returnType.getLLVMName() + "*");
+        final String val = cctx.nextRegister();
+        cctx.declare("  " + val + " = call " + returnType.getLLVMName() + " @" + innerFn.getLLVMName() + "()");
 
-            cctx.emit("store " + returnType.getLLVMName() + " " + retVal + ", " + returnType.getLLVMName() + "* " + typedPtr);
-            cctx.emit("ret i8* " + resultPtrHeap);
-        } else {
-            block.compile(cctx);
-            cctx.emit("ret i8* null");
-        }
+        final long size = returnType.getSize();
+        final String mem = cctx.nextRegister();
+        cctx.declare("  " + mem + " = call i8* @malloc(i64 " + size + ")");
 
-        block.checkTypes(cctx, returnType, true);
+        final String casted = cctx.nextRegister();
+        cctx.declare("  " + casted + " = bitcast i8* " + mem + " to " + returnType.getLLVMName() + "*");
 
-        String body = cctx.popFunctionBody();
-        cctx.popScope();
-        cctx.popIndent();
+        cctx.declare("  store " + returnType.getLLVMName() + " " + val + ", " + returnType.getLLVMName() + "* " + casted);
 
-        cctx.declare("define i8* @" + wrapperName + "(i8* %raw_ctx) {\nentry:\n" + body + "\n}\n");
+        cctx.declare("  ret i8* " + mem);
+        cctx.declare("}");
 
-        cctx.addIR("declare i8* @rhenium_spawn(i8* (i8*)*, i8*)");
+        cctx.addIR("declare i8* @rhenium_spawn(i8*)");
 
-        String rawHandle = cctx.nextRegister();
-        cctx.emit(rawHandle + " = call i8* @rhenium_spawn(i8* (i8*)* @" + wrapperName + ", i8* null)");
+        final String fnPtr = cctx.nextRegister();
+        cctx.emit(fnPtr + " = bitcast i8* ()* @" + wrapperName + " to i8*");
 
-        String thread = THREAD_TYPE.getMangledName();
+        final String handle = cctx.nextRegister();
+        cctx.emit(handle + " = call i8* @rhenium_spawn(i8* " + fnPtr + ")");
 
-        String structPtr = cctx.nextRegister();
-        cctx.emit(structPtr + " = alloca %struct." + thread);
-        String fieldPtr = cctx.nextRegister();
-        cctx.emit(fieldPtr + " = getelementptr %struct." + thread + ", %struct." + thread + "* " + structPtr + ", i32 0, i32 0");
-        cctx.emit("store i8* " + rawHandle + ", i8** " + fieldPtr);
+        final String threadValue = cctx.nextRegister();
+        cctx.emit(threadValue + " = insertvalue " + THREAD_TYPE.getLLVMName() + " undef, i8* " + handle + ", 0");
 
-        String structVal = cctx.nextRegister();
-        cctx.emit(structVal + " = load %struct." + thread + ", %struct." + thread + "* " + structPtr);
-        return structVal;
+        setType(THREAD_TYPE);
+        return threadValue;
     }
 
     @Override

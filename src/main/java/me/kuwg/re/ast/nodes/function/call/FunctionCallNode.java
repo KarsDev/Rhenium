@@ -82,7 +82,6 @@ public class FunctionCallNode extends ValueNode {
         if (existing == null) {
             FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(line, true, genFn.name(), concreteParams, concreteReturnType, genFn.block());
 
-
             concreteFnNode.compile(cctx);
 
             RFunction concreteFn = cctx.getFunction(genFn.name(), concreteParams.stream().map(FunctionParameter::type).toList());

@@ -23,6 +23,13 @@ public class NotEqualsBO extends BinaryOperator {
         TypeRef leftType = c.leftType();
         TypeRef rightType = c.rightType();
 
+        if ((leftType instanceof NullType && !(rightType instanceof AnyPointerType)) ||
+                (rightType instanceof NullType && !(leftType instanceof AnyPointerType))) {
+            return new RUnsupportedBinaryExpressionError(
+                    leftType.getName(), getSymbol(), rightType.getName(), c.line()
+            ).raise();
+        }
+
         if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
             c.cctx().include(-1, null, "string", null);
 
@@ -47,7 +54,7 @@ public class NotEqualsBO extends BinaryOperator {
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 
-        if (leftType instanceof NullType && rightType instanceof AnyPointerType) {
+        if (leftType instanceof NullType) {
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(
                     resReg + " = icmp ne ptr null, " + c.rightReg()
