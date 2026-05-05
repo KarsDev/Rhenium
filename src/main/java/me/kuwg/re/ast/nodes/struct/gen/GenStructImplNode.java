@@ -7,9 +7,11 @@ import me.kuwg.re.compiler.struct.RConstructor;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.GenStructType;
 
 import java.util.List;
+import java.util.Map;
 
 public class GenStructImplNode extends ASTNode implements GlobalNode {
     private final GenStructType type;
@@ -24,6 +26,10 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
         this.genericNames = genericNames;
         this.constructors = constructors;
         this.functions = functions;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

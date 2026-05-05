@@ -7,7 +7,10 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.LoopContext;
 import me.kuwg.re.error.errors.condition.RInvalidConditionError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BoolBuiltinType;
+
+import java.util.Map;
 
 public class WhileNode extends ASTNode implements IBlockContainer {
     private final ValueNode condition;
@@ -17,6 +20,12 @@ public class WhileNode extends ASTNode implements IBlockContainer {
         super(line);
         this.condition = condition;
         this.block = block;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        condition.replaceGenerics(generics);
+        block.replaceGenerics(generics);
     }
 
     @Override

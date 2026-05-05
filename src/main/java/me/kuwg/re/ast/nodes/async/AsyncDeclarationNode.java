@@ -11,17 +11,24 @@ import me.kuwg.re.type.struct.StructType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AsyncDeclarationNode extends ValueNode {
     private static final TypeRef THREAD_TYPE = new StructType("Thread", List.of(BuiltinTypes.ANYPTR.getType()));
 
-    private final TypeRef returnType;
+    private TypeRef returnType;
     private final BlockNode block;
 
     public AsyncDeclarationNode(final int line, final TypeRef returnType, final BlockNode block) {
         super(line, THREAD_TYPE);
         this.returnType = returnType;
         this.block = block;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        returnType = replaceGenericType(returnType, generics);
+        block.replaceGenerics(generics);
     }
 
     @Override

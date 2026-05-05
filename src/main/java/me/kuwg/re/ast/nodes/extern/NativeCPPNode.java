@@ -6,9 +6,11 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.error.errors.natv.RNativeCPPError;
 import me.kuwg.re.resource.ResourceLoader;
+import me.kuwg.re.type.TypeRef;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 public class NativeCPPNode extends ASTNode implements GlobalNode {
     private final String name;
@@ -18,6 +20,10 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
         super(line);
         this.name = name;
         this.functions = functions;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

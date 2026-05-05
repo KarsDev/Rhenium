@@ -10,6 +10,7 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.writer.Writeable;
 
 import java.util.List;
+import java.util.Map;
 
 public class MatchNode extends ASTNode {
     private final ValueNode expr;
@@ -19,6 +20,12 @@ public class MatchNode extends ASTNode {
         super(line);
         this.expr = expr;
         this.cases = cases;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        expr.replaceGenerics(generics);
+        cases.forEach(c -> c.block.replaceGenerics(generics));
     }
 
     @Override

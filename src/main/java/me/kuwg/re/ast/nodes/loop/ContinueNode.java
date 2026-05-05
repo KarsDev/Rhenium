@@ -3,10 +3,17 @@ package me.kuwg.re.ast.nodes.loop;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.loop.RLoopError;
+import me.kuwg.re.type.TypeRef;
+
+import java.util.Map;
 
 public class ContinueNode extends ASTNode {
     public ContinueNode(final int line) {
         super(line);
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

@@ -1,10 +1,17 @@
 package me.kuwg.re.ast.nodes.variable;
 
+import me.kuwg.re.ast.nodes.pointer.DereferenceNode;
+import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.struct.RDefaultStruct;
+import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.StructType;
+
+import java.util.Map;
 
 public class DirectVariableReferenceNode extends VariableReference {
     private final String name;
@@ -12,6 +19,10 @@ public class DirectVariableReferenceNode extends VariableReference {
     public DirectVariableReferenceNode(final int line, final String name) {
         super(line);
         this.name = name;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override
@@ -35,8 +46,6 @@ public class DirectVariableReferenceNode extends VariableReference {
             return tmp;
         }
 
-
-
         return var.valueReg();
     }
 
@@ -54,7 +63,37 @@ public class DirectVariableReferenceNode extends VariableReference {
     public RVariable getVariable(final CompilationContext cctx) {
         var v = cctx.getVariable(name);
         if (v != null) setType(v.type());
+        if (v == null) {
+            var local = cctx.getVariable("self");
+            if (local == null) return null;
+            return compileSelfReference(cctx);
+        }
+
         return v;
+    }
+
+    private RVariable compileSelfReference(CompilationContext cctx) {
+        var self = new DereferenceNode(line, new DirectVariableReferenceNode(line, "self"));
+
+        cctx.pushFunctionBody();
+        self.compileAndGet(cctx);
+        cctx.popFunctionBody();
+
+        TypeRef t = self.getType();
+
+        if (!t.toString().startsWith("struct ")) {
+            return null;
+        }
+
+        RDefaultStruct struct = cctx.getStruct(t.getName());
+        if (struct == null || struct.fields().stream().noneMatch(f -> f.name().equals(name)))
+            return null;
+
+        var node = new StructFieldAccessNode(line, new DereferenceNode(line, new DirectVariableReferenceNode(line, "self")), name);
+        var res = node.getVariable(cctx);
+        setType(node.getType());
+
+        return res;
     }
 
     @Override

@@ -7,20 +7,28 @@ import me.kuwg.re.error.errors.cast.RNotPrimitiveCastError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 
+import java.util.Map;
+
 public class CastNode extends ValueNode {
     private final ValueNode value;
 
     public CastNode(final int line, final TypeRef type, final ValueNode value) {
         super(line, type);
         this.value = value;
+    }
 
-        if (!type.isPrimitive()) {
-            new RNotPrimitiveCastError(type, line);
-        }
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        this.type = replaceGenericType(this.type, generics);
+        value.replaceGenerics(generics);
     }
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        if (!type.isPrimitive()) {
+            new RNotPrimitiveCastError(type, line);
+        }
+
         return CastManager.executeCast(line, value, evalType(type, cctx), cctx);
     }
 

@@ -7,12 +7,19 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 
+import java.util.Map;
+
 public class ReturnNode extends ASTNode implements InterruptNode {
     private final ValueNode value;
 
     public ReturnNode(final int line, final ValueNode value) {
         super(line);
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        value.replaceGenerics(generics);
     }
 
     @Override

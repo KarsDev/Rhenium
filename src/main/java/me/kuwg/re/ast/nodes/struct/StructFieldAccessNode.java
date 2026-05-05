@@ -7,9 +7,12 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
+import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.StructType;
+
+import java.util.Map;
 
 public class StructFieldAccessNode extends VariableReference {
     public final VariableReference struct;
@@ -22,10 +25,15 @@ public class StructFieldAccessNode extends VariableReference {
     }
 
     @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        struct.replaceGenerics(generics);
+    }
+
+    @Override
     public String compileAndGet(final CompilationContext cctx) {
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
-            return new RStructAccessError("Struct access on non-variable: " + struct.getCompleteName(), line).raise();
+            return new RVariableNotFoundError(struct.getCompleteName(), line).raise();
         }
 
         TypeRef structType = structVar.type();
@@ -54,12 +62,12 @@ public class StructFieldAccessNode extends VariableReference {
             return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
         }
 
+        setType(fieldType);
+
         String structPtr = structVar.addrReg();
 
         String fieldPtr = cctx.nextRegister();
         cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);
-
-        setType(fieldType);
 
         if (fieldType instanceof StructType) {
             return fieldPtr;
@@ -109,6 +117,7 @@ public class StructFieldAccessNode extends VariableReference {
             return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
         }
 
+        setType(fieldType);
         String structPtr = structVar.addrReg();
 
         String fieldPtr = cctx.nextRegister();

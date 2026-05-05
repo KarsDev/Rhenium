@@ -12,7 +12,9 @@ import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GenStructInitNode extends ValueNode {
     private final String name;
@@ -24,6 +26,12 @@ public class GenStructInitNode extends ValueNode {
         this.name = name;
         this.genericTypes = genericTypes;
         this.values = values;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        genericTypes.replaceAll(current -> replaceGenericType(current, generics));
+        values.forEach(v -> v.value().replaceGenerics(generics));
     }
 
     @Override
@@ -47,6 +55,16 @@ public class GenStructInitNode extends ValueNode {
                     line
             ).raise();
         }
+
+        Map<String, TypeRef> bindings = new HashMap<>();
+
+        List<String> declared = genStruct.type().genericTypes();
+
+        for (int i = 0; i < declared.size(); i++) {
+            bindings.put(declared.get(i), genericTypes.get(i));
+        }
+
+        replaceGenerics(bindings);
 
         RStruct specialized = genStruct.instantiate(genericTypes, cctx);
 

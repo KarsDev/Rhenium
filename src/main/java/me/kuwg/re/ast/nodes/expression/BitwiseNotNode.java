@@ -10,12 +10,19 @@ import me.kuwg.re.type.builtin.IntBuiltinType;
 import me.kuwg.re.type.builtin.LongBuiltinType;
 import me.kuwg.re.type.builtin.ShortBuiltinType;
 
+import java.util.Map;
+
 public class BitwiseNotNode extends ValueNode {
     private final ValueNode value;
 
     public BitwiseNotNode(final int line, final ValueNode value) {
         super(line);
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        value.replaceGenerics(generics);
     }
 
     @Override

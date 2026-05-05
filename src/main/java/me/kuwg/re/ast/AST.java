@@ -3,6 +3,9 @@ package me.kuwg.re.ast;
 import me.kuwg.re.ast.nodes.blocks.ASTBlockNode;
 import me.kuwg.re.compiler.Compilable;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.type.TypeRef;
+
+import java.util.Map;
 
 public class AST implements Compilable {
     private final ASTBlockNode block;
@@ -13,6 +16,10 @@ public class AST implements Compilable {
 
     public void addChild(ASTNode node) {
         block.addChild(node);
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

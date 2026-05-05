@@ -31,6 +31,11 @@ public class FunctionCallNode extends ValueNode {
     }
 
     @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        parameters.forEach(p -> p.replaceGenerics(generics));
+    }
+
+    @Override
     public void compile(final CompilationContext cctx) {
         compile0(cctx, false);
     }
@@ -66,6 +71,8 @@ public class FunctionCallNode extends ValueNode {
         validateGenericUsage(genFn);
 
         Map<String, TypeRef> bindings = inferGenericTypes(genFn, callTypes);
+        replaceGenerics(bindings);
+
         for (String tp : genFn.typeParameters()) {
             if (!bindings.containsKey(tp)) {
                 new RFunctionGenericsError("Could not infer type parameter " + tp, line).raise();
@@ -196,7 +203,7 @@ public class FunctionCallNode extends ValueNode {
         return type;
     }
 
-    private boolean containsGeneric(TypeRef type) {
+    public static boolean containsGeneric(TypeRef type) {
         if (type instanceof GenericType) return true;
         if (type instanceof ArrayType arr) return containsGeneric(arr.inner());
         if (type instanceof PointerType ptr) return containsGeneric(ptr.inner());

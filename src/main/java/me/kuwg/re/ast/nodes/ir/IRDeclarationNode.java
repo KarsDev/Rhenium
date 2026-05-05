@@ -3,6 +3,9 @@ package me.kuwg.re.ast.nodes.ir;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.type.TypeRef;
+
+import java.util.Map;
 
 public class IRDeclarationNode extends ASTNode implements GlobalNode {
     private final String content;
@@ -12,6 +15,9 @@ public class IRDeclarationNode extends ASTNode implements GlobalNode {
         this.content = content;
     }
 
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    }
 
     @Override
     public void compile(final CompilationContext cctx) {

@@ -7,6 +7,8 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.type.TypeRef;
 
+import java.util.Map;
+
 public class BinaryExpressionNode extends ValueNode {
     private final ValueNode left;
     private final BinaryOperator op;
@@ -17,6 +19,12 @@ public class BinaryExpressionNode extends ValueNode {
         this.left = left;
         this.op = op;
         this.right = right;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        left.replaceGenerics(generics);
+        right.replaceGenerics(generics);
     }
 
     @Override

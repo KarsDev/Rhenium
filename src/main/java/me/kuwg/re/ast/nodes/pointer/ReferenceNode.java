@@ -7,7 +7,10 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.deref.RNotAddressableError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.ptr.PointerType;
+
+import java.util.Map;
 
 public class ReferenceNode extends ValueNode {
     private final VariableReference value;
@@ -15,6 +18,11 @@ public class ReferenceNode extends ValueNode {
     public ReferenceNode(final int line, final VariableReference value) {
         super(line);
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        value.replaceGenerics(generics);
     }
 
     @Override

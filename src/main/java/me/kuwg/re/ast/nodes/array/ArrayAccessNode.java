@@ -6,12 +6,15 @@ import me.kuwg.re.cast.CastManager;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
+import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
+
+import java.util.Map;
 
 public class ArrayAccessNode extends VariableReference {
     private final ValueNode array;
@@ -21,6 +24,12 @@ public class ArrayAccessNode extends VariableReference {
         super(line);
         this.array = array;
         this.index = index;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        array.replaceGenerics(generics);
+        index.replaceGenerics(generics);
     }
 
     @Override
@@ -82,10 +91,10 @@ public class ArrayAccessNode extends VariableReference {
 
     private String computeElementPointer(final CompilationContext cctx) {
         String arrayAddr;
-        if (array instanceof VariableReference) {
-            RVariable arrVar = ((VariableReference) array).getVariable(cctx);
+        if (array instanceof VariableReference vr) {
+            RVariable arrVar = vr.getVariable(cctx);
             if (arrVar == null) {
-                return new RVariableTypeError("array or pointer", "null", line).raise();
+                return new RVariableNotFoundError(vr.getCompleteName(), line).raise();
             }
             if (arrVar.addrReg() == null) {
                 return new RVariableTypeError("addressable array", "temporary value", line).raise();

@@ -9,12 +9,19 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 
+import java.util.Map;
+
 public class LenNode extends ValueNode {
     private final ValueNode value;
 
     public LenNode(final int line, final ValueNode value) {
         super(line, BuiltinTypes.INT.getType());
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        value.replaceGenerics(generics);
     }
 
     @Override

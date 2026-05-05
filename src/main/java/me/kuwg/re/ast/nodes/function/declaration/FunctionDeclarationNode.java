@@ -20,24 +20,22 @@ import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlockContainer {
     private final boolean isGeneric;
     private final String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
-    private final TypeRef returnType;
+    private TypeRef returnType;
     private final BlockNode block;
 
     private boolean registered = false;
 
-    public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name,
-                                   final List<FunctionParameter> parameters,
-                                   final TypeRef returnType, final BlockNode block) {
+    public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
         super(line);
         this.isGeneric = isGeneric;
         this.name = name;
-
 
         if (name.startsWith("\"") && name.endsWith("\"")) {
             String cleanName = name.startsWith("\"") ? name.substring(1, name.length() - 1) : name;
@@ -50,6 +48,13 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         this.returnType = returnType;
         this.block = block.clone();
     }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        returnType = replaceGenericType(returnType, generics);
+        block.replaceGenerics(generics);
+    }
+
     private static boolean appendMainReturn(StringBuilder sb) {
         String[] lines = sb.toString().split("\\r?\\n");
         for (int i = lines.length - 1; i >= 0; i--) {
@@ -78,8 +83,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         String funcName = main ? "main" : llvmName;
 
         StringBuilder func = new StringBuilder();
-        func.append("define ").append(returnType.getLLVMName()).append(" @")
-                .append(funcName).append("(");
+        func.append("define ").append(returnType.getLLVMName()).append(" @").append(funcName).append("(");
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
@@ -98,14 +102,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         for (FunctionParameter param : parameters) {
             if (param.type() instanceof PointerType) {
-                RVariable paramVar = new RVariable(
-                        param.name(),
-                        false,
-                        false,
-                        param.type(),
-                        null,
-                        "%" + param.name()
-                );
+                RVariable paramVar = new RVariable(param.name(), false, false, param.type(), null, "%" + param.name());
                 cctx.addVariable(paramVar);
                 continue;
             }
@@ -113,17 +110,9 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             String paramPtr = "%" + param.name() + ".addr";
             TypeRef pt = evalType(param.type(), cctx);
             cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
-            cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", "
-                    + pt.getLLVMName() + "* " + paramPtr);
+            cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + pt.getLLVMName() + "* " + paramPtr);
 
-            RVariable paramVar = new RVariable(
-                    param.name(),
-                    param.mutable(),
-                    true,
-                    pt,
-                    paramPtr,
-                    "%" + param.name()
-            );
+            RVariable paramVar = new RVariable(param.name(), param.mutable(), true, pt, paramPtr, "%" + param.name());
             cctx.addVariable(paramVar);
         }
 
@@ -161,8 +150,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         var oldFunc = cctx.getFunction(name, types);
 
         if (oldFunc != null && !(isGeneric && oldFunc.parameters.stream().anyMatch(p -> p.type() instanceof GenericType))) {
-            new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: "
-                    + name + types.toString().replace("[", "(").replace("]", ")"), line).raise();
+            new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: " + name + types.toString().replace("[", "(").replace("]", ")"), line).raise();
         }
 
         RFunction fnObj = new RDefFunction(llvmName, name, returnType, parameters);

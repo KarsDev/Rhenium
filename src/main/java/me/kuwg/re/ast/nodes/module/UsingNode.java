@@ -3,6 +3,9 @@ package me.kuwg.re.ast.nodes.module;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.type.TypeRef;
+
+import java.util.Map;
 
 public class UsingNode extends ASTNode implements GlobalNode {
     private final String sourceFile;
@@ -14,6 +17,10 @@ public class UsingNode extends ASTNode implements GlobalNode {
         this.sourceFile = sourceFile;
         this.name = name.toLowerCase();
         this.pkg = pkg;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

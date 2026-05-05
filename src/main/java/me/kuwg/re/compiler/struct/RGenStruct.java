@@ -10,7 +10,6 @@ import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
-import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
@@ -47,13 +46,14 @@ public class RGenStruct extends RDefaultStruct {
         List<RStructField> newFields = new ArrayList<>();
 
         for (RStructField field : fields) {
-            TypeRef replaced = replace(field.type(), mapping);
+            TypeRef replaced = ASTNode.replaceGenericType(field.type(), mapping);
             newFields.add(new RStructField(field.name(), replaced));
         }
 
         String mangledName = mangleName(types);
 
         TypeRef newType = new StructType(mangledName, newFields.stream().map(RStructField::type).toList());
+
 
         RStruct specialized = new RStruct(false, newType, newFields);
 
@@ -83,30 +83,6 @@ public class RGenStruct extends RDefaultStruct {
         sb.append(" }");
 
         cctx.addIR(sb.toString());
-    }
-
-    private TypeRef replace(TypeRef original, Map<String, TypeRef> mapping) {
-        if (original instanceof GenericType gen) {
-            TypeRef resolved = mapping.get(gen.name());
-
-            if (resolved == null) {
-                throw new RuntimeException("Unmapped generic type: " + gen.name());
-            }
-
-            return resolved;
-        }
-
-        if (original instanceof GenStructType genType) {
-            List<TypeRef> replacedFields = new ArrayList<>();
-
-            for (TypeRef fieldType : genType.fieldTypes()) {
-                replacedFields.add(replace(fieldType, mapping));
-            }
-
-            return new GenStructType(genType.genericTypes(), genType.getName(), replacedFields);
-        }
-
-        return original;
     }
 
     private String mangleName(List<TypeRef> types) {
@@ -177,6 +153,7 @@ public class RGenStruct extends RDefaultStruct {
                         ctor.block()
                 );
 
+                fn.replaceGenerics(mapping);
                 fn.compile(cctx);
 
                 RFunction compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
@@ -200,7 +177,8 @@ public class RGenStruct extends RDefaultStruct {
                     ));
                     withSelf.addAll(params);
 
-                    TypeRef returnType = replace(dec.getReturnType(), combined);
+                    TypeRef original = dec.getReturnType();
+                    TypeRef returnType = ASTNode.replaceGenericType(original, combined);
 
                     String mangledName = StructImplNode.generateName(
                             struct.type().getName(),
@@ -216,6 +194,7 @@ public class RGenStruct extends RDefaultStruct {
                             dec.getBlock()
                     );
 
+                    renamed.replaceGenerics(mapping);
                     renamed.compile(cctx);
 
                     compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
@@ -233,7 +212,8 @@ public class RGenStruct extends RDefaultStruct {
                     ));
                     withSelf.addAll(params);
 
-                    TypeRef returnType = replace(blt.getReturnType(), combined);
+                    TypeRef original = blt.getReturnType();
+                    TypeRef returnType = ASTNode.replaceGenericType(original, combined);
 
                     String mangledName = StructImplNode.generateName(
                             struct.type().getName(),
@@ -250,10 +230,10 @@ public class RGenStruct extends RDefaultStruct {
                                     blt.getLlvmBody()
                             );
 
+                    renamed.replaceGenerics(mapping);
                     renamed.compile(cctx);
 
                     compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
-
                 } else {
                     throw new RuntimeException("Invalid function node in impl");
                 }
@@ -267,7 +247,7 @@ public class RGenStruct extends RDefaultStruct {
         List<FunctionParameter> result = new ArrayList<>();
 
         for (FunctionParameter p : params) {
-            result.add(new FunctionParameter(p.name(), p.mutable(), replace(p.type(), mapping)));
+            result.add(new FunctionParameter(p.name(), p.mutable(), ASTNode.replaceGenericType(p.type(), mapping)));
         }
 
         return result;

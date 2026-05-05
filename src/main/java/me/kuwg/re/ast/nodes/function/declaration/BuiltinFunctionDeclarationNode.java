@@ -10,12 +10,13 @@ import me.kuwg.re.type.TypeRef;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNode {
     private final String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
-    private final TypeRef returnType;
+    private TypeRef returnType;
     private final String llvmBody;
 
     public BuiltinFunctionDeclarationNode(final int line, final boolean keepName, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
@@ -25,6 +26,11 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         this.parameters = parameters;
         this.returnType = returnType;
         this.llvmBody = llvmBody;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        returnType = replaceGenericType(returnType, generics);
     }
 
     @Override

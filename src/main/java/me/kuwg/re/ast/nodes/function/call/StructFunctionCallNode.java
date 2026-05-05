@@ -6,6 +6,7 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
+import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
@@ -14,6 +15,7 @@ import me.kuwg.re.type.struct.StructType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StructFunctionCallNode extends ValueNode {
     private final ValueNode struct;
@@ -29,6 +31,12 @@ public class StructFunctionCallNode extends ValueNode {
     }
 
     @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        struct.replaceGenerics(generics);
+        params.forEach(p -> p.replaceGenerics(generics));
+    }
+
+    @Override
     public String compileAndGet(final CompilationContext cctx) {
         RFunction fn;
         String mangled;
@@ -40,7 +48,7 @@ public class StructFunctionCallNode extends ValueNode {
             var var = vr.getVariable(cctx);
 
             if (var == null) {
-                return new RVariableTypeError("struct", "null", line).raise();
+                return new RVariableNotFoundError(vr.getCompleteName(), line).raise();
             }
 
             selfType = evalType(var.type(), cctx);

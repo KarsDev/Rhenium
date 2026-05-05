@@ -6,8 +6,11 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.deref.RDerefNotPointerError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
+
+import java.util.Map;
 
 public class DereferenceNode extends VariableReference {
     public final VariableReference value;
@@ -15,6 +18,11 @@ public class DereferenceNode extends VariableReference {
     public DereferenceNode(final int line, final VariableReference value) {
         super(line);
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        value.replaceGenerics(generics);
     }
 
     @Override

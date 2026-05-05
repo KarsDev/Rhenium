@@ -8,6 +8,8 @@ import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 
+import java.util.HashMap;
+
 public interface GenericTypeEvaluator {
     default @SuppressWarnings("unchecked") <T extends TypeRef> T evalType(T type, CompilationContext cctx) {
         if (type instanceof AppliedGenStructType ags) {

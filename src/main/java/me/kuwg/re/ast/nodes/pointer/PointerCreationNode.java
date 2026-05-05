@@ -9,12 +9,19 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.LongBuiltinType;
 
+import java.util.Map;
+
 public class PointerCreationNode extends ValueNode {
     private final ConstantNode value;
 
     public PointerCreationNode(final int line, final ConstantNode value) {
         super(line, BuiltinTypes.ANYPTR.getType());
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        value.replaceGenerics(generics);
     }
 
     @Override

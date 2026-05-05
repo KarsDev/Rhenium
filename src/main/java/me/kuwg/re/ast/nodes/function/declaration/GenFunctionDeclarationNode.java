@@ -8,12 +8,13 @@ import me.kuwg.re.compiler.function.RGenFunction;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.List;
+import java.util.Map;
 
 public class GenFunctionDeclarationNode extends ASTNode {
     private final String name;
     private final List<String> typeParameters;
     private final List<FunctionParameter> params;
-    private final TypeRef returnType;
+    private TypeRef returnType;
     private final BlockNode block;
 
     private boolean registered = false;
@@ -25,6 +26,12 @@ public class GenFunctionDeclarationNode extends ASTNode {
         this.params = params;
         this.returnType = returnType;
         this.block = block;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        returnType = replaceGenericType(returnType, generics);
+        block.replaceGenerics(generics);
     }
 
     @Override

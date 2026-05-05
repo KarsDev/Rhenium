@@ -10,9 +10,11 @@ import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.StructType;
 
+import java.util.Map;
+
 public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
-    private final TypeRef type;
+    private TypeRef type;
     private final ConstantNode value;
 
     public GlobalVariableDeclarationNode(final int line, final String name, final TypeRef type, final ConstantNode value) {
@@ -20,6 +22,12 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
         this.name = name;
         this.type = type;
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        type = replaceGenericType(type, generics);
+        value.replaceGenerics(generics);
     }
 
     @Override

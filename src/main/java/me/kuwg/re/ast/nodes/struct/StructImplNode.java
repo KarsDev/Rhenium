@@ -4,6 +4,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
+import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
@@ -18,6 +19,7 @@ import me.kuwg.re.type.struct.StructType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StructImplNode extends ASTNode implements GlobalNode {
     private final StructType struct;
@@ -40,6 +42,12 @@ public class StructImplNode extends ASTNode implements GlobalNode {
     }
 
     @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        constructors.forEach(c -> c.block().replaceGenerics(generics));
+        functions.forEach(f -> f.replaceGenerics(generics));
+    }
+
+    @Override
     public void compile(final CompilationContext cctx) {
         RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
 
@@ -56,7 +64,8 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
             if (fn instanceof FunctionDeclarationNode dec) compiled = compileFunction(cctx, cctxStruct, dec);
             else if (fn instanceof BuiltinFunctionDeclarationNode blt) compiled = compileBuiltin(cctx, cctxStruct, blt);
-            else throw new RInternalError("internal error: not function declaration");
+            //else if (fn instanceof GenFunctionDeclarationNode gnc) compiled = compileGeneric(cctx, cctxStruct, gnc);
+            else throw new RInternalError("Not function declaration: " + fn);
 
             cctxStruct.functions().add(compiled);
         }

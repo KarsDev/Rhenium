@@ -8,10 +8,12 @@ import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 
 import java.util.List;
+import java.util.Map;
 
 public class RaiseNode extends ASTNode implements InterruptNode {
     private final ValueNode value;
@@ -19,6 +21,11 @@ public class RaiseNode extends ASTNode implements InterruptNode {
     public RaiseNode(final int line, final ValueNode value) {
         super(line);
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        value.replaceGenerics(generics);
     }
 
     @Override
@@ -53,6 +60,10 @@ public class RaiseNode extends ASTNode implements InterruptNode {
                             @Override
                             public void write(final StringBuilder sb, final String indent) {
                                 sb.append(indent).append("Error Value").append(NEWLINE);
+                            }
+
+                            @Override
+                            public void replaceGenerics(final Map<String, TypeRef> generics) {
                             }
 
                             @Override

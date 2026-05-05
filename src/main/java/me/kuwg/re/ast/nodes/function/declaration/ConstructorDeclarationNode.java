@@ -4,8 +4,10 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.parser.RParserError;
+import me.kuwg.re.type.TypeRef;
 
 import java.util.List;
+import java.util.Map;
 
 public class ConstructorDeclarationNode extends ASTNode {
     private final String fileName;
@@ -17,6 +19,11 @@ public class ConstructorDeclarationNode extends ASTNode {
         this.fileName = fileName;
         this.parameters = parameters;
         this.block = block;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        block.replaceGenerics(generics);
     }
 
     @Override

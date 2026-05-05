@@ -4,7 +4,10 @@ import me.kuwg.re.ast.nodes.constants.StringNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+
+import java.util.Map;
 
 public class TypeofNode extends ValueNode {
     private final ValueNode valueNode;
@@ -14,6 +17,11 @@ public class TypeofNode extends ValueNode {
         super(line, BuiltinTypes.STR.getType());
         this.valueNode = valueNode;
         this.llvm = llvm;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        valueNode.replaceGenerics(generics);
     }
 
     @Override

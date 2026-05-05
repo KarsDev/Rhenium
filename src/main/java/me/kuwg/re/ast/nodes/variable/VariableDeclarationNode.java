@@ -14,10 +14,12 @@ import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.struct.StructType;
 
+import java.util.Map;
+
 public class VariableDeclarationNode extends ValueNode {
     private final VariableReference variable;
     private final boolean mutable;
-    private final TypeRef type;
+    private TypeRef type;
     private final ValueNode value;
 
     public VariableDeclarationNode(final int line, final VariableReference variable, final boolean mutable, final TypeRef type, final ValueNode value) {
@@ -26,6 +28,13 @@ public class VariableDeclarationNode extends ValueNode {
         this.mutable = mutable;
         this.type = type;
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        variable.replaceGenerics(generics);
+        type = replaceGenericType(type, generics);
+        value.replaceGenerics(generics);
     }
 
     @Override

@@ -11,12 +11,20 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 
+import java.util.Map;
+
 public class ArrayCreationNode extends ValueNode {
     private final ValueNode size;
 
     public ArrayCreationNode(final int line, final TypeRef type, final ValueNode size) {
         super(line, type);
         this.size = size;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        size.replaceGenerics(generics);
+        type = replaceGenericType(type, generics);
     }
 
     @Override
@@ -49,7 +57,6 @@ public class ArrayCreationNode extends ValueNode {
         setType(new ArrayType(sizeLong, elementType));
 
         return arrReg;
-
     }
 
     private String compileDynamic(final CompilationContext cctx) {
@@ -63,11 +70,10 @@ public class ArrayCreationNode extends ValueNode {
             sizeReg = CastManager.executeCast(line, sizeReg, size.getType(), BuiltinTypes.LONG.getType(), cctx);
         }
 
-        TypeRef elementType = type;
-        String llvmElemType = elementType.getLLVMName();
+        String llvmElemType = evalType(type, cctx).getLLVMName();
 
         String bytesReg = cctx.nextRegister();
-        cctx.emit(bytesReg + " = mul i64 " + sizeReg + ", " + elementType.getSize());
+        cctx.emit(bytesReg + " = mul i64 " + sizeReg + ", " + evalType(type, cctx).getSize());
 
         cctx.addIR("declare i8* @malloc(i64)");
 
@@ -81,7 +87,7 @@ public class ArrayCreationNode extends ValueNode {
         String arrReg = cctx.nextRegister();
         cctx.emit(arrReg + " = bitcast i8* " + rawPtr + " to " + llvmElemType + "*");
 
-        setType(new PointerType(elementType));
+        setType(new PointerType(evalType(type, cctx)));
 
         return arrReg;
     }

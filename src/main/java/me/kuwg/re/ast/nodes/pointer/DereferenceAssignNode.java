@@ -2,7 +2,10 @@ package me.kuwg.re.ast.nodes.pointer;
 
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.ptr.PointerType;
+
+import java.util.Map;
 
 public class DereferenceAssignNode extends ValueNode {
     private final ValueNode pointer;
@@ -12,6 +15,12 @@ public class DereferenceAssignNode extends ValueNode {
         super(line);
         this.pointer = pointer;
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        pointer.replaceGenerics(generics);
+        value.replaceGenerics(generics);
     }
 
     @Override

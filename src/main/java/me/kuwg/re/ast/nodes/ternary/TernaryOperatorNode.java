@@ -4,7 +4,10 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.condition.RInvalidConditionError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+
+import java.util.Map;
 
 public class TernaryOperatorNode extends ValueNode {
     private final ValueNode condition;
@@ -16,6 +19,13 @@ public class TernaryOperatorNode extends ValueNode {
         this.condition = condition;
         this.thenExpr = thenExpr;
         this.elseExpr = elseExpr;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        condition.replaceGenerics(generics);
+        thenExpr.replaceGenerics(generics);
+        elseExpr.replaceGenerics(generics);
     }
 
     @Override

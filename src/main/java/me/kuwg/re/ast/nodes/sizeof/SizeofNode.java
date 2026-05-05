@@ -8,14 +8,22 @@ import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
+import java.util.Map;
+
 public class SizeofNode extends ConstantNode {
-    private final TypeRef type;
+    private TypeRef type;
     private final ValueNode value;
 
     public SizeofNode(final int line, final ValueNode value) {
         super(line, BuiltinTypes.INT.getType());
         this.type = null;
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        type = replaceGenericType(type, generics);
+        value.replaceGenerics(generics);
     }
 
     public SizeofNode(final int line, final TypeRef type) {

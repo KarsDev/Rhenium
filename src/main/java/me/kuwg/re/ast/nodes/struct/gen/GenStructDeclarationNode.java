@@ -4,9 +4,11 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.error.errors.struct.RStructAlreadyExistsError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.GenStructType;
 
 import java.util.List;
+import java.util.Map;
 
 public class GenStructDeclarationNode extends ASTNode {
     private final String name;
@@ -18,6 +20,10 @@ public class GenStructDeclarationNode extends ASTNode {
         this.name = name;
         this.type = type;
         this.fields = fields;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

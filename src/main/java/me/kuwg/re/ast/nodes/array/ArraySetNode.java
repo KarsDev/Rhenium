@@ -10,8 +10,9 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 
-public class ArraySetNode extends ValueNode {
+import java.util.Map;
 
+public class ArraySetNode extends ValueNode {
     private final ValueNode array;
     private final ValueNode index;
     private final ValueNode value;
@@ -21,6 +22,13 @@ public class ArraySetNode extends ValueNode {
         this.array = array;
         this.index = index;
         this.value = value;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        array.replaceGenerics(generics);
+        index.replaceGenerics(generics);
+        value.replaceGenerics(generics);
     }
 
     @Override

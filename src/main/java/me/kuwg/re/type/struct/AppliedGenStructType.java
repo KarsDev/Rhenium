@@ -2,13 +2,13 @@ package me.kuwg.re.type.struct;
 
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public record AppliedGenStructType(GenStructType base, List<TypeRef> args) implements TypeRef {
-
     @Override
     public boolean isPrimitive() {
         return false;
@@ -39,6 +39,11 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
     @Override
     public String getLLVMName() {
         throw new RInternalError();
+    }
+
+    @Override
+    public @NotNull String toString() {
+        return "struct " + base.name();
     }
 
     @Override

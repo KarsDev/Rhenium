@@ -10,8 +10,10 @@ import me.kuwg.re.error.errors.struct.RGenStructInitError;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
+import me.kuwg.re.type.TypeRef;
 
 import java.util.List;
+import java.util.Map;
 
 public class StructInitNode extends ValueNode {
     private final String name;
@@ -21,6 +23,11 @@ public class StructInitNode extends ValueNode {
         super(line);
         this.name = name;
         this.values = values;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        values.forEach(v -> v.value().replaceGenerics(generics));
     }
 
     @Override

@@ -24,7 +24,7 @@ final class RFunctions {
     }
 
     void writeAll() {
-        System.out.println(functions);
+        functions.forEach(f -> System.out.println(f.name()));
     }
 
     RFunction get(String name, List<TypeRef> parameters) {

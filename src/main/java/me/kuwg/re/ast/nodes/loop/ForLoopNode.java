@@ -17,6 +17,8 @@ import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.struct.StructType;
 
+import java.util.Map;
+
 public class ForLoopNode extends ASTNode implements IBlockContainer {
     private final String variable;
     private final String llvmVariable;
@@ -29,6 +31,12 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         this.llvmVariable = RVariable.makeUnique(variable);
         this.collection = collection;
         this.block = block;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        collection.replaceGenerics(generics);
+        block.replaceGenerics(generics);
     }
 
     @Override

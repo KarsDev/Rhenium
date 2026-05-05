@@ -18,6 +18,7 @@ import me.kuwg.re.writer.Writeable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public final class BlockNode implements Writeable, Compilable, GlobalNode, Cloneable {
     private final List<ASTNode> nodes;
@@ -29,6 +30,11 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
     public List<ASTNode> getNodes() {
         return nodes;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        nodes.forEach(n -> n.replaceGenerics(generics));
     }
 
     @Override

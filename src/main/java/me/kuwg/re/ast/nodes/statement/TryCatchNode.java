@@ -4,6 +4,9 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.type.TypeRef;
+
+import java.util.Map;
 
 public class TryCatchNode extends ASTNode implements IBlockContainer {
     private final BlockNode tryBlock;
@@ -13,6 +16,12 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
         super(line);
         this.tryBlock = tryBlock;
         this.catchBlock = catchBlock;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        tryBlock.replaceGenerics(generics);
+        catchBlock.replaceGenerics(generics);
     }
 
     @Override

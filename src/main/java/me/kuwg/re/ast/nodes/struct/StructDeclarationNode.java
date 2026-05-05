@@ -5,9 +5,11 @@ import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.error.errors.struct.RStructAlreadyExistsError;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.List;
+import java.util.Map;
 
 public class StructDeclarationNode extends ASTNode implements GlobalNode {
     private final boolean builtin;
@@ -21,6 +23,10 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
         this.name = name;
         this.type = type;
         this.fields = fields;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

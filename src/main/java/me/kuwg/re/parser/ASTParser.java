@@ -36,7 +36,10 @@ import me.kuwg.re.ast.nodes.sizeof.SizeofNode;
 import me.kuwg.re.ast.nodes.statement.IfStatementNode;
 import me.kuwg.re.ast.nodes.statement.MatchNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
-import me.kuwg.re.ast.nodes.struct.*;
+import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
+import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
+import me.kuwg.re.ast.nodes.struct.StructImplNode;
+import me.kuwg.re.ast.nodes.struct.StructInitNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructImplNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructInitNode;
@@ -83,6 +86,7 @@ public class ASTParser {
     private final String file;
     private final Token[] tokens;
     private final boolean initial;
+    private List<String> currentGenericTypes = new ArrayList<>();
     private int tokenIndex;
 
     public ASTParser(final String file, final Token[] tokens) {
@@ -526,7 +530,8 @@ public class ASTParser {
             holder = new DereferenceNode(line, new DirectVariableReferenceNode(line, "self"));
         } else if (matchAndConsume(DIVIDER, "(")) {
             ASTNode v = parseValue();
-            if (!(v instanceof VariableReference vr)) return new RParserError("Expected variable reference for dereference operator", file, line).raise();
+            if (!(v instanceof VariableReference vr))
+                return new RParserError("Expected variable reference for dereference operator", file, line).raise();
             holder = vr;
             if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')'", file, line).raise();
         } else {
@@ -586,7 +591,7 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        return new FunctionDeclarationNode(line, false,  name, params, returnType, block);
+        return new FunctionDeclarationNode(line, false, name, params, returnType, block);
     }
 
     private @SubFunc ASTNode parseForKeyword() {
@@ -935,8 +940,11 @@ public class ASTParser {
         while (iterator.hasNext()) {
             var next = iterator.next();
 
+            if (next.getClass().getSimpleName().contains("Gen"))
+                return new RParserError("Generic functions in structs are not supported", file, line).raise();
             if (next.getClass().getSimpleName().contains("FunctionDeclarationNode")) continue;
-            if (!(next instanceof ConstructorDeclarationNode cdn)) return new RImplNotFunctionError(next.getLine()).raise();
+            if (!(next instanceof ConstructorDeclarationNode cdn))
+                return new RImplNotFunctionError(next.getLine()).raise();
 
             iterator.remove();
 
@@ -1249,8 +1257,10 @@ public class ASTParser {
             return new RParserError("Expected '>' for generic function declaration", file, line).raise();
         }
 
-        var params = parseParamsDeclare(true);
+        List<String> old = currentGenericTypes;
+        currentGenericTypes = new ArrayList<>(typeParameters);
 
+        var params = parseParamsDeclare(true);
         TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : NoneBuiltinType.INSTANCE;
 
         if (!matchAndConsume(OPERATOR, ":")) {
@@ -1258,6 +1268,8 @@ public class ASTParser {
         }
 
         BlockNode block = parseBlock();
+
+        currentGenericTypes = old;
 
         return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block);
     }
@@ -1430,6 +1442,9 @@ public class ASTParser {
 
         consume();
 
+        List<String> old = currentGenericTypes;
+        currentGenericTypes = new ArrayList<>(implGenerics);
+
         List<ASTNode> statements = new ArrayList<>();
 
         while (!match(EOF) && !match(DEDENT)) {
@@ -1441,6 +1456,8 @@ public class ASTParser {
             if (n == null) break;
             statements.add(n);
         }
+
+        currentGenericTypes = old;
 
         if (!match(EOF)) {
             if (match(DEDENT)) {
@@ -1598,7 +1615,10 @@ public class ASTParser {
         TypeRef type = BuiltinTypes.getByName(typeName);
 
         if (type == null) {
-            if (generics) return new GenericType(typeName);
+            if (currentGenericTypes.contains(typeName) || generics) {
+                return new GenericType(typeName);
+            }
+
             return new RParserError("Unknown type: " + typeName, file, line).raise();
         }
 

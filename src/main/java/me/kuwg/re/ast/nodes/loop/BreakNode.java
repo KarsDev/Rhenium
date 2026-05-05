@@ -4,10 +4,17 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.loop.RLoopError;
+import me.kuwg.re.type.TypeRef;
+
+import java.util.Map;
 
 public class BreakNode extends ASTNode implements InterruptNode {
     public BreakNode(final int line) {
         super(line);
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
     }
 
     @Override

@@ -12,6 +12,7 @@ import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 public class ArrayNode extends PointerValueNode {
@@ -20,6 +21,11 @@ public class ArrayNode extends PointerValueNode {
     public ArrayNode(final int line, final List<ValueNode> values) {
         super(line);
         this.values = values;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics) {
+        values.forEach(v -> v.replaceGenerics(generics));
     }
 
     private TypeRef inferType() {
