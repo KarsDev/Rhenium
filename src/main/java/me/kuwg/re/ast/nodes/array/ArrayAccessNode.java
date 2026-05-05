@@ -100,7 +100,13 @@ public class ArrayAccessNode extends VariableReference {
                 return new RVariableTypeError("addressable array", "temporary value", line).raise();
             }
 
-            arrayAddr = arrVar.addrReg();
+            TypeRef arrType = arrVar.type();
+
+            if (arrType instanceof ArrayType) {
+                arrayAddr = arrVar.addrReg();
+            } else {
+                arrayAddr = arrVar.valueReg();
+            }
         } else {
             arrayAddr = array.compileAndGet(cctx);
         }

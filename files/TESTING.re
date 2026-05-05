@@ -26,7 +26,7 @@ func testArray():
     if (len(a) != 3):
         raise "Error with len"
 
-    for (_ in a):
+    for (ignore in a):
         v = a[idx]
         idx += 1
         if (v != idx):

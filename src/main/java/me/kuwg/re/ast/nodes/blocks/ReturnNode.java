@@ -19,7 +19,7 @@ public class ReturnNode extends ASTNode implements InterruptNode {
 
     @Override
     public void replaceGenerics(final Map<String, TypeRef> generics) {
-        value.replaceGenerics(generics);
+        if (value != null) value.replaceGenerics(generics);
     }
 
     @Override

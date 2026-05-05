@@ -41,9 +41,20 @@ public class ArraySetNode extends ValueNode {
                 return new RVariableTypeError("addressable array", "temporary value", line).raise();
             }
 
-            arrayReg = arrVar.addrReg();
+
+            if (array.getType() instanceof ArrayType) {
+                arrayReg = arrVar.addrReg();
+            } else {
+                arrayReg = arrVar.valueReg();
+            }
         } else {
-            arrayReg = array.compileAndGet(cctx);
+            String val = array.compileAndGet(cctx);
+
+            if (!(array.getType() instanceof PointerType)) {
+                return new RVariableTypeError("ptr", array.getType().getName(), line).raise();
+            }
+
+            arrayReg = val;
         }
 
         String valueReg = value.compileAndGet(cctx);
@@ -69,24 +80,14 @@ public class ArraySetNode extends ValueNode {
         }
 
         if (!elementType.isCompatibleWith(value.getType())) {
-            return new RVariableTypeError(
-                    elementType.getName(),
-                    value.getType().getName(),
-                    line
-            ).raise();
+            return new RVariableTypeError(elementType.getName(), value.getType().getName(), line).raise();
         }
 
 
         String index64Reg = indexReg;
 
         if (!index.getType().equals(BuiltinTypes.LONG.getType())) {
-            index64Reg = CastManager.executeCast(
-                    line,
-                    indexReg,
-                    index.getType(),
-                    BuiltinTypes.LONG.getType(),
-                    cctx
-            );
+            index64Reg = CastManager.executeCast(line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
         }
 
         String llvmElemType = elementType.getLLVMName();
@@ -94,30 +95,12 @@ public class ArraySetNode extends ValueNode {
 
         if (fixedArray) {
             String llvmArrType = "[" + fixedSize + " x " + llvmElemType + "]";
-            cctx.emit(
-                    elemPtrReg +
-                            " = getelementptr inbounds " +
-                            llvmArrType + ", " +
-                            llvmArrType + "* " +
-                            arrayReg + ", i32 0, i64 " + index64Reg
-            );
+            cctx.emit(elemPtrReg + " = getelementptr inbounds " + llvmArrType + ", " + llvmArrType + "* " + arrayReg + ", i32 0, i64 " + index64Reg);
         } else {
-            cctx.emit(
-                    elemPtrReg +
-                            " = getelementptr " +
-                            llvmElemType + ", " +
-                            llvmElemType + "* " +
-                            arrayReg + ", i64 " + index64Reg
-            );
+            cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayReg + ", i64 " + index64Reg);
         }
 
-        cctx.emit(
-                "store " +
-                        llvmElemType + " " +
-                        valueReg + ", " +
-                        llvmElemType + "* " +
-                        elemPtrReg
-        );
+        cctx.emit("store " + llvmElemType + " " + valueReg + ", " + llvmElemType + "* " + elemPtrReg);
 
         setType(value.getType());
         return valueReg;

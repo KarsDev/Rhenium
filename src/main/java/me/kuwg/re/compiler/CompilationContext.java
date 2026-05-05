@@ -65,7 +65,7 @@ final class CompilationContext {
     }
 
     public void emit(String s) {
-        if (s.contains("ret i8* %208 a")) throw new RuntimeException();
+        if (s.contains("%108 = agetelementptr inbounds [3 x i32], [3 x i32]* %a_0097_6, i32 0, i64 %107")) throw new RuntimeException();
         if (s.strip().matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
         Objects.requireNonNull(codeStack.peek()).append(TAB.repeat(indentLevel)).append(s).append('\n');
     }
