@@ -23,7 +23,7 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -63,5 +63,10 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Native CPP: ").append(name).append(NEWLINE);
         functions.forEach(f -> sb.append(indent).append(TAB).append(f));
+    }
+
+    @Override
+    public NativeCPPNode clone() {
+        return this;
     }
 }

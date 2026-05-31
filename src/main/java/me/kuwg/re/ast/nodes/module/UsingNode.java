@@ -20,7 +20,7 @@ public class UsingNode extends ASTNode implements GlobalNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -31,5 +31,10 @@ public class UsingNode extends ASTNode implements GlobalNode {
     @Override
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Using: ").append(name).append(NEWLINE);
+    }
+
+    @Override
+    public UsingNode clone() {
+        return this;
     }
 }

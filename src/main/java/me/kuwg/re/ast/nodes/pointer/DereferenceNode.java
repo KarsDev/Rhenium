@@ -21,8 +21,8 @@ public class DereferenceNode extends VariableReference {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -131,5 +131,10 @@ public class DereferenceNode extends VariableReference {
     @Override
     public String getSimpleName() {
         return value.getSimpleName();
+    }
+
+    @Override
+    public DereferenceNode clone() {
+        return new DereferenceNode(line, value.clone());
     }
 }

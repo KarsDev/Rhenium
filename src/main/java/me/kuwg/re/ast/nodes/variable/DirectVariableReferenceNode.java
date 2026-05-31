@@ -8,7 +8,6 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.struct.StructType;
 
 import java.util.Map;
 
@@ -21,7 +20,7 @@ public class DirectVariableReferenceNode extends VariableReference {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -37,11 +36,7 @@ public class DirectVariableReferenceNode extends VariableReference {
         if (var.addrReg() != null) {
             String elemLLVM = var.type().getLLVMName();
             String tmp = cctx.nextRegister();
-            if (var.type() instanceof StructType) {
-                return var.addrReg();
-            } else {
-                cctx.emit(tmp + " = load " + elemLLVM + ", " + elemLLVM + "* " + var.addrReg());
-            }
+            cctx.emit(tmp + " = load " + elemLLVM + ", " + elemLLVM + "* " + var.addrReg());
             return tmp;
         }
 
@@ -108,5 +103,10 @@ public class DirectVariableReferenceNode extends VariableReference {
     @Override
     public String toString() {
         return "DirectVariableReferenceNode{" + "name='" + name + '\'' + '}';
+    }
+
+    @Override
+    public DirectVariableReferenceNode clone() {
+        return new DirectVariableReferenceNode(line, name);
     }
 }

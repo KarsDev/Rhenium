@@ -25,8 +25,8 @@ public class StructFieldAccessNode extends VariableReference {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        struct.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        struct.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -147,5 +147,8 @@ public class StructFieldAccessNode extends VariableReference {
         sb.append(indent).append(TAB).append("Field: ").append(fieldName).append(NEWLINE);
     }
 
-
+    @Override
+    public StructFieldAccessNode clone() {
+        return new StructFieldAccessNode(line, struct.clone(), fieldName);
+    }
 }

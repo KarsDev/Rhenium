@@ -22,15 +22,15 @@ public class BinaryExpressionNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        left.replaceGenerics(generics);
-        right.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        left.replaceGenerics(generics, cctx);
+        right.replaceGenerics(generics, cctx);
     }
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String leftReg = left.compileAndGet(cctx);
-        String rightReg = right.compileAndGet(cctx);
+        String leftReg =  cctx.ensureValue(left, left.compileAndGet(cctx));
+        String rightReg = cctx.ensureValue(right, right.compileAndGet(cctx));
 
         TypeRef leftType = left.getType();
         TypeRef rightType = right.getType();
@@ -55,5 +55,10 @@ public class BinaryExpressionNode extends ValueNode {
         left.write(sb, indent + TAB);
         sb.append(indent).append(TAB).append("Symbol: ").append(op.getSymbol()).append(NEWLINE);
         right.write(sb, indent + TAB);
+    }
+
+    @Override
+    public BinaryExpressionNode clone() {
+        return new BinaryExpressionNode(line, left.clone(), op, right.clone());
     }
 }

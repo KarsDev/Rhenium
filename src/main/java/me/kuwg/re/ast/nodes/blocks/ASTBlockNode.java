@@ -5,6 +5,7 @@ import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.ArrayList;
@@ -25,8 +26,8 @@ public class ASTBlockNode extends ASTNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        nodes.forEach(n -> n.replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        nodes.forEach(n -> n.replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -53,5 +54,10 @@ public class ASTBlockNode extends ASTNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("AST: ").append(NEWLINE);
         nodes.forEach(node -> node.write(sb, TAB + indent));
+    }
+
+    @Override
+    public ASTNode clone() {
+        throw new RInternalError();
     }
 }

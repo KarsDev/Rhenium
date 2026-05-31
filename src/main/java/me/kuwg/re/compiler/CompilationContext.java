@@ -1,5 +1,7 @@
 package me.kuwg.re.compiler;
 
+import me.kuwg.re.ast.nodes.variable.VariableReference;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
@@ -12,6 +14,7 @@ import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.struct.GenStructType;
+import me.kuwg.re.type.struct.StructType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -25,6 +28,8 @@ import static me.kuwg.re.writer.Writeable.TAB;
 
 public @SuppressWarnings("unused")
 final class CompilationContext {
+    private static final String ERROR_LINE = "Error line here!";
+
     private final Map<String, TypeRef> typeMap;
     private final List<String> irCode = new ArrayList<>();
     private final StringBuilder declarations = new StringBuilder();
@@ -65,7 +70,7 @@ final class CompilationContext {
     }
 
     public void emit(String s) {
-        if (s.contains("%108 = agetelementptr inbounds [3 x i32], [3 x i32]* %a_0097_6, i32 0, i64 %107")) throw new RuntimeException();
+        if (s.contains(ERROR_LINE)) throw new RuntimeException();
         if (s.strip().matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
         Objects.requireNonNull(codeStack.peek()).append(TAB.repeat(indentLevel)).append(s).append('\n');
     }
@@ -174,6 +179,7 @@ final class CompilationContext {
     }
 
     public void declare(String declaration) {
+        if (declaration.contains(ERROR_LINE)) throw new RuntimeException();
         declarations.append(declaration).append('\n');
     }
 
@@ -203,6 +209,37 @@ final class CompilationContext {
 
     public void markStructDeclared(String struct) {
         declaredStructs.add(struct);
+    }
+
+    public String ensureValue(ValueNode node, String reg) {
+        if (!(node.getType() instanceof StructType)) return reg;
+
+        if (node instanceof VariableReference vr) {
+            var var = vr.getVariable(this);
+            if (var != null && var.addrReg() != null && reg.equals(var.addrReg())) {
+                String loaded = nextRegister();
+                emit(loaded + " = load "
+                        + node.getType().getLLVMName() + ", "
+                        + node.getType().getLLVMName() + "* "
+                        + reg);
+                return loaded;
+            }
+        }
+
+        return reg;
+    }
+
+    public String ensurePointer(ValueNode node, String reg) {
+        if (!(node.getType() instanceof StructType)) return reg;
+
+        if (node instanceof VariableReference vr) {
+            var var = vr.getVariable(this);
+            if (var != null && var.addrReg() != null && reg.equals(var.valueReg())) {
+                return var.addrReg();
+            }
+        }
+
+        return reg;
     }
 
     public String compileAndGet(File output, List<String> clangArgs) throws IOException {

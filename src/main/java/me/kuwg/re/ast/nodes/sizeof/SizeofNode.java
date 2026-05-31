@@ -21,9 +21,9 @@ public class SizeofNode extends ConstantNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        type = replaceGenericType(type, generics);
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        type = replaceGenericType(type, generics, cctx);
+        value.replaceGenerics(generics, cctx);
     }
 
     public SizeofNode(final int line, final TypeRef type) {
@@ -55,5 +55,11 @@ public class SizeofNode extends ConstantNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Sizeof: ").append(NEWLINE);
         value.write(sb, indent + TAB);
+    }
+
+    @Override
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public SizeofNode clone() {
+        return new SizeofNode(line, value.clone());
     }
 }

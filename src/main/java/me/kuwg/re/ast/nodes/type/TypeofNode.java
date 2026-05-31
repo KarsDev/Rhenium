@@ -20,8 +20,8 @@ public class TypeofNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        valueNode.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        valueNode.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -40,5 +40,10 @@ public class TypeofNode extends ValueNode {
         valueNode.compileAndGet(cctx);
 
         return new StringNode(line, llvm ? valueNode.getType().getLLVMName() : valueNode.getType().getName()).compileAndGet(cctx);
+    }
+
+    @Override
+    public TypeofNode clone() {
+        return new TypeofNode(line, valueNode.clone(), llvm);
     }
 }

@@ -22,9 +22,9 @@ public class ArrayCreationNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        size.replaceGenerics(generics);
-        type = replaceGenericType(type, generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        size.replaceGenerics(generics, cctx);
+        type = replaceGenericType(type, generics, cctx);
     }
 
     @Override
@@ -103,5 +103,10 @@ public class ArrayCreationNode extends ValueNode {
                 .append(indent).append(TAB).append("Type: ").append(type.getName()).append(NEWLINE)
                 .append(indent).append(TAB).append("Size: ").append(NEWLINE);
         size.write(sb, indent + TAB + TAB);
+    }
+
+    @Override
+    public ArrayCreationNode clone() {
+        return new ArrayCreationNode(line, type, size.clone());
     }
 }

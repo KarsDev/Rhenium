@@ -12,7 +12,6 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
-import me.kuwg.re.type.struct.StructType;
 
 import java.util.Map;
 
@@ -27,17 +26,17 @@ public class ArrayAccessNode extends VariableReference {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        array.replaceGenerics(generics);
-        index.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        array.replaceGenerics(generics, cctx);
+        index.replaceGenerics(generics, cctx);
     }
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Array Access:").append(NEWLINE).append(indent).append("\tArray: ").append(NEWLINE);
-        array.write(sb, indent + "\t\t");
-        sb.append(indent).append("\tIndex: ").append(NEWLINE);
-        index.write(sb, indent + "\t\t");
+        sb.append(indent).append("Array Access:").append(NEWLINE).append(indent).append(TAB).append("Array: ").append(NEWLINE);
+        array.write(sb, indent + TAB + TAB);
+        sb.append(indent).append(TAB).append("Index: ").append(NEWLINE);
+        index.write(sb, indent + TAB + TAB);
     }
 
     @Override
@@ -61,6 +60,7 @@ public class ArrayAccessNode extends VariableReference {
 
     @Override
     public RVariable getVariable(final CompilationContext cctx) {
+
         String elemPtr = computeElementPointer(cctx);
 
         TypeRef elementType = getElementType();
@@ -69,15 +69,11 @@ public class ArrayAccessNode extends VariableReference {
 
         String valueReg;
 
-        if (elementType instanceof StructType) {
-            valueReg = elemPtr;
-        } else {
-            valueReg = cctx.nextRegister();
-            cctx.emit(valueReg + " = load "
-                    + elementType.getLLVMName() + ", "
-                    + elementType.getLLVMName() + "* "
-                    + elemPtr);
-        }
+        valueReg = cctx.nextRegister();
+        cctx.emit(valueReg + " = load "
+                + elementType.getLLVMName() + ", "
+                + elementType.getLLVMName() + "* "
+                + elemPtr);
 
         return new RVariable(
                 getSimpleName(),
@@ -172,5 +168,10 @@ public class ArrayAccessNode extends VariableReference {
     @Override
     public String getSimpleName() {
         return "Array Access";
+    }
+
+    @Override
+    public ArrayAccessNode clone() {
+        return new ArrayAccessNode(line, array.clone(), index.clone());
     }
 }

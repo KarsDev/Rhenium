@@ -18,9 +18,9 @@ public class CastNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        this.type = replaceGenericType(this.type, generics);
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        this.type = replaceGenericType(this.type, generics, cctx);
+        value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -43,5 +43,10 @@ public class CastNode extends ValueNode {
         sb.append(indent).append(TAB).append("Type: ").append(type.getName()).append(NEWLINE);
         sb.append(indent).append(TAB).append("Value: ").append(NEWLINE);
         value.write(sb, indent + TAB + TAB);
+    }
+
+    @Override
+    public CastNode clone() {
+        return new CastNode(line, type, value.clone());
     }
 }

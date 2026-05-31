@@ -12,9 +12,11 @@ import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class GenStructInitNode extends ValueNode {
     private final String name;
@@ -29,9 +31,9 @@ public class GenStructInitNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        genericTypes.replaceAll(current -> replaceGenericType(current, generics));
-        values.forEach(v -> v.value().replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        genericTypes.replaceAll(current -> replaceGenericType(current, generics, cctx));
+        values.forEach(v -> v.value().replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -64,7 +66,7 @@ public class GenStructInitNode extends ValueNode {
             bindings.put(declared.get(i), genericTypes.get(i));
         }
 
-        replaceGenerics(bindings);
+        replaceGenerics(bindings, cctx);
 
         RStruct specialized = genStruct.instantiate(genericTypes, cctx);
 
@@ -84,5 +86,12 @@ public class GenStructInitNode extends ValueNode {
         genericTypes.forEach(t -> sb.append(indent).append(TAB).append(TAB).append("- ").append(t.getName()).append(NEWLINE));
         sb.append(indent).append(TAB).append("Values: ").append(NEWLINE);
         values.forEach(v -> v.value().write(sb, indent + TAB + TAB));
+    }
+
+    @Override
+    public GenStructInitNode clone() {
+        List<RParamValue> valuesCloned = new ArrayList<>();
+        IntStream.range(0, values.size()).forEach(i -> valuesCloned.add(i, values.get(i).clone()));
+        return new GenStructInitNode(line, name, genericTypes, valuesCloned);
     }
 }

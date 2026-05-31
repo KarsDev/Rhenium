@@ -14,7 +14,7 @@ public class BreakNode extends ASTNode implements InterruptNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -31,5 +31,10 @@ public class BreakNode extends ASTNode implements InterruptNode {
     @Override
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Break").append(NEWLINE);
+    }
+
+    @Override
+    public BreakNode clone() {
+        return this;
     }
 }

@@ -29,8 +29,8 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        returnType = replaceGenericType(returnType, generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        returnType = replaceGenericType(returnType, generics, cctx);
     }
 
     @Override
@@ -78,6 +78,11 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         }
 
         cctx.addFunction(fnObj);
+    }
+
+    @Override
+    public BuiltinFunctionDeclarationNode clone() {
+        return this;
     }
 
     public String getLlvmBody() {

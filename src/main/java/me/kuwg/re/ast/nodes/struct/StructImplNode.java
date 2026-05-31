@@ -4,7 +4,6 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
-import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
@@ -20,6 +19,7 @@ import me.kuwg.re.type.struct.StructType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class StructImplNode extends ASTNode implements GlobalNode {
     private final StructType struct;
@@ -42,9 +42,9 @@ public class StructImplNode extends ASTNode implements GlobalNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        constructors.forEach(c -> c.block().replaceGenerics(generics));
-        functions.forEach(f -> f.replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        constructors.forEach(c -> c.block().replaceGenerics(generics, cctx));
+        functions.forEach(f -> f.replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -129,5 +129,16 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         renamed.compile(cctx);
 
         return cctx.getFunction(mangledName, extractTypes(newParams));
+    }
+
+    @Override
+    public StructImplNode clone() {
+        List<RConstructor> constructorsCloned = new ArrayList<>();
+        IntStream.range(0, constructors.size()).forEach(i -> constructorsCloned.add(i, constructors.get(i).clone()));
+
+        List<ASTNode> functionsCloned = new ArrayList<>();
+        IntStream.range(0, functions.size()).forEach(i -> functionsCloned.add(i, functions.get(i).clone()));
+
+        return new StructImplNode(line, struct, constructorsCloned, functionsCloned);
     }
 }

@@ -14,12 +14,12 @@ public class RangeNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
         RangeType self = (RangeType) this.type;
 
-        self.start().replaceGenerics(generics);
-        self.end().replaceGenerics(generics);
-        self.step().replaceGenerics(generics);
+        self.start().replaceGenerics(generics, cctx);
+        self.end().replaceGenerics(generics, cctx);
+        self.step().replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -43,5 +43,11 @@ public class RangeNode extends ValueNode {
         range.end().write(sb, indent + TAB + TAB);
         sb.append(indent).append(TAB).append("Step: ").append(NEWLINE);
         range.step().write(sb, indent + TAB + TAB);
+    }
+
+    @Override
+    public RangeNode clone() {
+        RangeType t = (RangeType) type;
+        return new RangeNode(line, t.start().clone(), t.end().clone(), t.step().clone());
     }
 }

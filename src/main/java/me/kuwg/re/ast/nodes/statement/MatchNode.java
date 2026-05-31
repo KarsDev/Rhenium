@@ -9,8 +9,10 @@ import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.writer.Writeable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class MatchNode extends ASTNode {
     private final ValueNode expr;
@@ -23,9 +25,9 @@ public class MatchNode extends ASTNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        expr.replaceGenerics(generics);
-        cases.forEach(c -> c.block.replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        expr.replaceGenerics(generics, cctx);
+        cases.forEach(c -> c.block.replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -117,6 +119,13 @@ public class MatchNode extends ASTNode {
         cases.forEach(c -> c.write(sb, indent + TAB + TAB));
     }
 
+    @Override
+    public MatchNode clone() {
+        List<MatchCase> casesCloned = new ArrayList<>();
+        IntStream.range(0, cases.size()).forEach(i -> casesCloned.add(i, cases.get(i).clone()));
+        return new MatchNode(line, expr.clone(), casesCloned);
+    }
+
     public List<MatchCase> getCases() {
         return cases;
     }
@@ -138,6 +147,12 @@ public class MatchNode extends ASTNode {
 
             sb.append(indent).append(TAB).append("Block: ").append(NEWLINE);
             block.write(sb, indent + TAB + TAB);
+        }
+
+        @Override
+        @SuppressWarnings("MethodDoesntCallSuperMethod")
+        public MatchCase clone() {
+            return new MatchCase(value, block.clone());
         }
     }
 }

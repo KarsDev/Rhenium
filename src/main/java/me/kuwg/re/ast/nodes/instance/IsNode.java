@@ -20,9 +20,9 @@ public class IsNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        value.replaceGenerics(generics);
-        isType = replaceGenericType(isType, generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        value.replaceGenerics(generics, cctx);
+        isType = replaceGenericType(isType, generics, cctx);
     }
 
     @Override
@@ -41,5 +41,10 @@ public class IsNode extends ValueNode {
         sb.append(indent).append("Is:").append(NEWLINE).append(indent).append(TAB).append("Value:").append(NEWLINE);
         value.write(sb, indent + TAB + TAB);
         sb.append(indent).append(TAB).append("Type: ").append(isType.getName());
+    }
+
+    @Override
+    public IsNode clone() {
+        return new IsNode(line, value.clone(), isType);
     }
 }

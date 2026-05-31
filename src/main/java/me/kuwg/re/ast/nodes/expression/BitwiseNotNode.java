@@ -21,8 +21,8 @@ public class BitwiseNotNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -59,5 +59,10 @@ public class BitwiseNotNode extends ValueNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Unary Operator: Bitwise NOT").append(NEWLINE);
         value.write(sb, indent + TAB);
+    }
+
+    @Override
+    public BitwiseNotNode clone() {
+        return new BitwiseNotNode(line, value.clone());
     }
 }

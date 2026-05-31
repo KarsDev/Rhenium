@@ -2,6 +2,7 @@ package me.kuwg.re.type.struct;
 
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.generic.GenericType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
     public String getName() {
         return base.getName() + "<" +
                 args.stream()
-                        .map(TypeRef::getName)
+                        .map(t -> t instanceof GenericType g ? g.name() : t.getName())
                         .collect(Collectors.joining(", "))
                 + ">";
     }

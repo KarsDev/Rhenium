@@ -10,8 +10,10 @@ import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.GenStructType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class GenStructImplNode extends ASTNode implements GlobalNode {
     private final GenStructType type;
@@ -29,7 +31,7 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -50,5 +52,16 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
                 .append(TAB).append("Generics: ").append(genericNames).append(NEWLINE)
                 .append(TAB).append("Functions:").append(NEWLINE);
         functions.forEach(f -> f.write(sb, indent + TAB + TAB));
+    }
+
+    @Override
+    public GenStructImplNode clone() {
+        List<RConstructor> constructorsCloned = new ArrayList<>();
+        IntStream.range(0, constructors.size()).forEach(i -> constructorsCloned.add(i, constructors.get(i).clone()));
+
+        List<ASTNode> functionsCloned = new ArrayList<>();
+        IntStream.range(0, functions.size()).forEach(i -> functionsCloned.add(i, functions.get(i).clone()));
+
+        return new GenStructImplNode(line, type, genericNames, constructorsCloned, functionsCloned);
     }
 }

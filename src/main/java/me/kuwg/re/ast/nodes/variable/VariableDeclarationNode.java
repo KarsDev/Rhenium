@@ -31,10 +31,10 @@ public class VariableDeclarationNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        variable.replaceGenerics(generics);
-        type = replaceGenericType(type, generics);
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        variable.replaceGenerics(generics, cctx);
+        type = replaceGenericType(type, generics, cctx);
+        value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -79,14 +79,8 @@ public class VariableDeclarationNode extends ValueNode {
             valueReg = castNode.compileAndGet(cctx);
         }
 
-        if (varType instanceof StructType && value instanceof VariableReference) {
-            String loaded = cctx.nextRegister();
-            cctx.emit(loaded + " = load "
-                    + varType.getLLVMName() + ", "
-                    + varType.getLLVMName() + "* "
-                    + valueReg);
-            valueReg = loaded;
-        }
+        valueReg = cctx.ensureValue(value, valueReg);
+
         String targetAddr = oldVar.addrReg() != null ? oldVar.addrReg() : oldVar.valueReg();
 
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
@@ -124,13 +118,16 @@ public class VariableDeclarationNode extends ValueNode {
             return valueReg;
         }
 
-        if (varType instanceof StructType && value instanceof VariableReference) {
-            String loaded = cctx.nextRegister();
-            cctx.emit(loaded + " = load "
-                    + varType.getLLVMName() + ", "
-                    + varType.getLLVMName() + "* "
-                    + valueReg);
-            valueReg = loaded;
+        if (varType instanceof StructType && value instanceof VariableReference vr) {
+            var var = vr.getVariable(cctx);
+            if (var != null && var.addrReg() != null && valueReg.equals(var.addrReg())) {
+                String loaded = cctx.nextRegister();
+                cctx.emit(loaded + " = load "
+                        + varType.getLLVMName() + ", "
+                        + varType.getLLVMName() + "* "
+                        + valueReg);
+                valueReg = loaded;
+            }
         }
         cctx.emit(addrReg + " = alloca " + varType.getLLVMName());
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
@@ -159,5 +156,20 @@ public class VariableDeclarationNode extends ValueNode {
         if (type != null)
             sb.append(indent).append(TAB).append("Type: ").append(mutable ? "mut " : "").append(type.getName()).append(NEWLINE);
         else sb.append(indent).append(TAB).append("Type: mut ?").append(NEWLINE);
+    }
+
+    @Override
+    public String toString() {
+        return "VariableDeclarationNode{" +
+                "mutable=" + mutable +
+                ", variable=" + variable +
+                ", type=" + type +
+                ", value=" + value +
+                '}';
+    }
+
+    @Override
+    public VariableDeclarationNode clone() {
+        return new VariableDeclarationNode(line, variable.clone(), mutable, type, value.clone());
     }
 }

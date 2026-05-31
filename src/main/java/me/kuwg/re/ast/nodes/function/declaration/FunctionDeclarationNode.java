@@ -50,9 +50,9 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        returnType = replaceGenericType(returnType, generics);
-        block.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        returnType = replaceGenericType(returnType, generics, cctx);
+        block.replaceGenerics(generics, cctx);
     }
 
     private static boolean appendMainReturn(StringBuilder sb) {
@@ -166,6 +166,11 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         sb.append(indent).append(TAB).append("Return Type: ").append(returnType.getName()).append(NEWLINE);
         block.write(sb, indent + TAB);
+    }
+
+    @Override
+    public FunctionDeclarationNode clone() {
+        return new FunctionDeclarationNode(line, isGeneric, name, parameters,  returnType, block.clone());
     }
 
     public void register(final CompilationContext cctx) {

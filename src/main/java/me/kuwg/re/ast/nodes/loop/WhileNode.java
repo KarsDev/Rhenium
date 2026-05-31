@@ -23,9 +23,9 @@ public class WhileNode extends ASTNode implements IBlockContainer {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        condition.replaceGenerics(generics);
-        block.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        condition.replaceGenerics(generics, cctx);
+        block.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -74,5 +74,10 @@ public class WhileNode extends ASTNode implements IBlockContainer {
                 .append(indent).append(TAB).append("Condition: ").append(NEWLINE);
         condition.write(sb, indent + TAB + TAB);
         block.write(sb, indent + TAB);
+    }
+
+    @Override
+    public WhileNode clone() {
+        return new WhileNode(line, condition.clone(), block.clone());
     }
 }

@@ -20,8 +20,8 @@ public class PointerCreationNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -49,5 +49,10 @@ public class PointerCreationNode extends ValueNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Pointer Creation: ").append(NEWLINE);
         value.write(sb, indent + TAB);
+    }
+
+    @Override
+    public PointerCreationNode clone() {
+        return new PointerCreationNode(line, value.clone());
     }
 }

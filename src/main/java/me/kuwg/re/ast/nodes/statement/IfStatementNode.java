@@ -28,11 +28,11 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        condition.replaceGenerics(generics);
-        block.replaceGenerics(generics);
-        if (elseIfNode != null) elseIfNode.replaceGenerics(generics);
-        if (elseNode != null) elseNode.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        condition.replaceGenerics(generics, cctx);
+        block.replaceGenerics(generics, cctx);
+        if (elseIfNode != null) elseIfNode.replaceGenerics(generics, cctx);
+        if (elseNode != null) elseNode.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -109,5 +109,10 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
     @Override
     public BlockNode getBlock() {
         return block;
+    }
+
+    @Override
+    public IfStatementNode clone() {
+        return new IfStatementNode(line, condition.clone(), block.clone(), elseIfNode == null ? null : elseIfNode.clone(), elseNode == null ? null : elseNode.clone());
     }
 }

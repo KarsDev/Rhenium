@@ -1600,7 +1600,7 @@ public class ASTParser {
                 return parseArrayType(line, generics);
             }
             case "struct" -> {
-                var type = typeMap.get(typeName);
+                var type = typeMap.get(identifier());
                 if (!(type instanceof StructType)) {
                     return new RParserError("Expected struct type", file, line()).raise();
                 }
@@ -1641,7 +1641,11 @@ public class ASTParser {
                 } while (matchAndConsume(DIVIDER, ","));
             }
 
-            if (!matchAndConsume(OPERATOR, ">")) {
+            if (match(OPERATOR, ">>")) {
+                tokens[tokenIndex] = new Token(OPERATOR, ">", current().line());
+            } else if (match(OPERATOR, ">>>")) {
+                tokens[tokenIndex] = new Token(OPERATOR, ">>", current().line());
+            } else if (!matchAndConsume(OPERATOR, ">")) {
                 return new RParserError("Expected '>' for generic type", file, line()).raise();
             }
 
@@ -1884,11 +1888,20 @@ public class ASTParser {
 
         String name = consume().value();
 
-        if (generic && match(OPERATOR, "<")) {
+        List<String> generics = new ArrayList<>();
+
+        if (generic) {
+            if (!matchAndConsume(OPERATOR, "<")) {
+                new RParserError("Expected '<' for generic type", file, line()).raise();
+            }
+
             do {
-                consume();
-            } while (!match(OPERATOR, ">") && !match(EOF));
-            matchAndConsume(OPERATOR, ">");
+                generics.add(identifier());
+            } while (matchAndConsume(DIVIDER, ","));
+
+            if (!matchAndConsume(OPERATOR, ">")) {
+                new RParserError("Expected '>' for generic type", file, line()).raise();
+            }
         }
 
         while (!match(OPERATOR, ":") && !match(EOF)) {
@@ -1935,7 +1948,7 @@ public class ASTParser {
         if (match(DEDENT)) consume();
 
         TypeRef type = generic
-                ? new GenStructType(List.of(), name, fieldTypes)
+                ? new GenStructType(generics, name, fieldTypes)
                 : new StructType(name, fieldTypes);
 
         typeMap.put(name, type);

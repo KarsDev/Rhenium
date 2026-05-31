@@ -21,8 +21,8 @@ public class ReferenceNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -50,5 +50,10 @@ public class ReferenceNode extends ValueNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Reference: ").append(NEWLINE);
         value.write(sb, indent + TAB);
+    }
+
+    @Override
+    public ReferenceNode clone() {
+        return new ReferenceNode(line, value.clone());
     }
 }

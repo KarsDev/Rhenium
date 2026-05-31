@@ -26,7 +26,7 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -63,5 +63,10 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
             sb.append(indent).append(TAB).append(TAB).append("Name: ").append(field.name()).append(", Type: ")
                     .append(field.type().getName()).append(NEWLINE);
         }
+    }
+
+    @Override
+    public StructDeclarationNode clone() {
+        return this;
     }
 }

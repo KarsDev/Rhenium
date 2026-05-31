@@ -18,8 +18,8 @@ public class ReturnNode extends ASTNode implements InterruptNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        if (value != null) value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        if (value != null) value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -29,6 +29,9 @@ public class ReturnNode extends ASTNode implements InterruptNode {
         } else {
             String valueReg = value.compileAndGet(cctx);
             String llvmType = value.getType().getLLVMName();
+
+            valueReg = cctx.ensureValue(value, valueReg);
+
             cctx.emit("ret " + llvmType + " " + valueReg + " ; return statement");
         }
     }
@@ -44,5 +47,10 @@ public class ReturnNode extends ASTNode implements InterruptNode {
     public TypeRef getValueType() {
         if (value == null) return NoneBuiltinType.INSTANCE;
         return value.getType();
+    }
+
+    @Override
+    public ReturnNode clone() {
+        return new ReturnNode(line, value == null ? null : value.clone());
     }
 }

@@ -13,8 +13,13 @@ public abstract class ConstantNode extends ValueNode {
 
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     public abstract String compileToConstant(final CompilationContext cctx);
+
+    @Override
+    public ConstantNode clone() {
+        return this;
+    }
 }

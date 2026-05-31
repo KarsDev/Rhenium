@@ -13,4 +13,7 @@ public abstract class VariableReference extends ValueNode {
 
     public abstract String getCompleteName();
     public abstract String getSimpleName();
+
+    @Override
+    public abstract VariableReference clone();
 }

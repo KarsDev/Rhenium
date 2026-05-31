@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static me.kuwg.re.ast.ASTNode.replaceGenericType;
+
 public class RGenStruct extends RDefaultStruct {
     private final Map<List<TypeRef>, RStruct> cache = new HashMap<>();
     private final List<ImplTemplate> impls = new ArrayList<>();
@@ -46,14 +48,13 @@ public class RGenStruct extends RDefaultStruct {
         List<RStructField> newFields = new ArrayList<>();
 
         for (RStructField field : fields) {
-            TypeRef replaced = ASTNode.replaceGenericType(field.type(), mapping);
+            TypeRef replaced = replaceGenericType(field.type(), mapping, cctx);
             newFields.add(new RStructField(field.name(), replaced));
         }
 
         String mangledName = mangleName(types);
 
         TypeRef newType = new StructType(mangledName, newFields.stream().map(RStructField::type).toList());
-
 
         RStruct specialized = new RStruct(false, newType, newFields);
 
@@ -127,33 +128,19 @@ public class RGenStruct extends RDefaultStruct {
             }
 
             for (RConstructor ctor : impl.constructors) {
+                ctor = ctor.clone();
 
-                List<FunctionParameter> substitutedParams =
-                        substituteParams(ctor.parameters(), combined);
+                List<FunctionParameter> substitutedParams = substituteParams(ctor.parameters(), combined, cctx);
 
-                String mangledName = StructImplNode.generateName(
-                        struct.type().getName(),
-                        ctor.llvmName()
-                );
+                String mangledName = StructImplNode.generateName(struct.type().getName(), ctor.llvmName());
 
                 List<FunctionParameter> withSelf = new ArrayList<>();
-                withSelf.add(new FunctionParameter(
-                        "self",
-                        false,
-                        new PointerType(struct.type())
-                ));
+                withSelf.add(new FunctionParameter("self", false, new PointerType(struct.type())));
                 withSelf.addAll(substitutedParams);
 
-                FunctionDeclarationNode fn = new FunctionDeclarationNode(
-                        ctor.block().getNodes().get(0).getLine(),
-                        false,
-                        mangledName,
-                        withSelf,
-                        NoneBuiltinType.INSTANCE,
-                        ctor.block()
-                );
+                FunctionDeclarationNode fn = new FunctionDeclarationNode(ctor.block().getNodes().get(0).getLine(), false, mangledName, withSelf, NoneBuiltinType.INSTANCE, ctor.block().clone());
 
-                fn.replaceGenerics(mapping);
+                fn.replaceGenerics(mapping, cctx);
                 fn.compile(cctx);
 
                 RFunction compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
@@ -161,76 +148,46 @@ public class RGenStruct extends RDefaultStruct {
             }
 
             for (ASTNode fnNode : impl.functions) {
+                fnNode = fnNode.clone();
 
                 RFunction compiled;
 
                 if (fnNode instanceof FunctionDeclarationNode dec) {
 
-                    List<FunctionParameter> params =
-                            substituteParams(dec.getParameters(), combined);
+                    List<FunctionParameter> params = substituteParams(dec.getParameters(), combined, cctx);
 
                     List<FunctionParameter> withSelf = new ArrayList<>();
-                    withSelf.add(new FunctionParameter(
-                            "self",
-                            false,
-                            new PointerType(struct.type())
-                    ));
+                    withSelf.add(new FunctionParameter("self", false, new PointerType(struct.type())));
                     withSelf.addAll(params);
 
                     TypeRef original = dec.getReturnType();
-                    TypeRef returnType = ASTNode.replaceGenericType(original, combined);
+                    TypeRef returnType = replaceGenericType(original, combined, cctx);
 
-                    String mangledName = StructImplNode.generateName(
-                            struct.type().getName(),
-                            dec.getName()
-                    );
+                    String mangledName = StructImplNode.generateName(struct.type().getName(), dec.getName());
 
-                    FunctionDeclarationNode renamed = new FunctionDeclarationNode(
-                            dec.getLine(),
-                            false,
-                            mangledName,
-                            withSelf,
-                            returnType,
-                            dec.getBlock()
-                    );
+                    FunctionDeclarationNode renamed = new FunctionDeclarationNode(dec.getLine(), false, mangledName, withSelf, returnType, dec.getBlock().clone());
 
-                    renamed.replaceGenerics(mapping);
+                    renamed.replaceGenerics(mapping, cctx);
                     renamed.compile(cctx);
 
                     compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
 
                 } else if (fnNode instanceof BuiltinFunctionDeclarationNode blt) {
 
-                    List<FunctionParameter> params =
-                            substituteParams(blt.getParameters(), combined);
+                    List<FunctionParameter> params = substituteParams(blt.getParameters(), combined, cctx);
 
                     List<FunctionParameter> withSelf = new ArrayList<>();
-                    withSelf.add(new FunctionParameter(
-                            "self",
-                            false,
-                            new PointerType(struct.type())
-                    ));
+                    withSelf.add(new FunctionParameter("self", false, new PointerType(struct.type())));
                     withSelf.addAll(params);
 
                     TypeRef original = blt.getReturnType();
-                    TypeRef returnType = ASTNode.replaceGenericType(original, combined);
+                    TypeRef returnType = replaceGenericType(original, combined, cctx);
 
-                    String mangledName = StructImplNode.generateName(
-                            struct.type().getName(),
-                            blt.getName()
-                    );
+                    String mangledName = StructImplNode.generateName(struct.type().getName(), blt.getName());
 
-                    BuiltinFunctionDeclarationNode renamed =
-                            new BuiltinFunctionDeclarationNode(
-                                    blt.getLine(),
-                                    true,
-                                    mangledName,
-                                    withSelf,
-                                    returnType,
-                                    blt.getLlvmBody()
-                            );
+                    BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(blt.getLine(), true, mangledName, withSelf, returnType, blt.getLlvmBody());
 
-                    renamed.replaceGenerics(mapping);
+                    renamed.replaceGenerics(mapping, cctx);
                     renamed.compile(cctx);
 
                     compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
@@ -243,11 +200,11 @@ public class RGenStruct extends RDefaultStruct {
         }
     }
 
-    private List<FunctionParameter> substituteParams(List<FunctionParameter> params, Map<String, TypeRef> mapping) {
+    private List<FunctionParameter> substituteParams(List<FunctionParameter> params, Map<String, TypeRef> mapping, final CompilationContext cctx) {
         List<FunctionParameter> result = new ArrayList<>();
 
         for (FunctionParameter p : params) {
-            result.add(new FunctionParameter(p.name(), p.mutable(), ASTNode.replaceGenericType(p.type(), mapping)));
+            result.add(new FunctionParameter(p.name(), p.mutable(), replaceGenericType(p.type(), mapping, cctx)));
         }
 
         return result;

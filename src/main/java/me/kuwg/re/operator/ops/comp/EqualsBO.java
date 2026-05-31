@@ -80,27 +80,16 @@ public class EqualsBO extends BinaryOperator {
                 var field = structDef.fields().get(i);
                 TypeRef fieldType = field.type();
 
-                String leftFieldPtr = c.cctx().nextRegister();
-                String rightFieldPtr = c.cctx().nextRegister();
-
-                c.cctx().emit(leftFieldPtr + " = getelementptr "
-                        + lt.getLLVMName() + ", "
-                        + lt.getLLVMName() + "* " + c.leftReg()
-                        + ", i32 0, i32 " + i);
-
-                c.cctx().emit(rightFieldPtr + " = getelementptr "
-                        + rt.getLLVMName() + ", "
-                        + rt.getLLVMName() + "* " + c.rightReg()
-                        + ", i32 0, i32 " + i);
-
                 String leftVal = c.cctx().nextRegister();
                 String rightVal = c.cctx().nextRegister();
 
-                c.cctx().emit(leftVal + " = load " + fieldType.getLLVMName()
-                        + ", " + fieldType.getLLVMName() + "* " + leftFieldPtr);
+                c.cctx().emit(leftVal + " = extractvalue "
+                        + lt.getLLVMName() + " "
+                        + c.leftReg() + ", " + i);
 
-                c.cctx().emit(rightVal + " = load " + fieldType.getLLVMName()
-                        + ", " + fieldType.getLLVMName() + "* " + rightFieldPtr);
+                c.cctx().emit(rightVal + " = extractvalue "
+                        + rt.getLLVMName() + " "
+                        + c.rightReg() + ", " + i);
 
                 String fieldEq = c.cctx().nextRegister();
 

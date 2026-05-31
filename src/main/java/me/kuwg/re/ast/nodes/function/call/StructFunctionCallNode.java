@@ -16,6 +16,7 @@ import me.kuwg.re.type.struct.StructType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class StructFunctionCallNode extends ValueNode {
     private final ValueNode struct;
@@ -31,9 +32,9 @@ public class StructFunctionCallNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        struct.replaceGenerics(generics);
-        params.forEach(p -> p.replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        struct.replaceGenerics(generics, cctx);
+        params.forEach(p -> p.replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -150,5 +151,12 @@ public class StructFunctionCallNode extends ValueNode {
                 .append(".")
                 .append(name)
                 .append("(...)\n");
+    }
+
+    @Override
+    public StructFunctionCallNode clone() {
+        List<ValueNode> paramsCloned = new ArrayList<>();
+        IntStream.range(0, params.size()).forEach(i -> paramsCloned.add(i, params.get(i).clone()));
+        return new StructFunctionCallNode(line, struct, name, paramsCloned);
     }
 }

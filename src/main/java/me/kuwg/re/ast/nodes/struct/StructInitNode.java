@@ -12,8 +12,10 @@ import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class StructInitNode extends ValueNode {
     private final String name;
@@ -26,8 +28,8 @@ public class StructInitNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        values.forEach(v -> v.value().replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        values.forEach(v -> v.value().replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -59,5 +61,12 @@ public class StructInitNode extends ValueNode {
         sb.append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE);
         sb.append(indent).append(TAB).append("Values: ").append(NEWLINE);
         values.forEach(v -> v.value().write(sb, indent + TAB + TAB));
+    }
+
+    @Override
+    public StructInitNode clone() {
+        List<RParamValue> valuesCloned = new ArrayList<>();
+        IntStream.range(0, values.size()).forEach(i -> valuesCloned.add(i, values.get(i).clone()));
+        return new StructInitNode(line, name, valuesCloned);
     }
 }

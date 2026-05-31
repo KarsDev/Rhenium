@@ -22,8 +22,8 @@ public class ConstructorDeclarationNode extends ASTNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        block.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        block.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -34,6 +34,11 @@ public class ConstructorDeclarationNode extends ASTNode {
     @Override
     public void write(final StringBuilder sb, final String indent) {
         new RParserError("Constructor declaration out of its scope", fileName, line).raise();
+    }
+
+    @Override
+    public ConstructorDeclarationNode clone() {
+        return new ConstructorDeclarationNode(line, fileName, parameters, block.clone());
     }
 
     public BlockNode getBlock() {

@@ -30,4 +30,7 @@ public abstract class ValueNode extends ASTNode {
         }
         return type;
     }
+
+    @Override
+    public abstract ValueNode clone();
 }

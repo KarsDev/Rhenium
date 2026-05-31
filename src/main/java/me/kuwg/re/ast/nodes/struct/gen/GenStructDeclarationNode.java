@@ -23,7 +23,7 @@ public class GenStructDeclarationNode extends ASTNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -47,5 +47,10 @@ public class GenStructDeclarationNode extends ASTNode {
             sb.append(indent).append(TAB).append(TAB).append("Name: ").append(field.name()).append(", Type: ")
                     .append(field.type().getName()).append(NEWLINE);
         }
+    }
+
+    @Override
+    public GenStructDeclarationNode clone() {
+        return this;
     }
 }

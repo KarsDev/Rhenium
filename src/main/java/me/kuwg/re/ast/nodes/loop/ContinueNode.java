@@ -13,7 +13,7 @@ public class ContinueNode extends ASTNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -30,5 +30,10 @@ public class ContinueNode extends ASTNode {
     @Override
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Continue").append(NEWLINE);
+    }
+
+    @Override
+    public ContinueNode clone() {
+        return this;
     }
 }

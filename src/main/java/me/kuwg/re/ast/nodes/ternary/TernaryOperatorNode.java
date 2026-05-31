@@ -22,10 +22,10 @@ public class TernaryOperatorNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        condition.replaceGenerics(generics);
-        thenExpr.replaceGenerics(generics);
-        elseExpr.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        condition.replaceGenerics(generics, cctx);
+        thenExpr.replaceGenerics(generics, cctx);
+        elseExpr.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -96,4 +96,8 @@ public class TernaryOperatorNode extends ValueNode {
         return resultReg;
     }
 
+    @Override
+    public TernaryOperatorNode clone() {
+        return new TernaryOperatorNode(line, condition.clone(), thenExpr.clone(), elseExpr.clone());
+    }
 }

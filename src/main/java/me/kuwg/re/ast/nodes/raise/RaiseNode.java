@@ -24,8 +24,8 @@ public class RaiseNode extends ASTNode implements InterruptNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        value.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        value.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -33,7 +33,6 @@ public class RaiseNode extends ASTNode implements InterruptNode {
         String catchLabel = cctx.popTryCatchScope();
 
         if (catchLabel == null) {
-
             if (value == null) {
                 String message = generateLog(line);
 
@@ -63,7 +62,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
                             }
 
                             @Override
-                            public void replaceGenerics(final Map<String, TypeRef> generics) {
+                            public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
                             }
 
                             @Override
@@ -85,6 +84,11 @@ public class RaiseNode extends ASTNode implements InterruptNode {
                                 );
 
                                 return msgReg;
+                            }
+
+                            @Override
+                            public ValueNode clone() {
+                                return this;
                             }
                         })
                 ).compile(cctx);
@@ -108,6 +112,11 @@ public class RaiseNode extends ASTNode implements InterruptNode {
         if (value != null) {
             value.write(sb, indent + "  ");
         }
+    }
+
+    @Override
+    public RaiseNode clone() {
+        return new RaiseNode(line, value.clone());
     }
 
     private static String generateLog(int line) {

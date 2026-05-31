@@ -34,9 +34,9 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        collection.replaceGenerics(generics);
-        block.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        collection.replaceGenerics(generics, cctx);
+        block.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -241,5 +241,10 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         sb.append(indent).append(TAB).append("Collection: ").append(NEWLINE);
         collection.write(sb, indent + TAB + TAB);
         block.write(sb, indent + TAB);
+    }
+
+    @Override
+    public ForLoopNode clone() {
+        return new ForLoopNode(line, variable, collection.clone(), block.clone());
     }
 }

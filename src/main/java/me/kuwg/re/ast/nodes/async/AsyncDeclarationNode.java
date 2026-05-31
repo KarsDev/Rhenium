@@ -26,9 +26,9 @@ public class AsyncDeclarationNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        returnType = replaceGenericType(returnType, generics);
-        block.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        returnType = replaceGenericType(returnType, generics, cctx);
+        block.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -88,5 +88,10 @@ public class AsyncDeclarationNode extends ValueNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Async Declaration: ").append(NEWLINE);
         block.write(sb, indent + TAB);
+    }
+
+    @Override
+    public AsyncDeclarationNode clone() {
+        return new AsyncDeclarationNode(line, returnType, block.clone());
     }
 }

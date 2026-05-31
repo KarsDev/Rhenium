@@ -16,7 +16,7 @@ public class IRDeclarationNode extends ASTNode implements GlobalNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override
@@ -28,5 +28,10 @@ public class IRDeclarationNode extends ASTNode implements GlobalNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("IR Declaration: ").append(NEWLINE);
         content.lines().forEach(l -> sb.append(indent).append(TAB).append(l).append(NEWLINE));
+    }
+
+    @Override
+    public IRDeclarationNode clone() {
+        return this;
     }
 }

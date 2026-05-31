@@ -19,6 +19,7 @@ import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class FunctionCallNode extends ValueNode {
     private final String name;
@@ -31,8 +32,8 @@ public class FunctionCallNode extends ValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        parameters.forEach(p -> p.replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        parameters.forEach(p -> p.replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -71,7 +72,7 @@ public class FunctionCallNode extends ValueNode {
         validateGenericUsage(genFn);
 
         Map<String, TypeRef> bindings = inferGenericTypes(genFn, callTypes);
-        replaceGenerics(bindings);
+        replaceGenerics(bindings, cctx);
 
         for (String tp : genFn.typeParameters()) {
             if (!bindings.containsKey(tp)) {
@@ -85,15 +86,21 @@ public class FunctionCallNode extends ValueNode {
         }
         TypeRef concreteReturnType = substituteConcrete(genFn.returnType(), bindings);
 
-        RFunction existing = genFn.getInstantiation(callTypes);
+        RFunction existing = genFn.getInstantiation(bindings);
         if (existing == null) {
-            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(line, true, genFn.name(), concreteParams, concreteReturnType, genFn.block());
+            String mangledName = genFn.name() + "__" +
+                    bindings.values().stream()
+                            .map(TypeRef::getName)
+                            .reduce((a, b) -> a + "_" + b)
+                            .orElse("");
+            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(line, true, mangledName, concreteParams, concreteReturnType, genFn.block().clone());
+            concreteFnNode.replaceGenerics(bindings, cctx);
 
             concreteFnNode.compile(cctx);
 
-            RFunction concreteFn = cctx.getFunction(genFn.name(), concreteParams.stream().map(FunctionParameter::type).toList());
+            RFunction concreteFn = cctx.getFunction(mangledName, concreteParams.stream().map(FunctionParameter::type).toList());
 
-            genFn.addInstantiation(callTypes, concreteFn);
+            genFn.addInstantiation(bindings, concreteFn);
             existing = concreteFn;
         }
 
@@ -247,5 +254,12 @@ public class FunctionCallNode extends ValueNode {
         sb.append(indent).append("Function Call: ").append(name).append("\n").append(indent).append("\t").append("Parameters:").append("\n");
 
         parameters.forEach(p -> p.write(sb, indent + "\t\t"));
+    }
+
+    @Override
+    public FunctionCallNode clone() {
+        List<ValueNode> paramsCloned = new ArrayList<>();
+        IntStream.range(0, parameters.size()).forEach(i -> paramsCloned.add(i, parameters.get(i).clone()));
+        return new FunctionCallNode(line, name, paramsCloned);
     }
 }

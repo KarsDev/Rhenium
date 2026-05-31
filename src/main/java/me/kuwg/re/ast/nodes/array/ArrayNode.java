@@ -24,8 +24,8 @@ public class ArrayNode extends PointerValueNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        values.forEach(v -> v.replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        values.forEach(v -> v.replaceGenerics(generics, cctx));
     }
 
     private TypeRef inferType() {
@@ -106,5 +106,12 @@ public class ArrayNode extends PointerValueNode {
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Array: ").append(NEWLINE);
         values.forEach(v -> v.write(sb, indent + TAB));
+    }
+
+    @Override
+    public ArrayNode clone() {
+        List<ValueNode> values = new ArrayList<>();
+        IntStream.range(0, this.values.size()).forEach(i -> values.add(i, this.values.get(i).clone()));
+        return new ArrayNode(line, values);
     }
 }

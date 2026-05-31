@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class BlockNode implements Writeable, Compilable, GlobalNode, Cloneable {
-    private final List<ASTNode> nodes;
+    private List<ASTNode> nodes;
     private boolean compiled = false;
 
     public BlockNode(final List<ASTNode> nodes) {
@@ -33,8 +33,8 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        nodes.forEach(n -> n.replaceGenerics(generics));
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        nodes.forEach(n -> n.replaceGenerics(generics, cctx));
     }
 
     @Override
@@ -119,24 +119,21 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
     @Override
     public BlockNode clone() {
-        BlockNode cloned ;
+        BlockNode cloned;
+
         try {
             cloned = (BlockNode) super.clone();
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
+
         List<ASTNode> clonedNodes = new ArrayList<>(nodes.size());
 
         for (ASTNode node : nodes) {
-            try {
-                clonedNodes.add((ASTNode) node.clone());
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException("Failed to clone ASTNode: " + node.getClass(), e);
-            }
+            clonedNodes.add(node.clone());
         }
 
-        cloned.getNodes().clear();
-        cloned.getNodes().addAll(clonedNodes);
+        cloned.nodes = clonedNodes;
 
         return cloned;
     }

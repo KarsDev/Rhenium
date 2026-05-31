@@ -241,11 +241,8 @@ public final class CastManager {
 
     private static String fromChar(int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof CharBuiltinType) return valReg;
+        if (to instanceof ByteBuiltinType) return valReg;
         String result = cctx.nextRegister();
-        if (to instanceof ByteBuiltinType) {
-            cctx.emit(result + " = trunc i8 " + valReg + " to i8");
-            return result;
-        }
         if (to instanceof ShortBuiltinType) {
             cctx.emit(result + " = zext i8 " + valReg + " to i16");
             return result;

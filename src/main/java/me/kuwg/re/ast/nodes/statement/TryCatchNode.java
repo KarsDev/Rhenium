@@ -19,9 +19,9 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        tryBlock.replaceGenerics(generics);
-        catchBlock.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        tryBlock.replaceGenerics(generics, cctx);
+        catchBlock.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -48,6 +48,11 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
 
         sb.append(indent).append("Catch:").append(NEWLINE);
         catchBlock.write(sb, indent + TAB);
+    }
+
+    @Override
+    public TryCatchNode clone() {
+        return new TryCatchNode(line, tryBlock.clone(), catchBlock.clone());
     }
 
     @Override

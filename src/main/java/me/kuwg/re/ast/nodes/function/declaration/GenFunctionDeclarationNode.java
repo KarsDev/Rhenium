@@ -29,9 +29,9 @@ public class GenFunctionDeclarationNode extends ASTNode {
     }
 
     @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics) {
-        returnType = replaceGenericType(returnType, generics);
-        block.replaceGenerics(generics);
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        returnType = replaceGenericType(returnType, generics, cctx);
+        block.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -55,5 +55,10 @@ public class GenFunctionDeclarationNode extends ASTNode {
         params.forEach(p -> p.write(sb, indent + TAB + TAB));
         sb.append(indent).append(TAB).append("Return Type: ").append(returnType.getName()).append(NEWLINE);
         block.write(sb, indent + TAB);
+    }
+
+    @Override
+    public GenFunctionDeclarationNode clone() {
+        return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block.clone());
     }
 }
