@@ -2,7 +2,7 @@ using string
 using map
 using number
 
-_NativeCPP("Network") str BNET_00(op: int, id: str, arg1: str, arg2: str)
+_NativeCPP("network") str BNET_00(op: int, id: str, arg1: str, arg2: str)
 
 struct Network:
     id: str
