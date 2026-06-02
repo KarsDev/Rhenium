@@ -28,17 +28,44 @@ public class ReferenceNode extends ValueNode {
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         RVariable var = value.getVariable(cctx);
+
         if (var == null) {
             return new RVariableNotFoundError(value.getCompleteName(), line).raise();
         }
 
         if (var.addrReg() == null) {
-            new RNotAddressableError("Cannot take reference of non-addressable value: " + value.getCompleteName(), line);
+            return new RNotAddressableError(
+                    "Cannot take reference of non-addressable value: " + value.getCompleteName(),
+                    line
+            ).raise();
         }
 
-        cctx.emit(" ; Pointer address of");
-        setType(new PointerType(var.type()));
-        return var.addrReg();
+        TypeRef type = var.type();
+
+        String loadedValue = cctx.nextRegister();
+        cctx.emit(loadedValue + " = load " +
+                type.getLLVMName() + ", " +
+                type.getLLVMName() + "* " + var.addrReg());
+
+        long size = type.getSize();
+
+        String heapMem = cctx.nextRegister();
+        cctx.emit(heapMem + " = call i8* @malloc(i64 " + size + ")");
+
+        String typedPtr = cctx.nextRegister();
+        cctx.emit(typedPtr + " = bitcast i8* " +
+                heapMem + " to " +
+                type.getLLVMName() + "*");
+
+        cctx.emit("store " +
+                type.getLLVMName() + " " +
+                loadedValue + ", " +
+                type.getLLVMName() + "* " +
+                typedPtr);
+
+        setType(new PointerType(type));
+
+        return typedPtr;
     }
 
     @Override

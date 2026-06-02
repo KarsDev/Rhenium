@@ -31,7 +31,7 @@ import static me.kuwg.re.writer.Writeable.TAB;
 
 public @SuppressWarnings("unused")
 final class CompilationContext {
-    private static final String ERROR_LINE = "%967 = alloca %struct.List$14Entry_3str3str_ptr_Entry$3str3str_str_str_int_int, i64 5";
+    private static final String ERROR_LINE = "ERROR LINE HERE";
 
     private final Map<String, TypeRef> typeMap;
     private final List<String> irCode = new ArrayList<>();
