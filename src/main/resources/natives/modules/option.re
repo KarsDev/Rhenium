@@ -23,7 +23,7 @@ impl Option<T>:
     func orElse(other: T) -> T:
         return @(this.value) if this.isPresent() else other
     
-    func expect(message: string) -> T:
+    func expect(message: str) -> T:
         if (this.isEmpty()):
             raise message
         return this.get()
