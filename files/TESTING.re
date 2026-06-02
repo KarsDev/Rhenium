@@ -1,4 +1,5 @@
 using math
+using network
 
 global TEN_FACTORIAL = 3628800
 
@@ -12,6 +13,7 @@ func main() -> int:
     testNativeFunctions()
     testGenerics()
     testTernary()
+    testConnections()
 
     println("\nAll test passed successfully")
 
@@ -177,3 +179,15 @@ func testTernary():
         raise "Error with ternary"
 
     println("Ternary testing passed successfully")
+
+func testConnections():
+    conn = init Network("main", "google.com", 80)
+    conn.open()
+    conn.send("GET / HTTP/1.1\r\n" + "Host: google.com\r\n\r\n")
+    raw = conn.receive()
+    response = parseHttpResponse(raw)
+    equality = strSubRange(response.body, 0, 78) == "<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">"
+    if (not equality):
+        raise "Error with connections"
+    conn.close()
+    println("Connection testing passed successfully")
