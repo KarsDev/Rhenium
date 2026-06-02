@@ -6,12 +6,14 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
+import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.error.errors.variable.RVariableIsNotMutableError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableReassignmentTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.struct.StructType;
 
 import java.util.Map;
@@ -124,6 +126,10 @@ public class VariableDeclarationNode extends ValueNode {
             RVariable src = ((VariableReference) value).getVariable(cctx);
             cctx.addVariable(new RVariable(variable.getSimpleName(), mutable, false, varType, src.addrReg(), src.valueReg()));
             return valueReg;
+        }
+
+        if (varType instanceof RangeType) {
+            return new RRangeTypeError(line).raise();
         }
 
         cctx.emit(addrReg + " = alloca " + varType.getLLVMName());

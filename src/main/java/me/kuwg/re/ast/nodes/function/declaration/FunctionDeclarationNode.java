@@ -10,12 +10,14 @@ import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionAlreadyExistError;
 import me.kuwg.re.error.errors.function.RMainFunctionError;
+import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.ArrayList;
@@ -47,6 +49,10 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         this.parameters = parameters;
         this.returnType = returnType;
         this.block = block.clone();
+
+        if (returnType instanceof RangeType) {
+            new RRangeTypeError(line).raise();
+        }
     }
 
     @Override

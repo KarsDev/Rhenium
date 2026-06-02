@@ -57,6 +57,7 @@ import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.expr.RImplNotFunctionError;
 import me.kuwg.re.error.errors.parser.RParserError;
+import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.operator.BinaryOperators;
 import me.kuwg.re.operator.ops.add.AddBO;
@@ -69,6 +70,7 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
@@ -1707,6 +1709,10 @@ public class ASTParser {
             boolean mutable = matchAndConsume(KEYWORD, "mut");
 
             TypeRef type = parseType(generics);
+
+            if (type instanceof RangeType) {
+                return new RRangeTypeError(line()).raise();
+            }
 
             var param = new FunctionParameter(name, mutable, type);
 

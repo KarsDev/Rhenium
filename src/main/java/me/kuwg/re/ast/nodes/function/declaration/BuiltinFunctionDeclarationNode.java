@@ -6,7 +6,9 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.error.errors.function.RFunctionAlreadyExistError;
+import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.iterable.range.RangeType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,10 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         this.parameters = parameters;
         this.returnType = returnType;
         this.llvmBody = llvmBody;
+
+        if (returnType instanceof RangeType) {
+            new RRangeTypeError(line).raise();
+        }
     }
 
     @Override

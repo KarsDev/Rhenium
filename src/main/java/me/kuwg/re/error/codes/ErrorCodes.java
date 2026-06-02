@@ -40,4 +40,5 @@ public final class ErrorCodes {
     public static final int STRUCT_ALREADY_EXISTS_ERROR = 36;
     public static final int NOT_ADDRESSABLE_ERROR = 37;
     public static final int STRUCT_GENERICS_INIT_ERROR = 38;
+    public static final int RANGE_TYPE_ERROR = 39;
 }
