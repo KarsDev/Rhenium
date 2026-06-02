@@ -126,8 +126,8 @@ Generic structs allow type-agnostic data layouts.
 generic struct Box<T>:
     value: T
 
-b1 = init Box("Hello World")
-b2 = init Box(10)
+b1 = init Box<str>("Hello World")
+b2 = init Box<int>(10)
 ```
 
 ### Async Execution
