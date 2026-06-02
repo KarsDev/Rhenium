@@ -59,7 +59,7 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         TypeRef type = collection.getType();
 
         if (!(type instanceof IterableTypeRef)) {
-            new RValueIsNotIterableError(variable, line).raise();
+            new RValueIsNotIterableError(type.getName(), line).raise();
             return;
         }
 

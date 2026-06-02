@@ -6,61 +6,61 @@ _NativeCPP("FileWriter") bool BFW_00(op: int, path: str, data: str)
 // FileWriter struct
 struct FileWriter:
     file: File
-    isOpen: bool = false
-    append: bool = false
+    isOpen: bool
+    append: bool
 
 // Implement FileWriter functions
 impl FileWriter:
 
     // Opens the file for writing (truncate)
     func open() -> bool:
-        if ((@self).isOpen):
+        if (this.isOpen):
             return false
             
-        if ((@self).file.exists() == false):
+        if (this.file.exists() == false):
             raise "Tried to open a FileWriter of a file that does not exist"
 
-        result = BFW_00(0, (@self).file.name, "")
-        (@self).isOpen = result
-        (@self).append = false
+        result = BFW_00(0, this.file.name, "")
+        this.isOpen = result
+        this.append = false
         return result
 
     // Opens the file for appending
     func openAppend() -> bool:
-        if ((@self).isOpen):
+        if (this.isOpen):
             raise "Use FileWriter#open() before FileWriter#openAppend"
 
-        result = BFW_00(1, (@self).file.name, "")
-        (@self).isOpen = result
-        (@self).append = true
+        result = BFW_00(1, this.file.name, "")
+        this.isOpen = result
+        this.append = true
         return result
 
     // Writes raw text to the file
     func write(text: str) -> bool:
-        if ((@self).isOpen == false):
+        if (this.isOpen == false):
             raise "Use FileWriter#open() before FileWriter#write"
 
-        return BFW_00(2, (@self).file.name, text)
+        return BFW_00(2, this.file.name, text)
 
     // Writes text followed by a newline
     func writeLine(text: str) -> bool:
-        if ((@self).isOpen == false):
+        if (this.isOpen == false):
             raise "Use FileWriter#open() before FileWriter#writeLine"
 
-        return BFW_00(2, (@self).file.name, text + "\n")
+        return BFW_00(2, this.file.name, text + "\n")
 
     // Flushes the file
     func flush() -> bool:
-        if ((@self).isOpen == false):
+        if (this.isOpen == false):
             raise "Use FileWriter#open() before flush"
 
-        return BFW_00(3, (@self).file.name, "")
+        return BFW_00(3, this.file.name, "")
 
     // Closes the file
     func close() -> bool:
-        if ((@self).isOpen == false):
+        if (this.isOpen == false):
             raise "Use FileWriter#open() before FileWriter#close"
 
-        result = BFW_00(4, (@self).file.name, "")
-        (@self).isOpen = false
+        result = BFW_00(4, this.file.name, "")
+        this.isOpen = false
         return result

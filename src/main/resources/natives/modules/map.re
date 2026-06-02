@@ -15,6 +15,13 @@ generic struct HashMap<K, V>:
     size: int
 
 impl HashMap<K, V>:
+    init():
+        this.capacity = 5
+        this.size = 0
+        this.buckets = init arr -> List<Entry<K, V>>(5)
+
+        for (i in range(5)):
+            this.buckets[i] = init List<Entry<K, V>>()
 
     init(cap: int):
         if (cap <= 0):
@@ -29,23 +36,16 @@ impl HashMap<K, V>:
 
     func put(key: K, value: V) -> none:
         idx: mut = hash(key) % this.capacity
-
         if (idx < 0):
             idx += this.capacity
-
-        bucket = this.buckets[idx]
-
-        for (i in range(bucket.size)):
-            if (eq(bucket.items[i].key, key)):
-                bucket.items[i].value = value
+        s = this.buckets[idx].size
+        for (i in range(s)):
+            k = this.buckets[idx].items[i].key
+            if (k == key):
+                this.buckets[idx].items[i].value = value
                 return
-
-        entry = init Entry<K, V>(key, value)
-
-        bucket.add(entry)
-        this.buckets[idx] = bucket
+        this.buckets[idx].add(init Entry<K, V>(key, value))
         this.size += 1
-
 
     func get(key: K) -> V:
         idx: mut = hash(key) % this.capacity
@@ -56,7 +56,7 @@ impl HashMap<K, V>:
         bucket = this.buckets[idx]
 
         for (i in range(bucket.size)):
-            if (eq(bucket.items[i].key, key)):
+            if (bucket.items[i].key == key):
                 return bucket.items[i].value
 
         raise "Key not found: " + key
@@ -71,7 +71,7 @@ impl HashMap<K, V>:
         bucket = this.buckets[idx]
 
         for (i in range(bucket.size)):
-            if (eq(bucket.items[i].key, key)):
+            if (bucket.items[i].key == key):
                 return true
 
         return false
@@ -86,7 +86,7 @@ impl HashMap<K, V>:
         bucket = this.buckets[idx]
 
         for (i in range(bucket.size)):
-            if (eq(bucket.items[i].key, key)):
+            if (bucket.items[i].key == key):
                 entry = bucket.remove(i)
                 this.buckets[idx] = bucket
                 this.size -= 1
@@ -105,7 +105,7 @@ impl HashMap<K, V>:
         bucket = this.buckets[idx]
 
         for (i in range(bucket.size)):
-            if (eq(bucket.items[i].key, key)):
+            if (bucket.items[i].key == key):
                 return bucket.items[i].value
 
         return default

@@ -48,11 +48,22 @@ public class ArrayCreationNode extends ValueNode {
             return new RVariableTypeError("positive int or long", size.getType().getName(), line).raise();
         }
 
-        TypeRef elementType = type;
+        TypeRef elementType = evalType(type, cctx);
         String llvmElemType = elementType.getLLVMName();
 
+        long bytes = sizeLong * elementType.getSize();
+
+        cctx.addIR("declare i8* @malloc(i64)");
+        cctx.addIR("declare i8* @memset(i8*, i32, i64)");
+
+        String rawPtr = cctx.nextRegister();
+        cctx.emit(rawPtr + " = call i8* @malloc(i64 " + bytes + ")");
+
+        cctx.emit("call i8* @memset(i8* " + rawPtr + ", i32 0, i64 " + bytes + ")");
+        cctx.nextRegister();
+
         String arrReg = cctx.nextRegister();
-        cctx.emit(arrReg + " = alloca " + llvmElemType + ", i64 " + sizeLong);
+        cctx.emit(arrReg + " = bitcast i8* " + rawPtr + " to " + llvmElemType + "*");
 
         setType(new ArrayType(sizeLong, elementType));
 
@@ -99,9 +110,7 @@ public class ArrayCreationNode extends ValueNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Array Creation:").append(NEWLINE)
-                .append(indent).append(TAB).append("Type: ").append(type.getName()).append(NEWLINE)
-                .append(indent).append(TAB).append("Size: ").append(NEWLINE);
+        sb.append(indent).append("Array Creation:").append(NEWLINE).append(indent).append(TAB).append("Type: ").append(type.getName()).append(NEWLINE).append(indent).append(TAB).append("Size: ").append(NEWLINE);
         size.write(sb, indent + TAB + TAB);
     }
 

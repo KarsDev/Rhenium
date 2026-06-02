@@ -24,6 +24,10 @@ declare i32 @sprintf_external(i8*, i64, i8*, ...)
 
 _NativeCPP("defaults") _Builtin
 
+struct StrDynArr:
+    values: ptr -> str
+    size: int
+
 // Converts a byte (i8) to a string representation of its numeric value
 _Builtin global func byteToStr(b: byte) -> str = """
 entry:
@@ -153,50 +157,8 @@ entry:
 """
 
 // Splits a string into an array of single-character strings
-_Builtin func strSplit(s: str) -> arr -> str = """
-entry:
-    %len = call i32 @strlen(i8* %s)
-
-    ; bytes = len * sizeof(i8*)
-    %len64 = zext i32 %len to i64
-    %bytes = mul i64 %len64, 8
-
-    ; malloc returns i8*
-    %raw = call i8* @malloc(i64 %bytes)
-
-    ; cast to i8**
-    %arr = bitcast i8* %raw to i8**
-
-    %i = alloca i32
-    store i32 0, i32* %i
-    br label %loop
-
-loop:
-    %idx = load i32, i32* %i
-    %cmp = icmp slt i32 %idx, %len
-    br i1 %cmp, label %body, label %end
-
-body:
-    ; allocate char string
-    %char_ptr = call i8* @malloc(i64 2)
-
-    %src_ptr = getelementptr i8, i8* %s, i32 %idx
-    %val = load i8, i8* %src_ptr
-    store i8 %val, i8* %char_ptr
-
-    %nullpos = getelementptr i8, i8* %char_ptr, i32 1
-    store i8 0, i8* %nullpos
-
-    %arr_elem = getelementptr i8*, i8** %arr, i32 %idx
-    store i8* %char_ptr, i8** %arr_elem
-
-    %next = add i32 %idx, 1
-    store i32 %next, i32* %i
-    br label %loop
-
-end:
-    ret i8** %arr
-"""
+func strSplit(s: str) -> StrDynArr:
+    return strSplit(s, "")
 
 // Returns a byte array of the string
 _Builtin func strGetBytes(s: str) -> arr -> byte = """
@@ -234,7 +196,7 @@ end:
 """
 
 // Returns index of first occurrence of val in s, -1 if not found
-_Builtin func strIndexOf(s: str, val: str) -> int = """
+_Builtin global func strIndexOf(s: str, val: str) -> int = """
 entry:
     %len_s = call i32 @strlen(i8* %s)
     %len_val = call i32 @strlen(i8* %val)
@@ -363,6 +325,9 @@ end:
     ret i8* %empty
 """
 
+func strTrim(s: str) -> str:
+    return strTrim(s, 0)
+
 // Strips trailing whitespace
 _Builtin func strStrip(s: str, begin: int) -> str = """
 entry:
@@ -395,3 +360,157 @@ done:
     %sub = call i8* @strSub(i8* %s, i32 %begin, i32 %new_end)
     ret i8* %sub
 """
+
+_Builtin func strIndexOf(s: str, val: str, startIndex: int) -> int = """
+entry:
+    %len_s = call i32 @strlen(i8* %s)
+    %len_val = call i32 @strlen(i8* %val)
+
+    ; last valid start index = len_s - len_val
+    %limit = sub i32 %len_s, %len_val
+
+    %i = alloca i32
+    store i32 %startIndex, i32* %i
+
+    %index = alloca i32
+    store i32 -1, i32* %index
+
+    br label %loop
+
+loop:
+    %idx = load i32, i32* %i
+    %cmp = icmp sle i32 %idx, %limit
+    br i1 %cmp, label %body, label %end
+
+body:
+    %s_ptr = getelementptr i8, i8* %s, i32 %idx
+    %cmp_val = call i32 @strncmp(i8* %s_ptr, i8* %val, i32 %len_val)
+    %is_eq = icmp eq i32 %cmp_val, 0
+    br i1 %is_eq, label %found, label %next
+
+found:
+    store i32 %idx, i32* %index
+    br label %end
+
+next:
+    %next_idx = add i32 %idx, 1
+    store i32 %next_idx, i32* %i
+    br label %loop
+
+end:
+    %res = load i32, i32* %index
+    ret i32 %res
+"""
+
+func strSplit(s: str, split: str) -> StrDynArr:
+    count: mut = 1
+    pos: mut = strIndexOf(s, split)
+
+    while (pos != -1):
+        count += 1
+        pos = strIndexOf(s, split, pos + 1)
+
+    values = init arr -> str(count)
+
+    start : mut= 0
+    outIndex: mut = 0
+
+    pos = strIndexOf(s, split)
+
+    while (pos != -1):
+        values[outIndex] = strSubRange(s, start, pos)
+        outIndex += 1
+
+        start = pos + len(split)
+        pos = strIndexOf(s, split, start)
+
+    values[outIndex] = strSub(s, start)
+
+    return init StrDynArr(values, count)
+
+_Builtin func strToLower(s: str) -> str = """
+entry:
+    %len = call i32 @strlen(i8* %s)
+
+    %size = add i32 %len, 1
+    %size64 = zext i32 %size to i64
+    %buf = call i8* @malloc(i64 %size64)
+
+    %i = alloca i32
+    store i32 0, i32* %i
+    br label %loop
+
+loop:
+    %idx = load i32, i32* %i
+    %cmp = icmp slt i32 %idx, %len
+    br i1 %cmp, label %body, label %end
+
+body:
+    %src = getelementptr i8, i8* %s, i32 %idx
+    %c = load i8, i8* %src
+
+    %geA = icmp sge i8 %c, 65
+    %leZ = icmp sle i8 %c, 90
+    %isUpper = and i1 %geA, %leZ
+
+    %lower = add i8 %c, 32
+    %out = select i1 %isUpper, i8 %lower, i8 %c
+
+    %dst = getelementptr i8, i8* %buf, i32 %idx
+    store i8 %out, i8* %dst
+
+    %next = add i32 %idx, 1
+    store i32 %next, i32* %i
+    br label %loop
+
+end:
+    %nullpos = getelementptr i8, i8* %buf, i32 %len
+    store i8 0, i8* %nullpos
+
+    ret i8* %buf
+"""
+
+_Builtin func strToUpper(s: str) -> str = """
+entry:
+    %len = call i32 @strlen(i8* %s)
+
+    %size = add i32 %len, 1
+    %size64 = zext i32 %size to i64
+    %buf = call i8* @malloc(i64 %size64)
+
+    %i = alloca i32
+    store i32 0, i32* %i
+    br label %loop
+
+loop:
+    %idx = load i32, i32* %i
+    %cmp = icmp slt i32 %idx, %len
+    br i1 %cmp, label %body, label %end
+
+body:
+    %src = getelementptr i8, i8* %s, i32 %idx
+    %c = load i8, i8* %src
+
+    %gea = icmp sge i8 %c, 97
+    %lez = icmp sle i8 %c, 122
+    %isLower = and i1 %gea, %lez
+
+    %upper = sub i8 %c, 32
+    %out = select i1 %isLower, i8 %upper, i8 %c
+
+    %dst = getelementptr i8, i8* %buf, i32 %idx
+    store i8 %out, i8* %dst
+
+    %next = add i32 %idx, 1
+    store i32 %next, i32* %i
+    br label %loop
+
+end:
+    %nullpos = getelementptr i8, i8* %buf, i32 %len
+    store i8 0, i8* %nullpos
+
+    ret i8* %buf
+"""
+
+func equalsIgnoreCase(s: str, s1: str) -> bool:
+    return strToLower(s) == strToLower(s1)

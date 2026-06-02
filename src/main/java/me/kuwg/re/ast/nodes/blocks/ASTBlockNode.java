@@ -3,7 +3,9 @@ package me.kuwg.re.ast.nodes.blocks;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
+import me.kuwg.re.ast.nodes.module.UsingNode;
 import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
+import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
@@ -41,6 +43,12 @@ public class ASTBlockNode extends ASTNode {
                 gfdn.register(cctx);
             } else if (node instanceof StructDeclarationNode sdn) {
                 sdn.compile(cctx);
+                iterator.remove();
+            } else if (node instanceof GenStructDeclarationNode gsdn) {
+                gsdn.compile(cctx);
+                iterator.remove();
+            } else if (node instanceof UsingNode un) {
+                un.compile(cctx);
                 iterator.remove();
             }
         }

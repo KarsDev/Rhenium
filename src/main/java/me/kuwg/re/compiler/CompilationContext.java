@@ -13,6 +13,9 @@ import me.kuwg.re.error.errors.function.RMainFunctionError;
 import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 
@@ -28,7 +31,7 @@ import static me.kuwg.re.writer.Writeable.TAB;
 
 public @SuppressWarnings("unused")
 final class CompilationContext {
-    private static final String ERROR_LINE = "Error line here!";
+    private static final String ERROR_LINE = "%967 = alloca %struct.List$14Entry_3str3str_ptr_Entry$3str3str_str_str_int_int, i64 5";
 
     private final Map<String, TypeRef> typeMap;
     private final List<String> irCode = new ArrayList<>();
@@ -406,5 +409,18 @@ final class CompilationContext {
         }
 
         return cmd.toString().trim();
+    }
+
+    public TypeRef resolveConcrete(TypeRef t) {
+        if (t instanceof AppliedGenStructType a) {
+            List<TypeRef> args = a.args().stream()
+                    .map(this::resolveConcrete)
+                    .toList();
+            RGenStruct gen = (RGenStruct) getStruct(a.base().name());
+            return gen.instantiate(args, this).type();
+        }
+        if (t instanceof PointerType p) return new PointerType(resolveConcrete(p.inner()));
+        if (t instanceof ArrayType a) return new ArrayType(a.size(), resolveConcrete(a.inner()));
+        return t;
     }
 }

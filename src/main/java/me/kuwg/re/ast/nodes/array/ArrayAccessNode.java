@@ -124,6 +124,8 @@ public class ArrayAccessNode extends VariableReference {
             fixedSize = arrType.size();
         } else if (arrayType instanceof PointerType ptrType) {
             elementType = ptrType.inner();
+        }  else if (arrayType.equals(BuiltinTypes.STR.getType())) {
+            elementType = BuiltinTypes.CHAR.getType();
         } else {
             return new RVariableTypeError("array or pointer", arrayType.getName(), line).raise();
         }
@@ -155,6 +157,10 @@ public class ArrayAccessNode extends VariableReference {
 
         if (arrayType instanceof PointerType ptrType) {
             return ptrType.inner();
+        }
+
+        if (arrayType.equals(BuiltinTypes.STR.getType())) {
+            return BuiltinTypes.CHAR.getType();
         }
 
         throw new IllegalStateException("Invalid array access type");

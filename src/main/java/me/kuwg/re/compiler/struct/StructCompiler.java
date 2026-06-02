@@ -85,7 +85,11 @@ public final class StructCompiler {
             String fieldPtr = cctx.nextRegister();
             cctx.emit(fieldPtr + " = getelementptr inbounds " + struct.type().getLLVMName() + ", " + struct.type().getLLVMName() + "* " + structPtr + ", i32 0, i32 " + i);
 
-            cctx.emit("store " + field.type().getLLVMName() + " " + valueReg + ", " + field.type().getLLVMName() + "* " + fieldPtr);
+
+            TypeRef concrete = cctx.resolveConcrete(field.type());
+            String ftln = concrete.getLLVMName();
+
+            cctx.emit("store " + ftln + " " + valueReg + ", " + ftln + "* " + fieldPtr);
         }
 
         String loaded = cctx.nextRegister();

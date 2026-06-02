@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static me.kuwg.re.compiler.struct.RGenStruct.encodeType;
+
 public record AppliedGenStructType(GenStructType base, List<TypeRef> args) implements TypeRef {
     @Override
     public boolean isPrimitive() {
@@ -39,7 +41,7 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
 
     @Override
     public String getLLVMName() {
-        throw new RInternalError();
+        throw new RuntimeException();
     }
 
     @Override
@@ -54,23 +56,19 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
         sb.append("$");
 
         for (TypeRef t : args) {
-            sb.append(encode(t));
+            sb.append(encodeType(t));
         }
 
         return sb.toString();
     }
 
-    private String encode(TypeRef t) {
-        String name = sanitize(t.getName());
-        return name.length() + name;
-    }
-
-    private String sanitize(String s) {
-        return s.replaceAll("[^A-Za-z0-9_]", "_");
+    @Override
+    public boolean equals(final TypeRef other) {
+        return equals((Object) other);
     }
 
     @Override
-    public boolean equals(final TypeRef other) {
+    public boolean equals(final Object other) {
         if (!(other instanceof StructType st)) return false;
         if (!base.getName().equals(st.getName().split("\\$")[0])) return false;
 

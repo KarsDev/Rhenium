@@ -6,7 +6,7 @@ _NativeCPP("FileReader") str BFR_00(op: int, path: str) // returns file content 
 // FileReader struct
 struct FileReader:
     file: File
-    isOpen: bool = false
+    isOpen: bool
     content: str = ""
     position: int = 0
 
@@ -15,48 +15,48 @@ impl FileReader:
 
     // Opens the file for reading
     func open() -> bool:
-        if ((@self).isOpen):
+        if (this.isOpen):
             return false
 
-        if ((@self).file.exists() == false):
+        if (this.file.exists() == false):
             raise "Tried to open a FileReader of a file that does not exist"
 
-        success = BFR_00(0, (@self).file.name) == "1"
+        success = BFR_00(0, this.file.name) == "1"
         if (success):
-            (@self).content = BFR_00(1, (@self).file.name) 
-            (@self).position = 0
-            (@self).isOpen = true
+            this.content = BFR_00(1, this.file.name) 
+            this.position = 0
+            this.isOpen = true
 
         return success
 
     // Reads the next N characters from the file
     func read(n: int) -> str:
-        if ((@self).isOpen == false):
+        if (this.isOpen == false):
             raise "Use FileReader#open() before FileReader#read"
 
-        start = (@self).position
+        start = this.position
         end: mut = start + n
-        if (end > len((@self).content)):
-            end = len((@self).content)
+        if (end > len(this.content)):
+            end = len(this.content)
 
         result: mut = ""
         i: mut = start
         while (i < end):
-            result = result + (@self).content[i]
+            result = result + this.content[i]
             i = i + 1
 
-        (@self).position = end
+        this.position = end
         return result
 
     // Reads the next line from the file
     func readLine() -> str:
-        if ((@self).isOpen == false):
+        if (this.isOpen == false):
             raise "Use FileReader#open() before FileReader#readLine"
 
         result: mut = ""
-        while ((@self).position < len((@self).content)):
-            c = (@self).content[(@self).position]
-            (@self).position = (@self).position + 1
+        while (this.position < len(this.content)):
+            c = this.content[this.position]
+            this.position = this.position + 1
             if (c == '\n'):
                 break
             result = result + c
@@ -65,14 +65,14 @@ impl FileReader:
 
     // Checks if the reader reached the end of the file
     func eof() -> bool:
-        return (@self).position >= len((@self).content)
+        return this.position >= len(this.content)
 
     // Closes the file
     func close() -> bool:
-        if ((@self).isOpen == false):
+        if (this.isOpen == false):
             raise "Use FileReader#open() before FileReader#"
 
-        (@self).content = ""
-        (@self).position = 0
-        (@self).isOpen = false
+        this.content = ""
+        this.position = 0
+        this.isOpen = false
         return true

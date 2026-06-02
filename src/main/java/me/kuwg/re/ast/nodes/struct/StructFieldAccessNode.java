@@ -36,7 +36,7 @@ public class StructFieldAccessNode extends VariableReference {
             return new RVariableNotFoundError(struct.getCompleteName(), line).raise();
         }
 
-        TypeRef structType = structVar.type();
+        TypeRef structType = cctx.resolveConcrete(structVar.type());
         if (!(structType instanceof StructType st)) {
             return new RVariableTypeError("struct", structType.getName(), line).raise();
         }
@@ -124,7 +124,11 @@ public class StructFieldAccessNode extends VariableReference {
         cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);
 
         String loaded = cctx.nextRegister();
-        cctx.emit(loaded + " = load " + fieldType.getLLVMName() + ", " + fieldType.getLLVMName() + "* " + fieldPtr);
+
+        TypeRef concrete = cctx.resolveConcrete(fieldType);
+        String ftln = concrete.getLLVMName();
+
+        cctx.emit(loaded + " = load " + ftln + ", " + ftln + "* " + fieldPtr);
 
         return new RVariable(fieldName, true, true, fieldType, fieldPtr, loaded);
     }

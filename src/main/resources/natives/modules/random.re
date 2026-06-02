@@ -7,12 +7,12 @@ This struct can be used to generate pseudorandom numbers
 struct Random:
     // Pseudo Random seed
     // We initialize it using our new helper function
-    seed: long = _randomSeed()
+    seed: long
 
     // LCG Constants (Standard glibc values)
-    _a: int = 1103515245
-    _c: int = 12345
-    _m: int = 2147483647 // 2^31 - 1
+    _a: int
+    _c: int
+    _m: int
 
 // Combines high-resolution nanotime with standard millisecond time
 // to create a unique seed value.
@@ -20,6 +20,12 @@ func _randomSeed() -> long:
     return timeNanos() + timeMillis()
 
 impl Random:
+    init():
+        this.seed = _randomSeed()
+        this._a= 1103515245
+        this._c= 12345
+        this._m= 2147483647 // 2^31 - 1
+    
     // Generates a pseudorandom 64-bit integer 
     func nextLong() -> long:
         // seed = (a * seed + c) % m

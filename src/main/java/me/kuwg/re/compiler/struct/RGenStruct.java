@@ -98,7 +98,7 @@ public class RGenStruct extends RDefaultStruct {
         return sb.toString();
     }
 
-    private String encodeType(TypeRef type) {
+    public static String encodeType(TypeRef type) {
         String name = sanitize(type.getName());
 
         String base = name.length() + name;
@@ -140,7 +140,7 @@ public class RGenStruct extends RDefaultStruct {
 
                 FunctionDeclarationNode fn = new FunctionDeclarationNode(ctor.block().getNodes().get(0).getLine(), false, mangledName, withSelf, NoneBuiltinType.INSTANCE, ctor.block().clone());
 
-                fn.replaceGenerics(mapping, cctx);
+                fn.replaceGenerics(combined, cctx);
                 fn.compile(cctx);
 
                 RFunction compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
@@ -167,7 +167,7 @@ public class RGenStruct extends RDefaultStruct {
 
                     FunctionDeclarationNode renamed = new FunctionDeclarationNode(dec.getLine(), false, mangledName, withSelf, returnType, dec.getBlock().clone());
 
-                    renamed.replaceGenerics(mapping, cctx);
+                    renamed.replaceGenerics(combined, cctx);
                     renamed.compile(cctx);
 
                     compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
@@ -187,7 +187,7 @@ public class RGenStruct extends RDefaultStruct {
 
                     BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(blt.getLine(), true, mangledName, withSelf, returnType, blt.getLlvmBody());
 
-                    renamed.replaceGenerics(mapping, cctx);
+                    renamed.replaceGenerics(combined, cctx);
                     renamed.compile(cctx);
 
                     compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
@@ -214,7 +214,7 @@ public class RGenStruct extends RDefaultStruct {
         return params.stream().map(FunctionParameter::type).toList();
     }
 
-    private String sanitize(String s) {
+    public static String sanitize(String s) {
         return s.replaceAll("[^A-Za-z0-9_]", "_");
     }
 

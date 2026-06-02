@@ -1876,6 +1876,12 @@ public class ASTParser {
                 continue;
             }
 
+            if (match(KEYWORD, "using")) {
+                consume();
+                collectUsingTypes();
+                continue;
+            }
+
             if (outOfBounds(0)) return;
             consume();
         }
@@ -1952,5 +1958,29 @@ public class ASTParser {
                 : new StructType(name, fieldTypes);
 
         typeMap.put(name, type);
+    }
+
+    private void collectUsingTypes() {
+        StringBuilder name = new StringBuilder(identifier());
+
+        while (matchAndConsume(OPERATOR, ".")) {
+            name.append("\\").append(identifier());
+        }
+
+        String pkg;
+
+        if (matchAndConsume(OPERATOR, "in")) {
+            if (matchAndConsume(KEYWORD, "self")) {
+                pkg = "self";
+            } else {
+                pkg = consume().value();
+            }
+        } else {
+            pkg = null;
+        }
+
+        ModuleLoadingHelper
+                .collectModuleTypes(line(), file, name.toString(), pkg)
+                .forEach(typeMap::putIfAbsent);
     }
 }

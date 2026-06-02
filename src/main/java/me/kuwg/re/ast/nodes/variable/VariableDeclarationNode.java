@@ -19,8 +19,8 @@ import java.util.Map;
 public class VariableDeclarationNode extends ValueNode {
     private final VariableReference variable;
     private final boolean mutable;
-    private TypeRef type;
     private final ValueNode value;
+    private TypeRef type;
 
     public VariableDeclarationNode(final int line, final VariableReference variable, final boolean mutable, final TypeRef type, final ValueNode value) {
         super(line);
@@ -55,6 +55,8 @@ public class VariableDeclarationNode extends ValueNode {
             valueReg = castNode.compileAndGet(cctx);
             valueType = targetType;
         }
+
+        setType(valueType);
 
         if (oldVar != null) {
             return compileReassignment(cctx, oldVar, valueReg, valueType);
@@ -118,17 +120,12 @@ public class VariableDeclarationNode extends ValueNode {
             return valueReg;
         }
 
-        if (varType instanceof StructType && value instanceof VariableReference vr) {
-            var var = vr.getVariable(cctx);
-            if (var != null && var.addrReg() != null && valueReg.equals(var.addrReg())) {
-                String loaded = cctx.nextRegister();
-                cctx.emit(loaded + " = load "
-                        + varType.getLLVMName() + ", "
-                        + varType.getLLVMName() + "* "
-                        + valueReg);
-                valueReg = loaded;
-            }
+        if (varType instanceof StructType && value instanceof VariableReference) {
+            RVariable src = ((VariableReference) value).getVariable(cctx);
+            cctx.addVariable(new RVariable(variable.getSimpleName(), mutable, false, varType, src.addrReg(), src.valueReg()));
+            return valueReg;
         }
+
         cctx.emit(addrReg + " = alloca " + varType.getLLVMName());
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
         cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + varType.getLLVMName() + "* " + addrReg);
@@ -160,12 +157,7 @@ public class VariableDeclarationNode extends ValueNode {
 
     @Override
     public String toString() {
-        return "VariableDeclarationNode{" +
-                "mutable=" + mutable +
-                ", variable=" + variable +
-                ", type=" + type +
-                ", value=" + value +
-                '}';
+        return "VariableDeclarationNode{" + "mutable=" + mutable + ", variable=" + variable + ", type=" + type + ", value=" + value + '}';
     }
 
     @Override
