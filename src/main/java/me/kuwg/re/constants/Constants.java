@@ -25,6 +25,7 @@ public abstract class Constants {
                 "try", "catch", "raise",
                 "is",
                 "async",
+                "lambda",
         };
 
         public static final String[] BOOLEANS = {

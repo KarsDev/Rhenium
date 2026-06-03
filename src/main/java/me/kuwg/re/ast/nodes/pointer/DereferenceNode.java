@@ -46,7 +46,7 @@ public class DereferenceNode extends VariableReference {
             ptrValueReg = cctx.nextRegister();
             cctx.emit(ptrValueReg + " = load "
                     + ptr.getLLVMName() + ", "
-                    + ptr.getLLVMName() + "* "
+                    + toPtr(ptr.getLLVMName())
                     + var.addrReg());
         } else {
             ptrValueReg = var.valueReg();
@@ -59,7 +59,7 @@ public class DereferenceNode extends VariableReference {
         String destReg = cctx.nextRegister();
         cctx.emit(destReg + " = load "
                 + ptr.inner().getLLVMName() + ", "
-                + ptr.inner().getLLVMName() + "* "
+                + toPtr(ptr.inner().getLLVMName())
                 + ptrValueReg);
 
         return destReg;
@@ -93,7 +93,7 @@ public class DereferenceNode extends VariableReference {
             ptrValueReg = cctx.nextRegister();
             cctx.emit(ptrValueReg + " = load "
                     + ptr.getLLVMName() + ", "
-                    + ptr.getLLVMName() + "* "
+                    + toPtr(ptr.getLLVMName())
                     + var.addrReg());
         } else {
             ptrValueReg = var.valueReg();
@@ -107,7 +107,7 @@ public class DereferenceNode extends VariableReference {
             valueReg = cctx.nextRegister();
             cctx.emit(valueReg + " = load "
                     + ptr.inner().getLLVMName() + ", "
-                    + ptr.inner().getLLVMName() + "* "
+                    + toPtr(ptr.inner().getLLVMName())
                     + ptrValueReg);
         }
 

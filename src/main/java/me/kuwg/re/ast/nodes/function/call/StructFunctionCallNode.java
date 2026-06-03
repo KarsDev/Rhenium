@@ -71,7 +71,7 @@ public class StructFunctionCallNode extends ValueNode {
             String addr = cctx.nextRegister();
             cctx.emit(addr + " = alloca " + structType.getLLVMName());
             cctx.emit("store " + structType.getLLVMName() + " " + tmpVal +
-                    ", " + structType.getLLVMName() + "* " + addr);
+                    ", " + toPtr(structType.getLLVMName()) + addr);
 
             selfValue = addr;
         }
@@ -82,7 +82,7 @@ public class StructFunctionCallNode extends ValueNode {
             String addr = cctx.nextRegister();
             cctx.emit(addr + " = alloca " + structType.getLLVMName());
             cctx.emit("store " + structType.getLLVMName() + " " + selfValue +
-                    ", " + structType.getLLVMName() + "* " + addr);
+                    ", " + toPtr(structType.getLLVMName()) + addr);
             selfValue = addr;
         }
 

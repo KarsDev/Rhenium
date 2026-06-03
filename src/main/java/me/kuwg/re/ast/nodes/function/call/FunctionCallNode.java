@@ -5,8 +5,10 @@ import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.function.RGenFunction;
+import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionGenericsError;
 import me.kuwg.re.error.errors.function.RFunctionIsVoidError;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
@@ -14,6 +16,7 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.lambda.LambdaType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.StructType;
@@ -29,6 +32,13 @@ public class FunctionCallNode extends ValueNode {
         super(line);
         this.name = name;
         this.parameters = parameters;
+    }
+
+    public static boolean containsGeneric(TypeRef type) {
+        if (type instanceof GenericType) return true;
+        if (type instanceof ArrayType arr) return containsGeneric(arr.inner());
+        if (type instanceof PointerType ptr) return containsGeneric(ptr.inner());
+        return false;
     }
 
     @Override
@@ -62,7 +72,7 @@ public class FunctionCallNode extends ValueNode {
         }
 
         if (fn == null) {
-            return throwNotFound(callTypes);
+            return tryLambda(cctx, callTypes, true);
         }
 
         return emitCall(cctx, fn, argRegs, callTypes, getting);
@@ -88,11 +98,7 @@ public class FunctionCallNode extends ValueNode {
 
         RFunction existing = genFn.getInstantiation(bindings);
         if (existing == null) {
-            String mangledName = genFn.name() + "__" +
-                    bindings.values().stream()
-                            .map(TypeRef::getName)
-                            .reduce((a, b) -> a + "_" + b)
-                            .orElse("");
+            String mangledName = genFn.name() + "__" + bindings.values().stream().map(TypeRef::getName).reduce((a, b) -> a + "_" + b).orElse("");
             FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(line, true, mangledName, concreteParams, concreteReturnType, genFn.block().clone());
             concreteFnNode.replaceGenerics(bindings, cctx);
 
@@ -142,10 +148,7 @@ public class FunctionCallNode extends ValueNode {
             if (actual instanceof StructType || actual instanceof AppliedGenStructType) {
                 String loaded = cctx.nextRegister();
                 TypeRef t = evalType(actual, cctx);
-                cctx.emit(loaded + " = load " +
-                        t.getLLVMName() + ", " +
-                        t.getLLVMName() + "* " +
-                        argRegs.get(i));
+                cctx.emit(loaded + " = load " + t.getLLVMName() + ", " + toPtr(t.getLLVMName()) + argRegs.get(i));
                 argRegs.set(i, loaded);
             }
         }
@@ -210,13 +213,6 @@ public class FunctionCallNode extends ValueNode {
         return type;
     }
 
-    public static boolean containsGeneric(TypeRef type) {
-        if (type instanceof GenericType) return true;
-        if (type instanceof ArrayType arr) return containsGeneric(arr.inner());
-        if (type instanceof PointerType ptr) return containsGeneric(ptr.inner());
-        return false;
-    }
-
     private void validateGenericUsage(RGenFunction fn) {
         Set<String> allowed = new HashSet<>(fn.typeParameters());
         for (var p : fn.parameters()) {
@@ -247,6 +243,67 @@ public class FunctionCallNode extends ValueNode {
         }
         sb.append(")");
         new RFunctionIsVoidError(fn.name(), sb.toString(), line).raise();
+    }
+
+    private String tryLambda(CompilationContext cctx, final List<TypeRef> callTypes, boolean getting) {
+        RVariable v = cctx.getVariable(name);
+
+        if (v == null || !(v.type() instanceof final LambdaType lambda)) {
+            System.out.println(v);
+            return throwNotFound(callTypes);
+        }
+
+        if (lambda.returnType() instanceof NoneBuiltinType && getting) {
+            throwVoid(new RDefFunction(lambda.getLLVMName(), name, lambda.returnType(), List.of()), callTypes);
+        }
+
+        List<String> argRegs = new ArrayList<>(parameters.size());
+
+        for (ValueNode param : parameters) {
+            argRegs.add(param.compileAndGet(cctx));
+        }
+
+        for (int i = 0; i < parameters.size(); i++) {
+            TypeRef expected = lambda.parameters().get(i);
+            TypeRef actual = callTypes.get(i);
+
+            if (!actual.equals(expected)) {
+                CastNode cast = new CastNode(line, expected, parameters.get(i));
+                argRegs.set(i, cast.compileAndGet(cctx));
+                callTypes.set(i, expected);
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        String result = null;
+
+        if (!(lambda.returnType() instanceof NoneBuiltinType)) {
+            result = cctx.nextRegister();
+            sb.append(result).append(" = ");
+        }
+        String fnPtr = v.valueReg();
+
+        sb.append("call ")
+                .append(lambda.returnType().getLLVMName())
+                .append(" ")
+                .append(fnPtr)
+                .append("(");
+
+        for (int i = 0; i < argRegs.size(); i++) {
+            sb.append(callTypes.get(i).getLLVMName()).append(" ").append(argRegs.get(i));
+
+            if (i < argRegs.size() - 1) {
+                sb.append(", ");
+            }
+        }
+
+        sb.append(")");
+
+        cctx.emit(sb.toString());
+
+        setType(lambda.returnType());
+
+        return lambda.returnType() instanceof NoneBuiltinType ? "%void_" + cctx.nextRegister() : result;
     }
 
     @Override

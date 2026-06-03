@@ -178,7 +178,7 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
             loopVarValue = cctx.nextRegister();
             cctx.emit(loopVarValue + " = load "
                     + arr.inner().getLLVMName() + ", "
-                    + arr.inner().getLLVMName() + "* "
+                    + toPtr(arr.inner().getLLVMName())
                     + loopVarAddr);
         }
 

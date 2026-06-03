@@ -57,7 +57,7 @@ public final class StructCompiler {
         cctx.emit("call void @" + constructor.llvmName + "(" + String.join(", ", args) + ")");
 
         String loaded = cctx.nextRegister();
-        cctx.emit(loaded + " = load " + struct.type().getLLVMName() + ", " + struct.type().getLLVMName() + "* " + structPtr);
+        cctx.emit(loaded + " = load " + struct.type().getLLVMName() + ", " + node.toPtr(struct.type.getLLVMName()) + structPtr);
 
         node.setType(struct.type());
         return loaded;
@@ -83,7 +83,7 @@ public final class StructCompiler {
             }
 
             String fieldPtr = cctx.nextRegister();
-            cctx.emit(fieldPtr + " = getelementptr inbounds " + struct.type().getLLVMName() + ", " + struct.type().getLLVMName() + "* " + structPtr + ", i32 0, i32 " + i);
+            cctx.emit(fieldPtr + " = getelementptr inbounds " + struct.type().getLLVMName() + ", " + node.toPtr(struct.type.getLLVMName()) + structPtr + ", i32 0, i32 " + i);
 
 
             TypeRef concrete = cctx.resolveConcrete(field.type());
@@ -93,7 +93,7 @@ public final class StructCompiler {
         }
 
         String loaded = cctx.nextRegister();
-        cctx.emit(loaded + " = load " + struct.type().getLLVMName() + ", " + struct.type().getLLVMName() + "* " + structPtr);
+        cctx.emit(loaded + " = load " + struct.type().getLLVMName() + ", " + node.toPtr(struct.type.getLLVMName()) + structPtr);
 
         node.setType(struct.type());
         return loaded;

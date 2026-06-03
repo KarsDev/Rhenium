@@ -14,6 +14,7 @@ func main() -> int:
     testGenerics()
     testTernary()
     testConnections()
+    testLambda()
 
     println("\nAll test passed successfully")
 
@@ -191,3 +192,19 @@ func testConnections():
         raise "Error with connections"
     conn.close()
     println("Connection testing passed successfully")
+
+func testLambda():
+    square = lambda(x: int) = x*x
+
+    y = fsq(square, 15)
+
+    if (y != 225):
+        raise "Error with lambda"
+
+    println("Lambda testing passed successfully")
+
+func fsq(y: lambda(int) -> int, p: int) -> int:
+    return exeLambda(y, p)
+
+func exeLambda(y: lambda(int) -> int, p: int) -> int:
+    return y(p)

@@ -57,9 +57,9 @@ public class AsyncDeclarationNode extends ValueNode {
         cctx.declare("  " + mem + " = call i8* @malloc(i64 " + size + ")");
 
         final String casted = cctx.nextRegister();
-        cctx.declare("  " + casted + " = bitcast i8* " + mem + " to " + returnType.getLLVMName() + "*");
+        cctx.declare("  " + casted + " = bitcast i8* " + mem + " to " + toPtr(returnType.getLLVMName()));
 
-        cctx.declare("  store " + returnType.getLLVMName() + " " + val + ", " + returnType.getLLVMName() + "* " + casted);
+        cctx.declare("  store " + returnType.getLLVMName() + " " + val + ", " + toPtr(returnType.getLLVMName()) + casted);
 
         cctx.declare("  ret i8* " + mem);
         cctx.declare("}");

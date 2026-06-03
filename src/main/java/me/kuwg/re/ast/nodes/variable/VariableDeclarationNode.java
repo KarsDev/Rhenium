@@ -88,7 +88,7 @@ public class VariableDeclarationNode extends ValueNode {
         String targetAddr = oldVar.addrReg() != null ? oldVar.addrReg() : oldVar.valueReg();
 
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
-        cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + varType.getLLVMName() + "* " + targetAddr + " ; Reassign variable " + variable.getCompleteName());
+        cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + toPtr(varType.getLLVMName()) + targetAddr + " ; Reassign variable " + variable.getCompleteName());
 
         return valueReg;
     }
@@ -108,14 +108,14 @@ public class VariableDeclarationNode extends ValueNode {
         if (varType instanceof ArrayType arrType) {
             cctx.emit(addrReg + " = alloca " + varType.getLLVMName());
             if (arrType.size() == ArrayType.UNKNOWN_SIZE) {
-                cctx.emit("store " + arrType.inner().getLLVMName() + "* " + valueReg + ", " + arrType.inner().getLLVMName() + "** " + addrReg + " ; dynamic array pointer");
+                cctx.emit("store " + toPtr(arrType.inner().getLLVMName()) + valueReg + ", " + arrType.inner().getLLVMName() + "** " + addrReg + " ; dynamic array pointer");
             } else {
                 String sizeConst = Long.toString(arrType.size() * arrType.inner().getSize());
                 cctx.emit("call void @memcpy(ptr " + addrReg + ", ptr " + valueReg + ", i64 " + sizeConst + ", i1 false)");
             }
 
             String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
-            cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + varType.getLLVMName() + "* " + addrReg);
+            cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + toPtr(varType.getLLVMName()) + addrReg);
 
             RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded);
             cctx.addVariable(v);
@@ -134,10 +134,11 @@ public class VariableDeclarationNode extends ValueNode {
 
         cctx.emit(addrReg + " = alloca " + varType.getLLVMName());
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
-        cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + varType.getLLVMName() + "* " + addrReg);
+
+        cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
 
         String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
-        cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + varType.getLLVMName() + "* " + addrReg);
+        cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
 
         RVariable v = new RVariable(variable.getSimpleName(), mutable, false, varType, addrReg, loaded);
         cctx.addVariable(v);

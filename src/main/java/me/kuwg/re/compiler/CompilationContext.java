@@ -74,6 +74,12 @@ final class CompilationContext {
 
     public void emit(String s) {
         if (s.contains(ERROR_LINE)) throw new RuntimeException();
+        if (s.contains(" ptr*")) {
+            System.err.println("WARNING: emitted invalid LLVM opaque pointer syntax:");
+            System.err.println(s);
+
+            s = s.replace("ptr*", "ptr");
+        }
         if (s.strip().matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
         Objects.requireNonNull(codeStack.peek()).append(TAB.repeat(indentLevel)).append(s).append('\n');
     }

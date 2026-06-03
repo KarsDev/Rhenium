@@ -72,7 +72,7 @@ public class ArrayAccessNode extends VariableReference {
         valueReg = cctx.nextRegister();
         cctx.emit(valueReg + " = load "
                 + elementType.getLLVMName() + ", "
-                + elementType.getLLVMName() + "* "
+                + toPtr(elementType.getLLVMName())
                 + elemPtr);
 
         return new RVariable(

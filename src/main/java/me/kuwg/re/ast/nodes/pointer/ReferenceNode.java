@@ -42,30 +42,9 @@ public class ReferenceNode extends ValueNode {
 
         TypeRef type = var.type();
 
-        String loadedValue = cctx.nextRegister();
-        cctx.emit(loadedValue + " = load " +
-                type.getLLVMName() + ", " +
-                type.getLLVMName() + "* " + var.addrReg());
-
-        long size = type.getSize();
-
-        String heapMem = cctx.nextRegister();
-        cctx.emit(heapMem + " = call i8* @malloc(i64 " + size + ")");
-
-        String typedPtr = cctx.nextRegister();
-        cctx.emit(typedPtr + " = bitcast i8* " +
-                heapMem + " to " +
-                type.getLLVMName() + "*");
-
-        cctx.emit("store " +
-                type.getLLVMName() + " " +
-                loadedValue + ", " +
-                type.getLLVMName() + "* " +
-                typedPtr);
-
         setType(new PointerType(type));
 
-        return typedPtr;
+        return var.addrReg();
     }
 
     @Override

@@ -108,9 +108,9 @@ public class ArraySetNode extends ValueNode {
 
         if (fixedArray) {
             String llvmArrType = "[" + fixedSize + " x " + llvmElemType + "]";
-            cctx.emit(elemPtrReg + " = getelementptr inbounds " + llvmArrType + ", " + llvmArrType + "* " + arrayReg + ", i32 0, i64 " + index64Reg);
+            cctx.emit(elemPtrReg + " = getelementptr inbounds " + llvmArrType + ", " + toPtr(llvmArrType) + arrayReg + ", i32 0, i64 " + index64Reg);
         } else {
-            cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayReg + ", i64 " + index64Reg);
+            cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + toPtr(llvmElemType) + arrayReg + ", i64 " + index64Reg);
         }
 
         cctx.emit("store " + llvmElemType + " " + valueReg + ", " + llvmElemType + "* " + elemPtrReg);

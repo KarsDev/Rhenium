@@ -139,10 +139,19 @@ impl HashMap<K, V>:
 
         this.size = 0
 
+    func entries() -> List<Entry<K, V>>:
+        result = init List<Entry<K, V>>()
+
+        for (b in range(this.capacity)):
+            bucket = this.buckets[b]
+
+            for (i in range(bucket.size)):
+                result.add(bucket.items[i])
+
+        return result
 
     func isEmpty() -> bool:
         return this.size == 0
-
 
     func length() -> int:
         return this.size

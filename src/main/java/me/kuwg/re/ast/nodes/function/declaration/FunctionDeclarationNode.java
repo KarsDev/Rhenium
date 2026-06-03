@@ -29,9 +29,8 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     private final String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
-    private TypeRef returnType;
     private final BlockNode block;
-
+    private TypeRef returnType;
     private boolean registered = false;
 
     public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
@@ -55,12 +54,6 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         }
     }
 
-    @Override
-    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
-        returnType = replaceGenericType(returnType, generics, cctx);
-        block.replaceGenerics(generics, cctx);
-    }
-
     private static boolean appendMainReturn(StringBuilder sb) {
         String[] lines = sb.toString().split("\\r?\\n");
         for (int i = lines.length - 1; i >= 0; i--) {
@@ -69,6 +62,15 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             return !line.startsWith("ret");
         }
         return true;
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        parameters.replaceAll(param ->
+                new FunctionParameter(param.name(), param.mutable(), replaceGenericType(param.type(), generics, cctx))
+        );
+        returnType = replaceGenericType(returnType, generics, cctx);
+        block.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -116,7 +118,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             String paramPtr = "%" + param.name() + ".addr";
             TypeRef pt = evalType(param.type(), cctx);
             cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
-            cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + pt.getLLVMName() + "* " + paramPtr);
+            cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 
             RVariable paramVar = new RVariable(param.name(), param.mutable(), true, pt, paramPtr, "%" + param.name());
             cctx.addVariable(paramVar);
@@ -176,7 +178,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     @Override
     public FunctionDeclarationNode clone() {
-        return new FunctionDeclarationNode(line, isGeneric, name, parameters,  returnType, block.clone());
+        return new FunctionDeclarationNode(line, isGeneric, name, parameters, returnType, block.clone());
     }
 
     public void register(final CompilationContext cctx) {

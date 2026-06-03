@@ -67,14 +67,14 @@ public class StructFieldAccessNode extends VariableReference {
         String structPtr = structVar.addrReg();
 
         String fieldPtr = cctx.nextRegister();
-        cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);
+        cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + toPtr(st.getLLVMName()) + structPtr + ", i32 0, i32 " + index);
 
         if (fieldType instanceof StructType) {
             return fieldPtr;
         }
 
         String loadReg = cctx.nextRegister();
-        cctx.emit(loadReg + " = load " + fieldType.getLLVMName() + ", " + fieldType.getLLVMName() + "* " + fieldPtr);
+        cctx.emit(loadReg + " = load " + fieldType.getLLVMName() + ", " + toPtr(fieldType.getLLVMName()) + fieldPtr);
 
         return loadReg;
     }
@@ -121,14 +121,14 @@ public class StructFieldAccessNode extends VariableReference {
         String structPtr = structVar.addrReg();
 
         String fieldPtr = cctx.nextRegister();
-        cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + st.getLLVMName() + "* " + structPtr + ", i32 0, i32 " + index);
+        cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + toPtr(st.getLLVMName()) + structPtr + ", i32 0, i32 " + index);
 
         String loaded = cctx.nextRegister();
 
         TypeRef concrete = cctx.resolveConcrete(fieldType);
         String ftln = concrete.getLLVMName();
 
-        cctx.emit(loaded + " = load " + ftln + ", " + ftln + "* " + fieldPtr);
+        cctx.emit(loaded + " = load " + ftln + ", " + toPtr(ftln) + fieldPtr);
 
         return new RVariable(fieldName, true, true, fieldType, fieldPtr, loaded);
     }

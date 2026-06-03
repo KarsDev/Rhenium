@@ -20,6 +20,7 @@ import me.kuwg.re.ast.nodes.function.declaration.*;
 import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
 import me.kuwg.re.ast.nodes.instance.IsNode;
 import me.kuwg.re.ast.nodes.ir.IRDeclarationNode;
+import me.kuwg.re.ast.nodes.lambda.LambdaDeclarationNode;
 import me.kuwg.re.ast.nodes.len.LenNode;
 import me.kuwg.re.ast.nodes.loop.BreakNode;
 import me.kuwg.re.ast.nodes.loop.ContinueNode;
@@ -71,6 +72,7 @@ import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
+import me.kuwg.re.type.lambda.LambdaType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
@@ -379,6 +381,7 @@ public class ASTParser {
             case "generic" -> parseGenericKeyword();
             case "this" -> parseThisKeyword();
             case "match" -> parseMatchKeyword();
+            case "lambda" -> parseLambdaKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -1581,6 +1584,19 @@ public class ASTParser {
         return new MatchNode.MatchCase((ConstantNode) v, b);
     }
 
+    private @SubFunc LambdaDeclarationNode parseLambdaKeyword() {
+        int line = line();
+        var params = parseParamsDeclare(false);
+
+        if (!matchAndConsume(OPERATOR, "=")) {
+            return new RParserError("Expected '=' for lambda declaration", file, line).raise();
+        }
+
+        ValueNode value = parseValue();
+
+        return new LambdaDeclarationNode(line, params, value);
+    }
+
     /*
     general utils
      */
@@ -1607,6 +1623,9 @@ public class ASTParser {
                     return new RParserError("Expected struct type", file, line()).raise();
                 }
                 return type;
+            }
+            case "lambda" -> {
+                return parseLambdaType(line, generics);
             }
         }
 
@@ -1687,6 +1706,26 @@ public class ASTParser {
         }
 
         return new ArrayType(ArrayType.UNKNOWN_SIZE, inner);
+    }
+
+    private @SubFunc TypeRef parseLambdaType(int line, boolean generics) {
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for lambda type declaration", file, line).raise();
+        List<TypeRef> params = new ArrayList<>();
+        if (!matchAndConsume(DIVIDER, ")")) {
+            do {
+                params.add(parseType(generics));
+            } while (matchAndConsume(DIVIDER, ","));
+
+            if (!matchAndConsume(DIVIDER, ")"))
+                return new RParserError("Expected ')' for lambda type declaration", file, line).raise();
+        }
+
+        if (!matchAndConsume(OPERATOR, "->"))
+            return new RParserError("Expected \"->\" for lambda type declaration", file, line).raise();
+
+        TypeRef inner = parseType(generics);
+        return new LambdaType(params, inner);
     }
 
     private @SubFunc List<FunctionParameter> parseParamsDeclare(final boolean generics) {
