@@ -35,7 +35,7 @@ impl HashMap<K, V>:
             this.buckets[i] = init List<Entry<K, V>>()
 
     func put(key: K, value: V) -> none:
-        idx: mut = hash(key) % this.capacity
+        idx: mut = (Hash::hash(key)) % this.capacity
         if (idx < 0):
             idx += this.capacity
         s = this.buckets[idx].size
@@ -48,7 +48,7 @@ impl HashMap<K, V>:
         this.size += 1
 
     func get(key: K) -> V:
-        idx: mut = hash(key) % this.capacity
+        idx: mut = Hash::hash(key) % this.capacity
 
         if (idx < 0):
             idx += this.capacity
@@ -63,7 +63,7 @@ impl HashMap<K, V>:
 
 
     func containsKey(key: K) -> bool:
-        idx: mut = hash(key) % this.capacity
+        idx: mut = Hash::hash(key) % this.capacity
 
         if (idx < 0):
             idx += this.capacity
@@ -78,7 +78,7 @@ impl HashMap<K, V>:
 
 
     func remove(key: K) -> V:
-        idx: mut = hash(key) % this.capacity
+        idx: mut = Hash::hash(key) % this.capacity
 
         if (idx < 0):
             idx += this.capacity
@@ -97,7 +97,7 @@ impl HashMap<K, V>:
         raise "Key not found: " + key
 
     func getOrDefault(key: K, default: V) -> V:
-        idx: mut = hash(key) % this.capacity
+        idx: mut = Hash::hash(key) % this.capacity
 
         if (idx < 0):
             idx += this.capacity

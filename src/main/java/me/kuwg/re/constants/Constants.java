@@ -86,4 +86,8 @@ public abstract class Constants {
 
         public static final boolean SUPPORT_NW = false;
     }
+
+    public static final class Parser extends Constants {
+        public static final String DEFAULT_MODULE_NAME = "default\\default";
+    }
 }

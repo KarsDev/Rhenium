@@ -165,4 +165,4 @@ namespace Math:
 
     // Returns the logarithm of x with a specified base
     func log(x: double, base: double) -> double:
-        return ln(x) / ln(base)
+        return Math::ln(x) / Math::ln(base)

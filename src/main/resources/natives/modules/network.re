@@ -71,108 +71,111 @@ impl Network:
 
         return data
 
-func dns(host: str) -> str:
-    return BNET_00(4, host, "", "")
-
 struct HttpResponse:
-    status: int
-    headers: HashMap<str, str>
-    body: str
+        status: int
+        headers: HashMap<str, str>
+        body: str
 
-func decodeChunkedBody(body: str) -> str:
-    result: mut = ""
-    i: mut = 0
+namespace Http:
 
-    while (i < len(body)):
-        lineEnd = strIndexOf(body, "\r\n", i)
-        if (lineEnd == -1):
-            break
+    func dns(host: str) -> str:
+        return BNET_00(4, host, "", "")
 
-        sizeText = strTrim(strSubRange(body, i, lineEnd), 0)
-        size: int = parseLongBase(sizeText, 16)
 
-        if (size <= 0):
-            break
+    func decodeChunkedBody(body: str) -> str:
+        result: mut = ""
+        i: mut = 0
 
-        start = lineEnd + 2
-        end: mut = start + size
+        while (i < len(body)):
+            lineEnd = strIndexOf(body, "\r\n", i)
+            if (lineEnd == -1):
+                break
 
-        if (end > len(body)):
-            end = len(body)
+            sizeText = strTrim(strSubRange(body, i, lineEnd), 0)
+            size: int = Number::parseLongBase(sizeText, 16)
 
-        result = result + strSubRange(body, start, end)
+            if (size <= 0):
+                break
 
-        i = end + 2
+            start = lineEnd + 2
+            end: mut = start + size
 
-    return result
+            if (end > len(body)):
+                end = len(body)
 
-func parseHttpResponse(raw: str) -> HttpResponse:
-    tm = init HashMap<str, str>()
-    response = init HttpResponse(0, tm, "")
+            result = result + strSubRange(body, start, end)
 
-    headerEnd = strIndexOf(raw, "\r\n\r\n")
+            i = end + 2
 
-    if (headerEnd == -1):
-        raise "Invalid HTTP response"
+        return result
 
-    headerText = strSubRange(raw, 0, headerEnd)
-    bodyText = strSubRange(raw, headerEnd + 4, len(raw))
+    func parseHttpResponse(raw: str) -> HttpResponse:
+        tm = init HashMap<str, str>()
+        response = init HttpResponse(0, tm, "")
 
-    dynLines = strSplit(headerText, "\r\n")
+        headerEnd = strIndexOf(raw, "\r\n\r\n")
 
-    lines = dynLines.values
-    linesLen = dynLines.size
+        if (headerEnd == -1):
+            raise "Invalid HTTP response"
 
-    if (linesLen == 0):
-        raise "Invalid HTTP response"
+        headerText = strSubRange(raw, 0, headerEnd)
+        bodyText = strSubRange(raw, headerEnd + 4, len(raw))
 
-    statusLine = lines[0]
-    statusPartsDyn = strSplit(statusLine, " ")
+        dynLines = strSplit(headerText, "\r\n")
 
-    if (statusPartsDyn.size < 2):
-        raise "Invalid HTTP status line"
+        lines = dynLines.values
+        linesLen = dynLines.size
 
-    response.status = parseInt(statusPartsDyn.values[1])
+        if (linesLen == 0):
+            raise "Invalid HTTP response"
 
-    i: mut = 1
-    while (i < linesLen):
-        line = lines[i]
-        colon = strIndexOf(line, ":")
-    
-        if (colon != -1):
-            key = strTrim(strSubRange(line, 0, colon))
-            value = strTrim(strSubRange(line, colon + 1, len(line)))
-            response.headers.put(key, value)
-    
-        i += 1
+        statusLine = lines[0]
+        statusPartsDyn = strSplit(statusLine, " ")
 
-    
-    transferEncoding: mut = ""
-    if (response.headers.containsKey("Transfer-Encoding")):
-        transferEncoding = response.headers.get("Transfer-Encoding")
+        if (statusPartsDyn.size < 2):
+            raise "Invalid HTTP status line"
 
-    if (strToLower(transferEncoding) == "chunked"):
-        response.body = decodeChunkedBody(bodyText)
-    else:
-        response.body = bodyText
+        response.status = Number::parseInt(statusPartsDyn.values[1])
 
-    return response
+        i: mut = 1
+        while (i < linesLen):
+            line = lines[i]
+            colon = strIndexOf(line, ":")
+        
+            if (colon != -1):
+                key = strTrim(strSubRange(line, 0, colon))
+                value = strTrim(strSubRange(line, colon + 1, len(line)))
+                response.headers.put(key, value)
+        
+            i += 1
 
-func httpGet(host: str, path: str, port: int) -> HttpResponse:
-    conn = init Network("http_" + host + path, host, port)
+        
+        transferEncoding: mut = ""
+        if (response.headers.containsKey("Transfer-Encoding")):
+            transferEncoding = response.headers.get("Transfer-Encoding")
 
-    if (conn.open() == false):
-        raise "Failed to open HTTP connection"
+        if (strToLower(transferEncoding) == "chunked"):
+            response.body = Http::decodeChunkedBody(bodyText)
+        else:
+            response.body = bodyText
 
-    hostHeader: mut = host if port == 80 else host + ":" + intToStr(port)
+        return response
 
-    request = "GET " + path + " HTTP/1.1\r\n" + "Host: " + hostHeader + "\r\n" + "Connection: close\r\n" + "User-Agent: BLang/1.0\r\n" + "\r\n"
+    func httpGet(host: str, path: str, port: int) -> HttpResponse:
+        conn = init Network("http_" + host + path, host, port)
 
-    if (conn.send(request) == false):
+        if (conn.open() == false):
+            raise "Failed to open HTTP connection"
+
+        hostHeader: mut = host if port == 80 else host + ":" + intToStr(port)
+
+        request = "GET " + path + " HTTP/1.1\r\n" + "Host: " + hostHeader + "\r\n" + "Connection: close\r\n" + "User-Agent: BLang/1.0\r\n" + "\r\n"
+
+        if (conn.send(request) == false):
+            conn.close()
+            raise "Failed to send HTTP request"
+
+        raw = conn.receive()
         conn.close()
-        raise "Failed to send HTTP request"
 
-    raw = conn.receive()
-    conn.close()
-
-    return parseHttpResponse(raw)
+        return Http::parseHttpResponse(raw)

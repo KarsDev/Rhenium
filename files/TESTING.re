@@ -28,6 +28,7 @@ func main() -> int:
     testTernary()
     testConnections()
     testLambda()
+    testNamespaces()
 
     println("\nAll test passed successfully")
 
@@ -118,7 +119,7 @@ func testFunctions():
     println("Instance testing passed successfully")
 
 func testModules():
-    if (ln(E) != 1):
+    if (Math::ln(E) != 1):
         raise "Error with math"
     
     println("Module testing passed successfully")
@@ -199,7 +200,7 @@ func testConnections():
     conn.open()
     conn.send("GET / HTTP/1.1\r\n" + "Host: google.com\r\n\r\n")
     raw = conn.receive()
-    response = parseHttpResponse(raw)
+    response = Http::parseHttpResponse(raw)
     equality = strSubRange(response.body, 0, 78) == "<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">"
     if (not equality):
         raise "Error with connections"
@@ -221,3 +222,17 @@ func fsq(y: lambda(int) -> int, p: int) -> int:
 
 func exeLambda(y: lambda(int) -> int, p: int) -> int:
     return y(p)
+
+namespace Normal:
+    func getAsync() -> Thread:
+        return async(int):
+            return 5+5
+
+func testNamespaces():
+    a = Normal::getAsync()
+    b = Thread::awaitAndCast<int>(a)
+
+    if (b != 10):
+        raise "Error with namespaces"
+    
+    println("Namespaces test passed successfully")

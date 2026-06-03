@@ -2,12 +2,13 @@ package me.kuwg.re.ast.nodes.namespace;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
+import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.Map;
 
-public class NamespaceDeclarationNode extends ASTNode {
+public class NamespaceDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
     private final BlockNode block;
 

@@ -15,6 +15,7 @@ import me.kuwg.re.ast.nodes.expression.BinaryExpressionNode;
 import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
 import me.kuwg.re.ast.nodes.extern.NativeCPPNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
+import me.kuwg.re.ast.nodes.function.call.GenericFunctionCallNode;
 import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
 import me.kuwg.re.ast.nodes.function.declaration.*;
 import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
@@ -57,6 +58,7 @@ import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RConstructor;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;
+import me.kuwg.re.constants.Constants;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.expr.RImplNotFunctionError;
 import me.kuwg.re.error.errors.parser.RParserError;
@@ -109,8 +111,9 @@ public class ASTParser {
         this.typeMap = typeMap;
     }
 
-    private static void includeInitialModules(AST ast) {
-        ast.addChild(new UsingNode(0, null, "default\\default", null));
+    private void includeInitialModules(AST ast) {
+        ModuleLoadingHelper.collectModuleTypes(0, file, Constants.Parser.DEFAULT_MODULE_NAME, null).forEach(typeMap::putIfAbsent);
+        ast.addChild(new UsingNode(0, null, Constants.Parser.DEFAULT_MODULE_NAME, null));
     }
 
     public AST parse() {
@@ -1155,9 +1158,57 @@ public class ASTParser {
             if (matchAndConsume(OPERATOR, "::")) {
                 if (self)
                     return new RParserError("Self for namespace is not allowed", file, line).raise();
-                ValueNode value = parseValue();
 
-                node = new NamespaceCallNode(line, name, value);
+                String fieldName = identifier();
+
+                if (matchAndConsume(OPERATOR, "<")) {
+                    List<TypeRef> genTypes = new ArrayList<>();
+
+                    if (!match(OPERATOR, ">")) {
+                        do {
+                            genTypes.add(parseType(false));
+                        } while (matchAndConsume(DIVIDER, ","));
+                    }
+
+                    if (!matchAndConsume(OPERATOR, ">")) {
+                        return new RParserError("Expected '>' for generic function declaration", file, line).raise();
+                    }
+
+                    var params = parseParamsCall();
+
+                    var inner = new GenericFunctionCallNode(line, fieldName, genTypes, params);
+
+                    node = new NamespaceCallNode(line, name, inner);
+                    continue;
+                }
+
+                if (!match(DIVIDER, "(")) {
+                    node = new NamespaceCallNode(line, name, new DirectVariableReferenceNode(line, fieldName));
+                    continue;
+                }
+
+                var args = parseParamsCall();
+
+                node = new NamespaceCallNode(line, name, new FunctionCallNode(line, fieldName, args));
+            }
+
+            if (matchAndConsume(OPERATOR, "<")) {
+                List<TypeRef> genTypes = new ArrayList<>();
+
+                if (!match(OPERATOR, ">")) {
+                    do {
+                        genTypes.add(parseType(false));
+                    } while (matchAndConsume(DIVIDER, ","));
+                }
+
+                if (!matchAndConsume(OPERATOR, ">")) {
+                    return new RParserError("Expected '>' for generic function declaration", file, line).raise();
+                }
+
+                var params = parseParamsCall();
+
+                node = new GenericFunctionCallNode(line, name, genTypes, params);
+                break;
             }
 
             break;
@@ -2028,6 +2079,7 @@ public class ASTParser {
     }
 
     private void collectUsingTypes() {
+        int line = line();
         StringBuilder name = new StringBuilder(identifier());
 
         while (matchAndConsume(OPERATOR, ".")) {
@@ -2047,7 +2099,7 @@ public class ASTParser {
         }
 
         ModuleLoadingHelper
-                .collectModuleTypes(line(), file, name.toString(), pkg)
+                .collectModuleTypes(line, file, name.toString(), pkg)
                 .forEach(typeMap::putIfAbsent);
     }
 }

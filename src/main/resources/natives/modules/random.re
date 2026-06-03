@@ -17,7 +17,7 @@ struct Random:
 // Combines high-resolution nanotime with standard millisecond time
 // to create a unique seed value.
 func _randomSeed() -> long:
-    return timeNanos() + timeMillis()
+    return Time::millis() + Time::nanos()
 
 impl Random:
     init():

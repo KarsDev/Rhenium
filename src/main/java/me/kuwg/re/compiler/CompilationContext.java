@@ -277,8 +277,9 @@ final class CompilationContext {
         namespaceStack.push(ns);
     }
 
-    public void popNamespace() {
-        if (!namespaceStack.isEmpty()) namespaceStack.pop();
+    public String popNamespace() {
+        if (!namespaceStack.isEmpty()) return namespaceStack.pop();
+        return null;
     }
 
     public String currentNamespace() {

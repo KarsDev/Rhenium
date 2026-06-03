@@ -61,3 +61,12 @@ impl Thread:
         res = this.await()
         this.destroy()
         return res
+
+// Utility namespace
+namespace Thread:
+
+    // Awaits for the thread result and converts it to a value
+    generic func awaitAndCast<T>(t: Thread) -> T:
+        v_anyptr = t.await()
+        v_ptr = cast<ptr -> T>(v_anyptr)
+        return @v_ptr

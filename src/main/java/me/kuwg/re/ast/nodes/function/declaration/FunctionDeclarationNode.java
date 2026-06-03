@@ -81,7 +81,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         boolean main = isMain();
 
         String qualifiedName = getQualifiedName(cctx);
-        String llvmName = registered ? this.llvmName : getEmissionLLVMName(cctx);
+        llvmName = registered ? this.llvmName : getEmissionLLVMName(cctx);
 
         List<TypeRef> types = new ArrayList<>(parameters.size());
         for (int i = 0; i < parameters.size(); i++) {
@@ -124,6 +124,8 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             cctx.addVariable(paramVar);
         }
 
+        String ns = cctx.popNamespace();
+
         block.compile(cctx);
 
         if (returnType instanceof NoneBuiltinType) {
@@ -132,6 +134,10 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         if (!main) {
             block.checkTypes(cctx, returnType, true);
+        }
+
+        if (ns != null) {
+            cctx.pushNamespace(ns);
         }
 
         String body = cctx.popFunctionBody();
@@ -192,7 +198,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         registered = true;
     }
 
-    private String getQualifiedName(CompilationContext cctx) {
+    public String getQualifiedName(CompilationContext cctx) {
         return isMain() ? "main" : cctx.qualify(name);
     }
 
