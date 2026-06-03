@@ -1,5 +1,18 @@
+using file
+using FileReader
+using FileWriter
+using hash
+using list
+using map
 using math
+using memory
 using network
+using number
+using option
+using random
+using string
+using time
+using win.win
 
 global TEN_FACTORIAL = 3628800
 
