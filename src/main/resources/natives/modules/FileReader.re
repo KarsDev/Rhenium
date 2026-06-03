@@ -7,11 +7,16 @@ _NativeCPP("FileReader") str BFR_00(op: int, path: str) // returns file content 
 struct FileReader:
     file: File
     isOpen: bool
-    content: str = ""
-    position: int = 0
+    content: str
+    position: int
 
 // Implement FileReader functions
 impl FileReader:
+    init(file: File):
+        this.file = file
+        this.isOpen = false 
+        this.content = ""
+        this.position = 0
 
     // Opens the file for reading
     func open() -> bool:
