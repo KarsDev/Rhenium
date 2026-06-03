@@ -31,7 +31,7 @@ import static me.kuwg.re.writer.Writeable.TAB;
 
 public @SuppressWarnings("unused")
 final class CompilationContext {
-    private static final String ERROR_LINE = "ERROR LINE HERE";
+    private static final String ERROR_LINE = "fds";
 
     private final Map<String, TypeRef> typeMap;
     private final List<String> irCode = new ArrayList<>();
@@ -49,6 +49,7 @@ final class CompilationContext {
     private final Set<String> declaredIR = new LinkedHashSet<>();
     private final Set<String> declaredStructs = new LinkedHashSet<>();
     private final Set<String> declaredGlobals = new HashSet<>();
+    private final Deque<String> namespaceStack = new ArrayDeque<>();
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -126,7 +127,24 @@ final class CompilationContext {
             var v = scopeStack.get(i).get(name);
             if (v != null) return v;
         }
-        return variables.get(name);
+
+        var direct = variables.get(name);
+        if (direct != null) return direct;
+
+        if (name.contains("$$")) return null;
+
+        String ns = currentNamespace();
+        while (true) {
+            String candidate = ns.isEmpty() ? name : ns + "$$" + name;
+            RVariable v = variables.get(candidate);
+            if (v != null) return v;
+
+            int idx = ns.lastIndexOf("::");
+            if (idx < 0) break;
+            ns = ns.substring(0, idx);
+        }
+
+        return null;
     }
 
     public void addFunction(RFunction f) {
@@ -135,6 +153,10 @@ final class CompilationContext {
 
     public RFunction getFunction(String name, List<TypeRef> parameters) {
         return functions.get(name, parameters);
+    }
+
+    public RFunction getExact(String name, List<TypeRef> parameters) {
+        return functions.getExact(name, parameters);
     }
 
     public List<RFunction> getFunctions(String name) {
@@ -249,6 +271,50 @@ final class CompilationContext {
         }
 
         return reg;
+    }
+
+    public void pushNamespace(String ns) {
+        namespaceStack.push(ns);
+    }
+
+    public void popNamespace() {
+        if (!namespaceStack.isEmpty()) namespaceStack.pop();
+    }
+
+    public String currentNamespace() {
+        if (namespaceStack.isEmpty()) return "";
+        var it = namespaceStack.descendingIterator();
+        StringBuilder sb = new StringBuilder();
+        while (it.hasNext()) {
+            if (!sb.isEmpty()) sb.append("::");
+            sb.append(it.next());
+        }
+        return sb.toString();
+    }
+
+    public String qualify(String name) {
+        String ns = currentNamespace();
+        return ns.isEmpty() ? name : ns + "$$" + name;
+    }
+
+    public RFunction resolveFunction(String name, List<TypeRef> parameters) {
+        if (name.contains("$$")) {
+            return getFunction(name, parameters);
+        }
+
+        String ns = currentNamespace();
+
+        while (true) {
+            String candidate = ns.isEmpty() ? name : ns + "$$" + name;
+            RFunction fn = getFunction(candidate, parameters);
+            if (fn != null) return fn;
+
+            int idx = ns.lastIndexOf("::");
+            if (idx < 0) break;
+            ns = ns.substring(0, idx);
+        }
+
+        return getFunction(name, parameters);
     }
 
     public String compileAndGet(File output, List<String> clangArgs) throws IOException {

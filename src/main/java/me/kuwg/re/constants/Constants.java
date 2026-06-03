@@ -26,6 +26,7 @@ public abstract class Constants {
                 "is",
                 "async",
                 "lambda",
+                "namespace",
         };
 
         public static final String[] BOOLEANS = {
@@ -33,7 +34,7 @@ public abstract class Constants {
         };
 
         public static final String[] OPERATORS = {
-                "and", "or", "not", "in",
+                "and", "or", "not", "in", "::",
 
                 "+", "-", "*", "/", "%",
                 "+=", "-=", "*=", "/=", "%=",

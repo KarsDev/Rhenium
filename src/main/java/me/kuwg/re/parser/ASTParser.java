@@ -27,6 +27,8 @@ import me.kuwg.re.ast.nodes.loop.ContinueNode;
 import me.kuwg.re.ast.nodes.loop.ForLoopNode;
 import me.kuwg.re.ast.nodes.loop.WhileNode;
 import me.kuwg.re.ast.nodes.module.UsingNode;
+import me.kuwg.re.ast.nodes.namespace.NamespaceCallNode;
+import me.kuwg.re.ast.nodes.namespace.NamespaceDeclarationNode;
 import me.kuwg.re.ast.nodes.pointer.DereferenceAssignNode;
 import me.kuwg.re.ast.nodes.pointer.DereferenceNode;
 import me.kuwg.re.ast.nodes.pointer.PointerCreationNode;
@@ -382,6 +384,7 @@ public class ASTParser {
             case "this" -> parseThisKeyword();
             case "match" -> parseMatchKeyword();
             case "lambda" -> parseLambdaKeyword();
+            case "namespace" -> parseNamespaceKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -481,6 +484,7 @@ public class ASTParser {
 
     private @SubFunc ASTNode parseUsingKeyword() {
         int line = line();
+
         StringBuilder name = new StringBuilder(identifier());
 
         while (matchAndConsume(OPERATOR, ".")) {
@@ -1148,6 +1152,14 @@ public class ASTParser {
                 node = new StructFunctionCallNode(line, node, fieldName, args);
             }
 
+            if (matchAndConsume(OPERATOR, "::")) {
+                if (self)
+                    return new RParserError("Self for namespace is not allowed", file, line).raise();
+                ValueNode value = parseValue();
+
+                node = new NamespaceCallNode(line, name, value);
+            }
+
             break;
         }
 
@@ -1595,6 +1607,16 @@ public class ASTParser {
         ValueNode value = parseValue();
 
         return new LambdaDeclarationNode(line, params, value);
+    }
+
+    private @SubFunc NamespaceDeclarationNode parseNamespaceKeyword() {
+        int line = line();
+        String name = identifier();
+        if (!matchAndConsume(OPERATOR, ":"))
+            return new RParserError("Expected ':' for namespace declaration", file, line).raise();
+
+        BlockNode block = parseBlock();
+        return new NamespaceDeclarationNode(line, name, block);
     }
 
     /*

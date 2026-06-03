@@ -472,6 +472,37 @@ b = init Box<int>(12)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
+  LAMBDA
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+// define lambda called square
+square = lambda(x: int) = x*x
+
+// call square lambda
+v = square(2)
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
+  NAMESPACES
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+// define namespace called Alpha
+namespace Alpha:
+  global I = -1
+
+  func beta():
+    println("called Alpha::beta()")
+
+// calls function beta in namespace Alpha
+Alpha::beta()
+
+// gets the global variable I
+Alpha::I
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT
 <=------------------------=>|<=>|<=-----------------------=>
 */

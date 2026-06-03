@@ -127,6 +127,23 @@ final class RFunctions {
         return functions.stream().filter(fn -> fn.name().equals(name)).toList();
     }
 
+    RFunction getExact(String name, List<TypeRef> parameters) {
+        for (final RFunction fn : get(name)) {
+            if (fn.parameters().size() != parameters.size()) continue;
+
+            boolean exact = true;
+            for (int i = 0; i < parameters.size(); i++) {
+                if (!fn.parameters().get(i).type().equals(parameters.get(i))) {
+                    exact = false;
+                    break;
+                }
+            }
+
+            if (exact) return fn;
+        }
+        return null;
+    }
+
     private static class MatchResult {
         private final boolean matches;
         private final boolean exact;

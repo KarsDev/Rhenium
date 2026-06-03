@@ -38,7 +38,14 @@ public class GenFunctionDeclarationNode extends ASTNode {
     public void compile(final CompilationContext cctx) {
         if (registered) return;
 
-        RFunction fn = new RGenFunction(name, name, typeParameters, returnType, params, block);
+        RFunction fn = new RGenFunction(
+                RFunction.makeUnique(cctx.qualify(name)),
+                cctx.qualify(name),
+                typeParameters,
+                returnType,
+                params,
+                block
+        );
 
         cctx.addFunction(fn);
         registered = true;

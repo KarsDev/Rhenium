@@ -1,0 +1,44 @@
+package me.kuwg.re.ast.nodes.namespace;
+
+import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.nodes.blocks.BlockNode;
+import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.type.TypeRef;
+
+import java.util.Map;
+
+public class NamespaceDeclarationNode extends ASTNode {
+    private final String name;
+    private final BlockNode block;
+
+    public NamespaceDeclarationNode(final int line, final String name, final BlockNode block) {
+        super(line);
+        this.name = name;
+        this.block = block;
+    }
+
+    @Override
+    public ASTNode clone() {
+        return new NamespaceDeclarationNode(line, name, block.clone());
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+        block.replaceGenerics(generics, cctx);
+    }
+
+    @Override
+    public void compile(final CompilationContext cctx) {
+        cctx.pushNamespace(name);
+        block.compile(cctx);
+        cctx.popNamespace();
+    }
+
+    @Override
+    public void write(final StringBuilder sb, final String indent) {
+        sb.append(indent).append("Namespace Declaration:").append(NEWLINE)
+                .append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE)
+                .append(indent).append(TAB).append("Block:").append(NEWLINE);
+        block.write(sb, indent + TAB + TAB);
+    }
+}

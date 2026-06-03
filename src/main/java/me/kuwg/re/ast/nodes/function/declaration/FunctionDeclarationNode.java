@@ -26,7 +26,7 @@ import java.util.Map;
 
 public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlockContainer {
     private final boolean isGeneric;
-    private final String llvmName;
+    private String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
     private final BlockNode block;
@@ -38,12 +38,12 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         this.isGeneric = isGeneric;
         this.name = name;
 
-        if (name.startsWith("\"") && name.endsWith("\"")) {
-            String cleanName = name.startsWith("\"") ? name.substring(1, name.length() - 1) : name;
-            this.llvmName = "\"" + RFunction.makeUnique(cleanName) + "\"";
-        } else {
-            this.llvmName = RFunction.makeUnique(name);
-        }
+        //if (name.startsWith("\"") && name.endsWith("\"")) {
+        //    String cleanName = name.startsWith("\"") ? name.substring(1, name.length() - 1) : name;
+        //    this.llvmName = "\"" + RFunction.makeUnique(cleanName) + "\"";
+        //} else {
+        //    this.llvmName = RFunction.makeUnique(name);
+        //}
 
         this.parameters = parameters;
         this.returnType = returnType;
@@ -66,9 +66,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     @Override
     public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
-        parameters.replaceAll(param ->
-                new FunctionParameter(param.name(), param.mutable(), replaceGenericType(param.type(), generics, cctx))
-        );
+        parameters.replaceAll(param -> new FunctionParameter(param.name(), param.mutable(), replaceGenericType(param.type(), generics, cctx)));
         returnType = replaceGenericType(returnType, generics, cctx);
         block.replaceGenerics(generics, cctx);
     }
@@ -82,16 +80,18 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     public void compile(final CompilationContext cctx) {
         boolean main = isMain();
 
+        String qualifiedName = getQualifiedName(cctx);
+        String llvmName = registered ? this.llvmName : getEmissionLLVMName(cctx);
+
         List<TypeRef> types = new ArrayList<>(parameters.size());
         for (int i = 0; i < parameters.size(); i++) {
             var p = parameters.get(i);
             types.add(i, p.type());
         }
 
-        String funcName = main ? "main" : llvmName;
-
         StringBuilder func = new StringBuilder();
-        func.append("define ").append(returnType.getLLVMName()).append(" @").append(funcName).append("(");
+
+        func.append("define ").append(returnType.getLLVMName()).append(" @").append(llvmName).append("(");
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
@@ -155,13 +155,13 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         if (registered) return;
 
-        var oldFunc = cctx.getFunction(name, types);
+        var oldFunc = cctx.getExact(qualifiedName, types);
 
         if (oldFunc != null && !(isGeneric && oldFunc.parameters.stream().anyMatch(p -> p.type() instanceof GenericType))) {
             new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: " + name + types.toString().replace("[", "(").replace("]", ")"), line).raise();
         }
 
-        RFunction fnObj = new RDefFunction(llvmName, name, returnType, parameters);
+        RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
         cctx.addFunction(fnObj);
         registered = true;
     }
@@ -183,9 +183,32 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     public void register(final CompilationContext cctx) {
         if (registered) return;
-        RFunction fnObj = new RDefFunction(llvmName, name, returnType, parameters);
+
+        String qualifiedName = getQualifiedName(cctx);
+        llvmName = getEmissionLLVMName(cctx);
+
+        RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
         cctx.addFunction(fnObj);
         registered = true;
+    }
+
+    private String getQualifiedName(CompilationContext cctx) {
+        return isMain() ? "main" : cctx.qualify(name);
+    }
+
+    private String getLLVMName(CompilationContext cctx) {
+        String qualified = getQualifiedName(cctx);
+
+        if (qualified.startsWith("\"") && qualified.endsWith("\"")) {
+            String clean = qualified.substring(1, qualified.length() - 1);
+            return "\"" + RFunction.makeUnique(clean) + "\"";
+        }
+
+        return RFunction.makeUnique(qualified);
+    }
+
+    private String getEmissionLLVMName(CompilationContext cctx) {
+        return isMain() ? "main" : getLLVMName(cctx);
     }
 
     private boolean isMain() {

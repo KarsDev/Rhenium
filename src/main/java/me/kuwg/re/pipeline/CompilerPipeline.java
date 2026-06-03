@@ -40,8 +40,6 @@ public final class CompilerPipeline {
     private void dumpAST(AST ast) {
         File dmp = new File("ast.txt");
 
-        dmp.mkdirs();
-
         try (FileWriter w = new FileWriter(dmp)) {
             w.write(ast.toString());
         } catch (IOException e) {

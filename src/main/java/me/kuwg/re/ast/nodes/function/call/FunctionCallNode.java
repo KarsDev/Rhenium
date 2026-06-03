@@ -65,7 +65,9 @@ public class FunctionCallNode extends ValueNode {
             callTypes.add(param.getType());
         }
 
-        RFunction fn = cctx.getFunction(name, callTypes);
+        String qualifiedName = cctx.qualify(name);
+
+        RFunction fn = cctx.getFunction(qualifiedName, callTypes);
 
         if (fn instanceof RGenFunction genFn) {
             return compileGeneric(cctx, genFn, callTypes, getting);
@@ -103,7 +105,6 @@ public class FunctionCallNode extends ValueNode {
             concreteFnNode.replaceGenerics(bindings, cctx);
 
             concreteFnNode.compile(cctx);
-
             RFunction concreteFn = cctx.getFunction(mangledName, concreteParams.stream().map(FunctionParameter::type).toList());
 
             genFn.addInstantiation(bindings, concreteFn);
@@ -161,7 +162,7 @@ public class FunctionCallNode extends ValueNode {
             sb.append(result).append(" = ");
         }
 
-        sb.append("call ").append(fn.returnType().getLLVMName()).append(" @").append(fn.llvmName()).append("(");
+        sb.append("call ").append(fn.returnType().getLLVMName()).append(" @").append(fn.llvmName).append("(");
 
         for (int i = 0; i < argRegs.size(); i++) {
             sb.append(evalType(callTypes.get(i), cctx).getLLVMName()).append(" ").append(argRegs.get(i));
@@ -249,7 +250,6 @@ public class FunctionCallNode extends ValueNode {
         RVariable v = cctx.getVariable(name);
 
         if (v == null || !(v.type() instanceof final LambdaType lambda)) {
-            System.out.println(v);
             return throwNotFound(callTypes);
         }
 

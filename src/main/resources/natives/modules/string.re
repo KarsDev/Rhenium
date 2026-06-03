@@ -156,10 +156,6 @@ entry:
     ret i1 %neq
 """
 
-// Splits a string into an array of single-character strings
-func strSplit(s: str) -> StrDynArr:
-    return strSplit(s, "")
-
 // Returns a byte array of the string
 _Builtin func strGetBytes(s: str) -> arr -> byte = """
 entry:
@@ -427,6 +423,10 @@ func strSplit(s: str, split: str) -> StrDynArr:
     values[outIndex] = strSub(s, start)
 
     return init StrDynArr(values, count)
+
+// Splits a string into an array of single-character strings
+func strSplit(s: str) -> StrDynArr:
+    return strSplit(s, "")
 
 _Builtin func strToLower(s: str) -> str = """
 entry:

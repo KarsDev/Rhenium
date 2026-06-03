@@ -6,6 +6,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.error.errors.function.RFunctionAlreadyExistError;
+import me.kuwg.re.error.errors.function.RGlobalFunctionInNamespace;
 import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.iterable.range.RangeType;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNode {
-    private final String llvmName;
+    private final boolean keepName;
     private final String name;
     private final List<FunctionParameter> parameters;
     private TypeRef returnType;
@@ -23,7 +24,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
 
     public BuiltinFunctionDeclarationNode(final int line, final boolean keepName, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
         super(line);
-        this.llvmName = keepName ? name : RFunction.makeUnique(name);
+        this.keepName = keepName;
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;
@@ -49,7 +50,17 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
 
     @Override
     public void compile(final CompilationContext cctx) {
-        RFunction fnObj = new RDefFunction(llvmName, name, returnType, parameters);
+        String qualifiedName = cctx.qualify(name);
+        String llvmName;
+
+        if (keepName) {
+            llvmName = name;
+            if (!cctx.currentNamespace().isEmpty()) {
+                new RGlobalFunctionInNamespace(line).raise();
+            }
+        } else llvmName = getLLVMName(cctx);
+
+        RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
 
 
         StringBuilder func = new StringBuilder();
@@ -77,7 +88,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
             types.add(i, p.type());
         }
 
-        if (cctx.getFunction(name, types) != null) {
+        if (cctx.getFunction(qualifiedName, types) != null) {
             String paramsToString = types.toString().replace("[", "(").replace("]", ")");
             String error = "While compiling a builtin function, a function with the same name and parameters was found existing: " + name + paramsToString;
             new RFunctionAlreadyExistError(error, line).raise();
@@ -90,6 +101,18 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
     public BuiltinFunctionDeclarationNode clone() {
         return this;
     }
+
+    private String getLLVMName(CompilationContext cctx) {
+        String qualified = cctx.qualify(name);
+
+        if (qualified.startsWith("\"") && qualified.endsWith("\"")) {
+            String clean = qualified.substring(1, qualified.length() - 1);
+            return "\"" + RFunction.makeUnique(clean) + "\"";
+        }
+
+        return RFunction.makeUnique(qualified);
+    }
+
 
     public String getLlvmBody() {
         return llvmBody;
