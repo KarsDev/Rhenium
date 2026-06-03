@@ -27,6 +27,7 @@ public abstract class Constants {
                 "async",
                 "lambda",
                 "namespace",
+                "type",
         };
 
         public static final String[] BOOLEANS = {

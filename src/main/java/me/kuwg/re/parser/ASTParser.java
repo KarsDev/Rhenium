@@ -82,10 +82,7 @@ import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static me.kuwg.re.token.TokenType.*;
 
@@ -388,6 +385,7 @@ public class ASTParser {
             case "match" -> parseMatchKeyword();
             case "lambda" -> parseLambdaKeyword();
             case "namespace" -> parseNamespaceKeyword();
+            case "type" -> parseTypeKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -824,46 +822,14 @@ public class ASTParser {
         if (!matchAndConsume(DIVIDER, "("))
             return new RParserError("Expected '(' for sizeof expression", file, line()).raise();
 
-        int preType = tokenIndex;
+        Optional<TypeRef> type = parseOptionalType();
 
-        TypeRef type;
-
-        LABEL_TYPE:
-        {
-            String typeName = consume().value();
-
-            switch (typeName) {
-                case "ptr" -> {
-                    type = parsePointerType(line, false);
-                    break LABEL_TYPE;
-                }
-                case "arr" -> {
-                    type = parseArrayType(line, false);
-                    break LABEL_TYPE;
-                }
-                case "struct" -> {
-                    type = typeMap.get(typeName);
-                    if (!(type instanceof StructType || type instanceof GenStructType))
-                        return new RParserError("Expected struct type", file, line()).raise();
-                    break LABEL_TYPE;
-                }
-            }
-
-            if (typeMap.containsKey(typeName)) {
-                type = typeMap.get(typeName);
-                break LABEL_TYPE;
-            }
-
-            type = BuiltinTypes.getByName(typeName);
-        }
-
-        if (type != null) {
+        if (type.isPresent()) {
             if (!matchAndConsume(DIVIDER, ")"))
                 return new RParserError("Expected ')' for sizeof expression", file, line()).raise();
 
-            return new SizeofNode(line, type);
+            return new SizeofNode(line, type.get());
         }
-        tokenIndex = preType;
 
         ValueNode value = parseValue();
 
@@ -1196,9 +1162,16 @@ public class ASTParser {
                 List<TypeRef> genTypes = new ArrayList<>();
 
                 if (!match(OPERATOR, ">")) {
-                    do {
-                        genTypes.add(parseType(false));
-                    } while (matchAndConsume(DIVIDER, ","));
+                    Optional<TypeRef> type = parseOptionalType();
+                    if (type.isPresent()) {
+                        genTypes.add(type.get());
+                        while (matchAndConsume(DIVIDER, ",")) {
+                            genTypes.add(parseType(false));
+                        }
+                    } else {
+                        tokenIndex--;
+                        break;
+                    }
                 }
 
                 if (!matchAndConsume(OPERATOR, ">")) {
@@ -1670,9 +1643,72 @@ public class ASTParser {
         return new NamespaceDeclarationNode(line, name, block);
     }
 
+    private @SubFunc ASTNode parseTypeKeyword() {
+        int line = line();
+        String name = identifier();
+        if (!matchAndConsume(OPERATOR, "=")) {
+            return new RParserError("Expected '=' for type declaration", file, line).raise();
+        }
+        TypeRef type = parseType(false);
+
+        typeMap.put(name, type);
+
+        return parseStatement();
+    }
+
     /*
     general utils
      */
+
+    private @SubFunc Optional<TypeRef> parseOptionalType() {
+        int line = line();
+        int preType = tokenIndex;
+
+        TypeRef type;
+
+        LABEL_TYPE:
+        {
+            String typeName = consume().value();
+
+            switch (typeName) {
+                case "ptr" -> {
+                    type = parsePointerType(line, false);
+                    break LABEL_TYPE;
+                }
+                case "arr" -> {
+                    type = parseArrayType(line, false);
+                    break LABEL_TYPE;
+                }
+                case "struct" -> {
+                    type = typeMap.get(typeName);
+                    if (!(type instanceof StructType || type instanceof GenStructType))
+                        return new RParserError("Expected struct type", file, line()).raise();
+                    break LABEL_TYPE;
+                }
+                case "lambda" -> {
+                    type = parseLambdaType(line, false);
+                    break LABEL_TYPE;
+                }
+            }
+
+            if (typeMap.containsKey(typeName)) {
+                type = typeMap.get(typeName);
+                break LABEL_TYPE;
+            }
+
+            type = BuiltinTypes.getByName(typeName);
+        }
+
+        if (type != null) {
+            if (!matchAndConsume(DIVIDER, ")"))
+                return new RParserError("Expected ')' for sizeof expression", file, line()).raise();
+
+            return Optional.of(type);
+        }
+
+        tokenIndex = preType;
+        return Optional.empty();
+    }
 
     private @SubFunc TypeRef parseType0(final boolean generics) {
         if (!match(IDENTIFIER) && !match(KEYWORD)) {
