@@ -729,7 +729,7 @@ public class ASTParser {
 
         var type = new StructType(name, types);
 
-        typeMap.put(name, type);
+        addType(name, type);
         return new StructDeclarationNode(line, builtin, name, type, fields);
     }
 
@@ -1377,7 +1377,7 @@ public class ASTParser {
 
         GenStructType type = new GenStructType(typeParameters, name, fieldTypes);
 
-        typeMap.put(name, type);
+        addType(name, type);
 
         return new GenStructDeclarationNode(line, name, type, fields);
     }
@@ -1647,7 +1647,7 @@ public class ASTParser {
         }
         TypeRef type = parseType(false);
 
-        typeMap.put(name, type);
+        addType(name, type);
 
         return parseStatement();
     }
@@ -1816,7 +1816,7 @@ public class ASTParser {
             return new RParserError("Unknown type: " + typeName, file, line).raise();
         }
 
-        typeMap.put(typeName, type);
+        addType(typeName, type);
 
         return type;
     }
@@ -2169,7 +2169,12 @@ public class ASTParser {
 
         TypeRef type = generic ? new GenStructType(generics, name, fieldTypes) : new StructType(name, fieldTypes);
 
-        typeMap.put(name, type);
+        addType(name, type);
+    }
+    
+    private void addType(String name, TypeRef type) {
+        if (typeMap.putIfAbsent(name, type) == null) return;
+        new RParserError("Type already defined: " + type.getName() + " as " + name, file, line());
     }
 
     private void collectUsingTypes() {

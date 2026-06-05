@@ -513,6 +513,26 @@ type IntPtr = ptr -> int
 x: int = 5
 x_ptr: IntPtr = ptr(x)
 
+/*
+<=------------------------=>|<=>|<=-----------------------=>
+  TYPE
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+// declare enum colors
+enum Colors:
+  RED
+  BLUE
+  GREEN
+
+// get field RED, equals to 0 as RED is index 0 in Colors
+r = Colors.RED
+
+// if we assign a constant to enums, getting fields return constants
+enum Cars:
+  MUSTANG = "Mustang"
+  FORD = "Ford"
+  FERRARI = "Ferrari"
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
