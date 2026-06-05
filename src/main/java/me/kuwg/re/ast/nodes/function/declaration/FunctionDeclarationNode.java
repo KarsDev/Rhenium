@@ -29,23 +29,22 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     private String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
+    private final boolean inline;
     private final BlockNode block;
     private TypeRef returnType;
     private boolean registered = false;
 
     public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
+        this(line, isGeneric, name, parameters, false, returnType, block);
+    }
+
+    public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final boolean inline, final TypeRef returnType, final BlockNode block) {
         super(line);
         this.isGeneric = isGeneric;
         this.name = name;
 
-        //if (name.startsWith("\"") && name.endsWith("\"")) {
-        //    String cleanName = name.startsWith("\"") ? name.substring(1, name.length() - 1) : name;
-        //    this.llvmName = "\"" + RFunction.makeUnique(cleanName) + "\"";
-        //} else {
-        //    this.llvmName = RFunction.makeUnique(name);
-        //}
-
         this.parameters = parameters;
+        this.inline = inline;
         this.returnType = returnType;
         this.block = block.clone();
 
@@ -101,7 +100,12 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             if (i < parameters.size() - 1) func.append(", ");
         }
 
-        func.append(") {\n");
+        func.append(") ");
+        if (inline) {
+            cctx.declare("attributes #0 = { alwaysinline }");
+            func.append("#0 ");
+        }
+        func.append("{\n");
         func.append("entry:\n");
 
         cctx.pushIndent();
@@ -217,7 +221,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         return isMain() ? "main" : getLLVMName(cctx);
     }
 
-    private boolean isMain() {
+    public boolean isMain() {
         if (!name.equals("main")) return false;
         if (parameters.isEmpty()) return true;
         if (parameters.size() != 1) return false;

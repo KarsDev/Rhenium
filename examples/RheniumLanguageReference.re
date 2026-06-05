@@ -217,6 +217,14 @@ r = add(1, 2)
 log("hello")
 
 /*
+Inline functions
+*/
+
+// inlines the functions after compilation
+func write(l: str) inline:
+  println(l)
+
+/*
 <=------------------------=>|<=>|<=-----------------------=>
   CONTROL FLOW
 <=------------------------=>|<=>|<=-----------------------=>

@@ -595,6 +595,8 @@ public class ASTParser {
 
         var params = parseParamsDeclare(false);
 
+        boolean inline = matchAndConsume(KEYWORD, "inline");
+
         TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : NoneBuiltinType.INSTANCE;
 
         if (!matchAndConsume(OPERATOR, ":")) {
@@ -603,7 +605,13 @@ public class ASTParser {
 
         BlockNode block = parseBlock();
 
-        return new FunctionDeclarationNode(line, false, name, params, returnType, block);
+        FunctionDeclarationNode fdn = new FunctionDeclarationNode(line, false, name, params, inline, returnType, block);
+
+        if (fdn.isMain() && inline) {
+            return new RParserError("Cannot inline main function", file, line).raise();
+        }
+
+        return fdn;
     }
 
     private @SubFunc ASTNode parseForKeyword() {
