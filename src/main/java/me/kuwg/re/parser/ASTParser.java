@@ -11,6 +11,7 @@ import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.ReturnNode;
 import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.constants.*;
+import me.kuwg.re.ast.nodes.enumeration.EnumDeclarationNode;
 import me.kuwg.re.ast.nodes.expression.BinaryExpressionNode;
 import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
 import me.kuwg.re.ast.nodes.extern.NativeCPPNode;
@@ -386,6 +387,7 @@ public class ASTParser {
             case "lambda" -> parseLambdaKeyword();
             case "namespace" -> parseNamespaceKeyword();
             case "type" -> parseTypeKeyword();
+            case "enum" -> parseEnumKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -903,8 +905,7 @@ public class ASTParser {
             return new RParserError("Expected ':' for impl declaration", file, line).raise();
         }
 
-        if (tmp instanceof GenStructType gen)
-            return parseGenericImpl(line, gen);
+        if (tmp instanceof GenStructType gen) return parseGenericImpl(line, gen);
 
         if (!(tmp instanceof StructType struct))
             return new RParserError("Struct not found: '" + name + "' for impl declaration", file, line).raise();
@@ -1122,8 +1123,7 @@ public class ASTParser {
             }
 
             if (matchAndConsume(OPERATOR, "::")) {
-                if (self)
-                    return new RParserError("Self for namespace is not allowed", file, line).raise();
+                if (self) return new RParserError("Self for namespace is not allowed", file, line).raise();
 
                 String fieldName = identifier();
 
@@ -1464,11 +1464,7 @@ public class ASTParser {
         }
 
         if (implGenerics.size() != type.genericTypes().size()) {
-            return new RParserError(
-                    "Expected " + type.genericTypes().size() + " generic parameters but got " + implGenerics.size(),
-                    file,
-                    line
-            ).raise();
+            return new RParserError("Expected " + type.genericTypes().size() + " generic parameters but got " + implGenerics.size(), file, line).raise();
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
@@ -1656,6 +1652,74 @@ public class ASTParser {
         return parseStatement();
     }
 
+    private @SubFunc EnumDeclarationNode parseEnumKeyword() {
+        int line = line();
+        String name = identifier();
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for enum declaration", file, line).raise();
+        }
+
+        if (!match(NEWLINE)) {
+            return new RParserError("Expected newline after enum declaration", file, line).raise();
+        }
+        consume();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indented enum body", file, line).raise();
+        }
+        consume();
+
+        Map<String, ConstantNode> fields = new LinkedHashMap<>();
+        Boolean withValues = null;
+
+        int idx = 0;
+
+        while (!match(EOF) && !match(DEDENT)) {
+            removeNewlines();
+
+            if (match(EOF) || match(DEDENT)) {
+                break;
+            }
+
+            int fieldLine = line();
+            String fieldName = identifier();
+
+            ConstantNode value = null;
+
+            if (matchAndConsume(OPERATOR, "=")) {
+                ValueNode parsed = parseValue();
+
+                if (!(parsed instanceof ConstantNode cnst)) {
+                    return new RParserError("Enum values must be constants", file, fieldLine).raise();
+                }
+
+                value = cnst;
+            }
+
+            if (withValues == null) {
+                withValues = value != null;
+            } else if (withValues == (value == null)) {
+                return new RParserError("Either all enum fields must have values, or none of them may have values", file, fieldLine).raise();
+            }
+
+            if (value == null) {
+                value = new NumberNode(line, String.valueOf(idx));
+                idx++;
+            }
+
+            fields.put(fieldName, value);
+        }
+
+        if (match(DEDENT)) {
+            consume();
+        } else if (!match(EOF)) {
+            return new RParserError("Expected dedent to close enum declaration", file, line).raise();
+        }
+
+        return new EnumDeclarationNode(line, name, fields);
+    }
+
     /*
     general utils
      */
@@ -1780,11 +1844,7 @@ public class ASTParser {
             }
 
             if (gen.genericTypes().size() != genericTypes.size()) {
-                return new RParserError(
-                        "Expected " + gen.genericTypes().size() + " generic arguments but got " + genericTypes.size(),
-                        file,
-                        line()
-                ).raise();
+                return new RParserError("Expected " + gen.genericTypes().size() + " generic arguments but got " + genericTypes.size(), file, line()).raise();
             }
 
             return new AppliedGenStructType(gen, genericTypes);
@@ -2107,9 +2167,7 @@ public class ASTParser {
 
         if (match(DEDENT)) consume();
 
-        TypeRef type = generic
-                ? new GenStructType(generics, name, fieldTypes)
-                : new StructType(name, fieldTypes);
+        TypeRef type = generic ? new GenStructType(generics, name, fieldTypes) : new StructType(name, fieldTypes);
 
         typeMap.put(name, type);
     }
@@ -2134,8 +2192,6 @@ public class ASTParser {
             pkg = null;
         }
 
-        ModuleLoadingHelper
-                .collectModuleTypes(line, file, name.toString(), pkg)
-                .forEach(typeMap::putIfAbsent);
+        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg).forEach(typeMap::putIfAbsent);
     }
 }

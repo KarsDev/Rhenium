@@ -45,7 +45,7 @@ public class RDefaultStruct {
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (RGenStruct) obj;
+        var that = (RDefaultStruct) obj;
         return Objects.equals(this.type, that.type) && Objects.equals(this.fields, that.fields) && Objects.equals(this.functions, that.functions);
     }
 }

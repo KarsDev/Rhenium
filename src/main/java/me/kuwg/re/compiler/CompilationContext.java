@@ -2,6 +2,7 @@ package me.kuwg.re.compiler;
 
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.enums.REnum;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
@@ -29,8 +30,7 @@ import java.util.function.Function;
 import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
-public @SuppressWarnings("unused")
-final class CompilationContext {
+public final class CompilationContext {
     private static final String ERROR_LINE = "fds";
 
     private final Map<String, TypeRef> typeMap;
@@ -50,6 +50,7 @@ final class CompilationContext {
     private final Set<String> declaredStructs = new LinkedHashSet<>();
     private final Set<String> declaredGlobals = new HashSet<>();
     private final Deque<String> namespaceStack = new ArrayDeque<>();
+    private final Map<String, REnum> enums = new HashMap<>();
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -91,10 +92,6 @@ final class CompilationContext {
 
     public void popIndent() {
         if (indentLevel > 0) indentLevel--;
-    }
-
-    public int getIndentLevel() {
-        return indentLevel;
     }
 
     public boolean emptyScope() {
@@ -157,14 +154,6 @@ final class CompilationContext {
 
     public RFunction getExact(String name, List<TypeRef> parameters) {
         return functions.getExact(name, parameters);
-    }
-
-    public List<RFunction> getFunctions(String name) {
-        return functions.get(name);
-    }
-
-    public void writeAllFunctions() {
-        functions.writeAll();
     }
 
     public void addStruct(boolean builtin, String name, TypeRef type, List<RStructField> fields) {
@@ -260,19 +249,6 @@ final class CompilationContext {
         return reg;
     }
 
-    public String ensurePointer(ValueNode node, String reg) {
-        if (!(node.getType() instanceof StructType)) return reg;
-
-        if (node instanceof VariableReference vr) {
-            var var = vr.getVariable(this);
-            if (var != null && var.addrReg() != null && reg.equals(var.valueReg())) {
-                return var.addrReg();
-            }
-        }
-
-        return reg;
-    }
-
     public void pushNamespace(String ns) {
         namespaceStack.push(ns);
     }
@@ -296,26 +272,6 @@ final class CompilationContext {
     public String qualify(String name) {
         String ns = currentNamespace();
         return ns.isEmpty() ? name : ns + "$$" + name;
-    }
-
-    public RFunction resolveFunction(String name, List<TypeRef> parameters) {
-        if (name.contains("$$")) {
-            return getFunction(name, parameters);
-        }
-
-        String ns = currentNamespace();
-
-        while (true) {
-            String candidate = ns.isEmpty() ? name : ns + "$$" + name;
-            RFunction fn = getFunction(candidate, parameters);
-            if (fn != null) return fn;
-
-            int idx = ns.lastIndexOf("::");
-            if (idx < 0) break;
-            ns = ns.substring(0, idx);
-        }
-
-        return getFunction(name, parameters);
     }
 
     public String compileAndGet(File output, List<String> clangArgs) throws IOException {
@@ -393,8 +349,16 @@ final class CompilationContext {
                 });
     }
 
-    public Map<String, RVariable> getVariables() {
-        return variables;
+    public void addEnum(String name, REnum rEnum) {
+        enums.put(name, rEnum);
+    }
+
+    public REnum getEnum(String name) {
+        return enums.get(name);
+    }
+
+    public boolean isEnumDeclared(String name) {
+        return enums.containsKey(name);
     }
 
     private String getCompilationCommand(String name, List<String> clangArgs) {

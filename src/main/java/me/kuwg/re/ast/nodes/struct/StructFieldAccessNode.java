@@ -2,8 +2,11 @@ package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.enums.REnum;
+import me.kuwg.re.compiler.enums.REnumField;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.error.errors.enums.REnumFieldNotFoundError;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
@@ -33,7 +36,7 @@ public class StructFieldAccessNode extends VariableReference {
     public String compileAndGet(final CompilationContext cctx) {
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
-            return new RVariableNotFoundError(struct.getCompleteName(), line).raise();
+            return attemptEnumAccess(cctx);
         }
 
         TypeRef structType = cctx.resolveConcrete(structVar.type());
@@ -77,6 +80,21 @@ public class StructFieldAccessNode extends VariableReference {
         cctx.emit(loadReg + " = load " + fieldType.getLLVMName() + ", " + toPtr(fieldType.getLLVMName()) + fieldPtr);
 
         return loadReg;
+    }
+
+    private String attemptEnumAccess(final CompilationContext cctx) {
+        String enumName = struct.getCompleteName();
+        if (enumName.contains(".")) return new RVariableNotFoundError(struct.getSimpleName(), line).raise();
+
+        REnum members = cctx.getEnum(enumName);
+        if (members == null) return new RVariableNotFoundError(enumName, null, line).raise();
+
+        REnumField field = members.getField(fieldName);
+
+        if (field == null) return new REnumFieldNotFoundError(fieldName, line).raise();
+
+        setType(field.type());
+        return field.valueReg();
     }
 
     @Override

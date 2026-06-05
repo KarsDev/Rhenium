@@ -42,4 +42,7 @@ public final class ErrorCodes {
     public static final int STRUCT_GENERICS_INIT_ERROR = 38;
     public static final int RANGE_TYPE_ERROR = 39;
     public static final int GLOBAL_FUNCTION_IN_NAMESPACE_ERROR = 40;
+    public static final int ENUM_ALREADY_DECLARED_ERROR = 41;
+    public static final int ENUM_FIELD_TYPES_ERROR = 42;
+    public static final int EMUM_FIELD_NOT_FOUND = 43;
 }

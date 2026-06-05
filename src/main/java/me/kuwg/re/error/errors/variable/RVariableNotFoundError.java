@@ -8,6 +8,10 @@ public class RVariableNotFoundError extends RError {
         super("Variable not found: " + name, line);
     }
 
+    public RVariableNotFoundError(final String name, Void ignore, final int line) {
+        super("Variable or enum not found: " + name, line);
+    }
+
     @Override
     protected int getCode() {
         return ErrorCodes.VARIABLE_NOT_FOUND_ERROR;

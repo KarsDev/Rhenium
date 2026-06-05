@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.nodes.enumeration.EnumDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.module.UsingNode;
@@ -49,6 +50,9 @@ public class ASTBlockNode extends ASTNode {
                 iterator.remove();
             } else if (node instanceof UsingNode un) {
                 un.compile(cctx);
+                iterator.remove();
+            } else if (node instanceof EnumDeclarationNode edn) {
+                edn.compile(cctx);
                 iterator.remove();
             }
         }
