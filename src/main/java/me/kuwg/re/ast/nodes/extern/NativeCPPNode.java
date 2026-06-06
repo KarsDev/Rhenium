@@ -8,16 +8,19 @@ import me.kuwg.re.error.errors.natv.RNativeCPPError;
 import me.kuwg.re.resource.ResourceLoader;
 import me.kuwg.re.type.TypeRef;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 public class NativeCPPNode extends ASTNode implements GlobalNode {
+    private final boolean isNative;
     private final String name;
     private final List<RFunction> functions;
 
-    public NativeCPPNode(final int line, final String name, final List<RFunction> functions) {
+    public NativeCPPNode(final int line, final boolean isNative, final String name, final List<RFunction> functions) {
         super(line);
+        this.isNative = isNative;
         this.name = name;
         this.functions = functions;
     }
@@ -52,7 +55,16 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
             cctx.declare(decl.toString());
         }
 
-        Path path = ResourceLoader.getResourcePath("/natives/cpp/" + name + ".cpp");
+        Path path;
+        if (isNative)
+            path = ResourceLoader.getResourcePath("/natives/cpp/" + name + ".cpp");
+        else {
+            File f = new File(name);
+            if (!f.exists()) {
+                new RNativeCPPError("Native C++ module not found: " + name, line).raise();
+            }
+            path = f.toPath();
+        }
         if (path == null) {
             new RNativeCPPError("Native C++ module not found: " + name, line).raise();
         }

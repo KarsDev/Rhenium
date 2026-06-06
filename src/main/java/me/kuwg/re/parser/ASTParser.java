@@ -388,6 +388,7 @@ public final class ASTParser {
             case "namespace" -> parseNamespaceKeyword();
             case "type" -> parseTypeKeyword();
             case "enum" -> parseEnumKeyword();
+            case "extern" -> parseExternKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -1002,33 +1003,7 @@ public final class ASTParser {
     }
 
     private @SubFunc ASTNode parse_NativeCPPKeyword() {
-        int line = line();
-
-        if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for Native CPP declaration", file, line).raise();
-
-        if (!match(STRING))
-            return new RParserError("Expected a string for file name in Native CPP declaration", file, line).raise();
-
-        String name = consume().value();
-
-        if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for Native CPP declaration", file, line).raise();
-
-        if (matchAndConsume(KEYWORD, "_Builtin")) {
-            return new NativeCPPNode(line, name, List.of());
-        }
-
-        List<RFunction> functions = new ArrayList<>();
-        do {
-            TypeRef type = parseType(false);
-            String funcName = identifier();
-            var params = parseParamsDeclare(false);
-
-            functions.add(new RDefFunction(funcName, funcName, type, params));
-        } while (matchAndConsume(OPERATOR, "and"));
-
-        return new NativeCPPNode(line, name, functions);
+        return parseExtern(true);
     }
 
     private ASTNode parseNullKeyword() {
@@ -1726,6 +1701,41 @@ public final class ASTParser {
         }
 
         return new EnumDeclarationNode(line, name, fields);
+    }
+
+    private @SubFunc NativeCPPNode parseExternKeyword() {
+        return parseExtern(false);
+    }
+
+    private @SubFunc NativeCPPNode parseExtern(boolean isNative) {
+        int line = line();
+        String ncn = isNative ? "Native CPP" : "extern";
+
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for " + ncn + " declaration", file, line).raise();
+
+        if (!match(STRING))
+            return new RParserError("Expected a string for file name in " + ncn + " declaration", file, line).raise();
+
+        String name = consume().value();
+
+        if (!matchAndConsume(DIVIDER, ")"))
+            return new RParserError("Expected ')' for " + ncn + " declaration", file, line).raise();
+
+        if (matchAndConsume(KEYWORD, "_Builtin")) {
+            return new NativeCPPNode(line, isNative, name, List.of());
+        }
+
+        List<RFunction> functions = new ArrayList<>();
+        do {
+            TypeRef type = parseType(false);
+            String funcName = identifier();
+            var params = parseParamsDeclare(false);
+
+            functions.add(new RDefFunction(funcName, funcName, type, params));
+        } while (matchAndConsume(OPERATOR, "and"));
+
+        return new NativeCPPNode(line, isNative, name, functions);
     }
 
     /*

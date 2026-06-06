@@ -66,9 +66,14 @@ Native C++ bindings
 _NativeCPP("native.cpp") _Builtin
 
 /*
- Loads the functions and the C++ file
+ Loads the functions and the resource C++ file
 */
 _NativeCPP("math.cpp") int add(a: int, b: int) and int sub(a: int, b: int)
+
+// If the C++ file is not in the resources it can be loaded with the extern keyword
+extern("math.cpp") _Builtin
+// or
+extern("math.cpp") int add(a: int, b: int)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
