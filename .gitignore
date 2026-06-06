@@ -38,7 +38,4 @@ build/
 .DS_Store
 
 ### Local Files ###
-files/run.cmd
-files/output.ll
-files/output.exe
-files/input.re
+files
