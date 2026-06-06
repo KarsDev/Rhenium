@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModuleLoadingHelper {
+public final class ModuleLoadingHelper {
     private ModuleLoadingHelper() {
         throw new RInternalError();
     }

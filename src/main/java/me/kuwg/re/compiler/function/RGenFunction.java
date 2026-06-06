@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RGenFunction extends RFunction {
+public final class RGenFunction extends RFunction {
     private final List<String> typeParameters;
     private final BlockNode block;
 

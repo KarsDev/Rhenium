@@ -10,7 +10,7 @@ import me.kuwg.re.type.builtin.DoubleBuiltinType;
 import me.kuwg.re.type.builtin.FloatBuiltinType;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 
-public class GreaterThanBO extends BinaryOperator {
+public final class GreaterThanBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new GreaterThanBO();
 
     GreaterThanBO() {

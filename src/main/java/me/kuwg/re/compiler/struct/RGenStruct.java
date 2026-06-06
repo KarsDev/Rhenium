@@ -21,7 +21,7 @@ import java.util.Map;
 
 import static me.kuwg.re.ast.ASTNode.replaceGenericType;
 
-public class RGenStruct extends RDefaultStruct {
+public final class RGenStruct extends RDefaultStruct {
     private final Map<List<TypeRef>, RStruct> cache = new HashMap<>();
     private final List<ImplTemplate> impls = new ArrayList<>();
 

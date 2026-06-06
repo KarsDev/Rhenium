@@ -10,7 +10,7 @@ import me.kuwg.re.type.builtin.DoubleBuiltinType;
 import me.kuwg.re.type.builtin.FloatBuiltinType;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 
-public class LessOrEqualBO extends BinaryOperator {
+public final class LessOrEqualBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new LessOrEqualBO();
 
     LessOrEqualBO() {

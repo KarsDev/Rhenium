@@ -11,7 +11,7 @@ import me.kuwg.re.type.struct.StructType;
 
 import java.util.Objects;
 
-public class NotEqualsBO extends BinaryOperator {
+public final class NotEqualsBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new NotEqualsBO();
 
     NotEqualsBO() {

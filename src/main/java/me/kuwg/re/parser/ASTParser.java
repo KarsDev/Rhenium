@@ -87,7 +87,7 @@ import java.util.*;
 
 import static me.kuwg.re.token.TokenType.*;
 
-public class ASTParser {
+public final class ASTParser {
     public final Map<String, TypeRef> typeMap;
     private final String file;
     private final Token[] tokens;
