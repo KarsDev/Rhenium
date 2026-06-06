@@ -2,7 +2,7 @@ package me.kuwg.re.type.builtin;
 
 import me.kuwg.re.type.TypeRef;
 
-public class StrBuiltinType extends BuiltinType {
+public final class StrBuiltinType extends BuiltinType {
     static final BuiltinType INSTANCE = new StrBuiltinType();
 
     private StrBuiltinType() {

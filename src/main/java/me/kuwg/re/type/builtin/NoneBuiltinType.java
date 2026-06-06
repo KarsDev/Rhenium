@@ -2,7 +2,7 @@ package me.kuwg.re.type.builtin;
 
 import me.kuwg.re.type.TypeRef;
 
-public class NoneBuiltinType extends BuiltinType {
+public final class NoneBuiltinType extends BuiltinType {
     public static final NoneBuiltinType INSTANCE = new NoneBuiltinType();
 
     private NoneBuiltinType() {
