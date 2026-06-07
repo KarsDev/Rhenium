@@ -7,6 +7,7 @@ import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.module.UsingNode;
 import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
+import me.kuwg.re.ast.nodes.trait.TraitDeclarationNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
@@ -53,6 +54,9 @@ public class ASTBlockNode extends ASTNode {
                 iterator.remove();
             } else if (node instanceof EnumDeclarationNode edn) {
                 edn.compile(cctx);
+                iterator.remove();
+            } else if (node instanceof TraitDeclarationNode tdn) {
+                tdn.compile(cctx);
                 iterator.remove();
             }
         }

@@ -73,11 +73,13 @@ public class FunctionCallNode extends FunCall {
         Map<String, TypeRef> bindings = inferGenericTypes(genFn, callTypes);
         replaceGenerics(bindings, cctx);
 
-        for (String tp : genFn.typeParameters()) {
-            if (!bindings.containsKey(tp)) {
+        for (var tp : genFn.typeParameters()) {
+            if (!bindings.containsKey(tp.name())) {
                 new RFunctionGenericsError("Could not infer type parameter " + tp + ". Please declare type parameters using fn<[T]...>([args]...)", line).raise();
             }
         }
+
+        validateGenericConstraints(cctx, genFn, bindings);
 
         List<FunctionParameter> concreteParams = new ArrayList<>();
         for (var p : genFn.parameters()) {

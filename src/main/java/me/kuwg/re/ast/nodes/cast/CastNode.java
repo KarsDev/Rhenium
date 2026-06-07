@@ -29,7 +29,7 @@ public class CastNode extends ValueNode {
             new RNotPrimitiveCastError(type, line);
         }
 
-        return CastManager.executeCast(line, value, evalType(type, cctx), cctx);
+        return CastManager.executeCast(line, value, evalType(type, cctx, line), cctx);
     }
 
     @Override

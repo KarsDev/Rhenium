@@ -4,17 +4,22 @@ import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.struct.RDefaultStruct;
+import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.range.RRangeTypeError;
+import me.kuwg.re.error.errors.trait.RInheritanceError;
 import me.kuwg.re.error.errors.variable.RVariableIsNotMutableError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableReassignmentTypeError;
+import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.struct.StructType;
+import me.kuwg.re.type.trait.TraitType;
 
 import java.util.Map;
 
@@ -52,7 +57,9 @@ public class VariableDeclarationNode extends ValueNode {
 
         TypeRef targetType = type != null ? type : (oldVar != null ? oldVar.type() : valueType);
 
-        if (!targetType.equals(valueType)) {
+        if (targetType instanceof TraitType t) {
+            checkTraitType(valueType, t, cctx);
+        } else if (!targetType.equals(valueType)) {
             ValueNode castNode = new CastNode(line, targetType, value);
             valueReg = castNode.compileAndGet(cctx);
             valueType = targetType;
@@ -94,7 +101,7 @@ public class VariableDeclarationNode extends ValueNode {
     }
 
     private String compileDeclaration(final CompilationContext cctx, String valueReg, TypeRef valueType) {
-        TypeRef varType = evalType(type == null ? valueType : type, cctx);
+        TypeRef varType = evalType(type == null || type instanceof TraitType ? valueType : type, cctx, line);
 
         if (valueType instanceof ArrayType arrType) {
             varType = new ArrayType(arrType.size(), arrType.inner());
@@ -144,6 +151,25 @@ public class VariableDeclarationNode extends ValueNode {
         cctx.addVariable(v);
 
         return valueReg;
+    }
+
+    private void checkTraitType(TypeRef type, TraitType traitType, CompilationContext cctx) {
+        Trait t = cctx.getTrait(traitType.getName());
+        if (t == null) {
+            new RInheritanceError("Trait not found: " + traitType.name(), line).raise();
+            return;
+        }
+
+        if (!(type instanceof StructType s)) {
+            new RVariableTypeError(type.getName(), traitType.getName(), line).raise();
+            return;
+        }
+
+        RDefaultStruct struct = cctx.getStruct(s.getName());
+        if (!struct.inherited().contains(t.name()))
+            new RVariableTypeError(type.getName(), traitType.getName(), line).raise();
+
+
     }
 
     @Override

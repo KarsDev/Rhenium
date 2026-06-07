@@ -80,8 +80,10 @@ public class GenericFunctionCallNode extends FunCall {
 
         Map<String, TypeRef> bindings = new LinkedHashMap<>();
         for (int i = 0; i < genFn.typeParameters().size(); i++) {
-            bindings.put(genFn.typeParameters().get(i), genericTypes.get(i));
+            bindings.put(genFn.typeParameters().get(i).name(), genericTypes.get(i));
         }
+
+        validateGenericConstraints(cctx, genFn, bindings);
 
         List<FunctionParameter> concreteParams = new ArrayList<>();
         for (var p : genFn.parameters()) {

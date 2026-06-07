@@ -7,6 +7,7 @@ import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RStruct;
+import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.RInternalError;
@@ -51,6 +52,7 @@ public final class CompilationContext {
     private final Set<String> declaredGlobals = new HashSet<>();
     private final Deque<String> namespaceStack = new ArrayDeque<>();
     private final Map<String, REnum> enums = new HashMap<>();
+    private final Map<String, Trait> traits = new HashMap<>();
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -156,11 +158,11 @@ public final class CompilationContext {
         return functions.getExact(name, parameters);
     }
 
-    public void addStruct(boolean builtin, String name, TypeRef type, List<RStructField> fields) {
+    public void addStruct(boolean builtin, String name, final List<String> inherited, TypeRef type, List<RStructField> fields) {
         if (type instanceof GenStructType) {
-            structs.put(name, new RGenStruct(type, fields));
+            structs.put(name, new RGenStruct(inherited, type, fields));
         } else {
-            structs.put(name, new RStruct(builtin, type, fields));
+            structs.put(name, new RStruct(builtin, inherited, type, fields));
         }
     }
 
@@ -359,6 +361,18 @@ public final class CompilationContext {
 
     public boolean isEnumDeclared(String name) {
         return enums.containsKey(name);
+    }
+
+    public void addTrait(String name, Trait trait) {
+        traits.put(name, trait);
+    }
+
+    public Trait getTrait(String name) {
+        return traits.get(name);
+    }
+
+    public boolean isTraitDeclared(String name) {
+        return traits.containsKey(name);
     }
 
     private String getCompilationCommand(String name, List<String> clangArgs) {

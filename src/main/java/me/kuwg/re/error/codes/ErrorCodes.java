@@ -45,4 +45,7 @@ public final class ErrorCodes {
     public static final int ENUM_ALREADY_DECLARED_ERROR = 41;
     public static final int ENUM_FIELD_TYPES_ERROR = 42;
     public static final int EMUM_FIELD_NOT_FOUND = 43;
+    public static final int TRAIT_ALREADY_DECLARED_ERROR = 44;
+    public static final int INHERITANCE_ERROR = 45;
+    public static final int STRUCT_GEN_FIELD_ERROR = 46;
 }

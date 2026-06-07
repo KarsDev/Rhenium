@@ -5,10 +5,12 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.StructCompiler;
+import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.error.errors.struct.RGenStructInitError;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
+import me.kuwg.re.error.errors.trait.RInheritanceError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 
@@ -47,6 +49,8 @@ public class StructInitNode extends ValueNode {
             return new RGenStructInitError("Add generic types for generic struct initialization", line).raise();
         }
 
+        checkInheritance(struct, cctx);
+
         return StructCompiler.compile(line, cctx, struct, values, this);
     }
 
@@ -68,5 +72,45 @@ public class StructInitNode extends ValueNode {
         List<RParamValue> valuesCloned = new ArrayList<>();
         IntStream.range(0, values.size()).forEach(i -> valuesCloned.add(i, values.get(i).clone()));
         return new StructInitNode(line, name, valuesCloned);
+    }
+
+    private void checkInheritance(RDefaultStruct struct, CompilationContext cctx) {
+        struct.inherited().forEach(i -> {
+            Trait trait = cctx.getTrait(i);
+            if (trait == null) {
+                new RInheritanceError("Trait not found: " + i, line).raise();
+                return;
+            }
+            checkInherited(trait, struct);
+        });
+    }
+
+    private void checkInherited(final Trait trait, final RDefaultStruct struct) {
+        trait.functions().forEach((name, traitFunc) -> {
+
+            boolean found = struct.functions().stream().anyMatch(f -> {
+                String[] vmSplit = name.split("\\.");
+
+                if (!vmSplit[vmSplit.length - 1].equals(name)) {
+                    return false;
+                }
+
+                if (f.parameters.size() - 1 != traitFunc.params().size()) {
+                    return false;
+                }
+
+                for (int i = 0; i < f.parameters.size() - 1; i++) {
+                    if (!f.parameters.get(i).type().isCompatibleWith(traitFunc.params().get(i).type())) {
+                        return false;
+                    }
+                }
+
+                return f.returnType.isCompatibleWith(traitFunc.getReturnType());
+            });
+
+            if (!found) {
+                new RInheritanceError("Struct '" + this.name + "' does not implement trait function '" + name + "' from trait '" + trait.name() + "'", line).raise();
+            }
+        });
     }
 }

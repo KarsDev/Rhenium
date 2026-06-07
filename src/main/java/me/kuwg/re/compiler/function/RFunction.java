@@ -50,7 +50,7 @@ public abstract class RFunction {
         return "RFunction(" +
                 "llvmName='" + llvmName + '\'' +
                 ", name='" + name + '\'' +
-                ", returnType=" + returnType +
+                ", getReturnType=" + returnType +
                 ", parameters=" + parameters +
                 ')';
     }

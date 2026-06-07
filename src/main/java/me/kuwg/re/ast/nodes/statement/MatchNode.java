@@ -33,7 +33,7 @@ public class MatchNode extends ASTNode {
     @Override
     public void compile(final CompilationContext cctx) {
         final String exprReg = expr.compileAndGet(cctx);
-        final String llvmType = evalType(expr.getType(), cctx).getLLVMName();
+        final String llvmType = evalType(expr.getType(), cctx, line).getLLVMName();
 
         final String endLabel = cctx.nextLabel("match_end");
 
@@ -64,7 +64,7 @@ public class MatchNode extends ASTNode {
         for (int i = 0; i < nonDefaultCases.size(); i++) {
             final MatchCase mc = nonDefaultCases.get(i);
             ConstantNode v = mc.value;
-            TypeRef t = evalType(expr.getType(), cctx);
+            TypeRef t = evalType(expr.getType(), cctx, line);
 
             if (!v.getType().equals(t)) {
                 new RVariableTypeError(v.getType().getName(), t.getName(), line).raise();

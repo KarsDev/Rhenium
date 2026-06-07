@@ -60,10 +60,10 @@ public class GenStructInitNode extends ValueNode {
 
         Map<String, TypeRef> bindings = new HashMap<>();
 
-        List<String> declared = genStruct.type().genericTypes();
+        var declared = genStruct.type().genericTypes();
 
         for (int i = 0; i < declared.size(); i++) {
-            bindings.put(declared.get(i), genericTypes.get(i));
+            bindings.put(declared.get(i).name(), genericTypes.get(i));
         }
 
         replaceGenerics(bindings, cctx);

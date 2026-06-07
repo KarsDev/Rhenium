@@ -5,6 +5,8 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.function.RGenFunction;
+import me.kuwg.re.compiler.generic.TypeParameter;
+import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.error.errors.function.RFunctionGenericsError;
 import me.kuwg.re.error.errors.function.RFunctionIsVoidError;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
@@ -27,13 +29,14 @@ public abstract class FunCall extends ValueNode {
     }
 
     void validateGenericUsage(RGenFunction fn) {
-        Set<String> allowed = new HashSet<>(fn.typeParameters());
+        Set<TypeParameter> allowed = new HashSet<>(fn.typeParameters());
         for (var p : fn.parameters()) {
-            if (p.type() instanceof GenericType g && !allowed.contains(g.name())) {
+            if (p.type() instanceof GenericType g && allowed.stream().noneMatch(a -> a.name().equals(g.name()))) {
                 new RFunctionGenericsError("Unknown type parameter: " + g.name(), line).raise();
             }
+
         }
-        if (fn.returnType() instanceof GenericType g && !allowed.contains(g.name())) {
+        if (fn.returnType() instanceof GenericType g && allowed.stream().noneMatch(a -> a.name().equals(g.name()))) {
             new RFunctionGenericsError("Unknown type parameter: " + g.name(), line).raise();
         }
     }
@@ -100,7 +103,7 @@ public abstract class FunCall extends ValueNode {
         sb.append("call ").append(fn.returnType().getLLVMName()).append(" @").append(fn.llvmName).append("(");
 
         for (int i = 0; i < argRegs.size(); i++) {
-            sb.append(evalType(callTypes.get(i), cctx).getLLVMName()).append(" ").append(argRegs.get(i));
+            sb.append(evalType(callTypes.get(i), cctx, line).getLLVMName()).append(" ").append(argRegs.get(i));
             if (i < argRegs.size() - 1) sb.append(", ");
         }
 
@@ -129,5 +132,54 @@ public abstract class FunCall extends ValueNode {
         }
         sb.append(")");
         new RFunctionIsVoidError(fn.name(), sb.toString(), line).raise();
+    }
+
+    void validateGenericConstraints(CompilationContext cctx, RGenFunction fn, Map<String, TypeRef> bindings) {
+        for (var tp : fn.typeParameters()) {
+            if (tp.inherited() == null) {
+                continue;
+            }
+
+            TypeRef actual = bindings.get(tp.name());
+
+            if (actual == null) {
+                continue;
+            }
+
+            if (!satisfiesConstraint(cctx, actual.getName(), tp.inherited())) {
+                new RFunctionGenericsError("Type '" + actual.getName() + "' does not satisfy constraint '" + tp.inherited() + "' for generic '" + tp.name() + "'", line).raise();
+            }
+        }
+    }
+
+    boolean satisfiesConstraint(CompilationContext cctx, String actual, String required) {
+        if (actual.equals(required)) {
+            return true;
+        }
+
+        RDefaultStruct struct = cctx.getStruct(actual);
+
+        if (struct == null) {
+            return false;
+        }
+
+        return inherits(cctx, struct, required);
+    }
+
+    boolean inherits(CompilationContext cctx, RDefaultStruct struct, String required) {
+        for (String parent : struct.inherited()) {
+
+            if (parent.equals(required)) {
+                return true;
+            }
+
+            RDefaultStruct inheritedStruct = cctx.getStruct(parent);
+
+            if (inheritedStruct != null && inherits(cctx, inheritedStruct, required)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

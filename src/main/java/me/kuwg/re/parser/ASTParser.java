@@ -49,6 +49,7 @@ import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructImplNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructInitNode;
 import me.kuwg.re.ast.nodes.ternary.TernaryOperatorNode;
+import me.kuwg.re.ast.nodes.trait.TraitDeclarationNode;
 import me.kuwg.re.ast.nodes.type.TypeofNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
 import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
@@ -56,7 +57,9 @@ import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.compiler.struct.RConstructor;
+import me.kuwg.re.compiler.trait.TraitFunction;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.constants.Constants;
@@ -82,6 +85,7 @@ import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
+import me.kuwg.re.type.trait.TraitType;
 
 import java.util.*;
 
@@ -389,6 +393,7 @@ public final class ASTParser {
             case "type" -> parseTypeKeyword();
             case "enum" -> parseEnumKeyword();
             case "extern" -> parseExternKeyword();
+            case "trait" -> parseTraitKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
         };
     }
@@ -691,6 +696,13 @@ public final class ASTParser {
         int line = line();
         String name = identifier();
 
+        List<String> inherited = new ArrayList<>();
+        if (matchAndConsume(KEYWORD, "inherits")) {
+            do {
+                inherited.add(identifier());
+            } while (matchAndConsume(DIVIDER, ","));
+        }
+
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for struct declaration", file, line()).raise();
         }
@@ -739,7 +751,7 @@ public final class ASTParser {
         var type = new StructType(name, types);
 
         addType(name, type);
-        return new StructDeclarationNode(line, builtin, name, type, fields);
+        return new StructDeclarationNode(line, builtin, name, inherited, type, fields);
     }
 
     private @SubFunc ASTNode parseInitKeyword() {
@@ -1266,23 +1278,10 @@ public final class ASTParser {
 
     private @SubFunc ASTNode parseGenericFunc(int line) {
         String name = identifier();
-        List<String> typeParameters = new ArrayList<>();
-
-        if (!matchAndConsume(OPERATOR, "<")) {
-            return new RParserError("Expected '<' for generic function declaration", file, line).raise();
-        }
-        if (!match(OPERATOR, ">")) {
-            do {
-                typeParameters.add(identifier());
-            } while (matchAndConsume(DIVIDER, ","));
-        }
-
-        if (!matchAndConsume(OPERATOR, ">")) {
-            return new RParserError("Expected '>' for generic function declaration", file, line).raise();
-        }
+        var typeParameters = parseTypeParameters();
 
         List<String> old = currentGenericTypes;
-        currentGenericTypes = new ArrayList<>(typeParameters);
+        currentGenericTypes = new ArrayList<>(typeParameters.stream().map(TypeParameter::name).toList());
 
         var params = parseParamsDeclare(true);
         TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : NoneBuiltinType.INSTANCE;
@@ -1301,20 +1300,13 @@ public final class ASTParser {
     private @SubFunc ASTNode parseGenericStruct(int line) {
         String name = identifier();
 
-        List<String> typeParameters = new ArrayList<>();
+        var typeParameters = parseTypeParameters();
 
-        if (!matchAndConsume(OPERATOR, "<")) {
-            return new RParserError("Expected '<' for generic struct declaration", file, line).raise();
-        }
-
-        if (!match(OPERATOR, ">")) {
+        List<String> inherited = new ArrayList<>();
+        if (matchAndConsume(KEYWORD, "inherits")) {
             do {
-                typeParameters.add(identifier());
+                inherited.add(identifier());
             } while (matchAndConsume(DIVIDER, ","));
-        }
-
-        if (!matchAndConsume(OPERATOR, ">")) {
-            return new RParserError("Expected '>' for generic struct declaration", file, line).raise();
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
@@ -1362,7 +1354,7 @@ public final class ASTParser {
 
         addType(name, type);
 
-        return new GenStructDeclarationNode(line, name, type, fields);
+        return new GenStructDeclarationNode(line, name, inherited, type, fields);
     }
 
     private @SubFunc ValueNode parseArrayCreation(TypeRef type) {
@@ -1430,24 +1422,10 @@ public final class ASTParser {
     }
 
     private @SubFunc ASTNode parseGenericImpl(final int line, final GenStructType type) {
-        List<String> implGenerics = new ArrayList<>();
+        var typeParameters = parseTypeParameters();
 
-        if (!matchAndConsume(OPERATOR, "<")) {
-            return new RParserError("Expected '<' for generic impl declaration", file, line).raise();
-        }
-
-        if (!match(OPERATOR, ">")) {
-            do {
-                implGenerics.add(identifier());
-            } while (matchAndConsume(DIVIDER, ","));
-        }
-
-        if (!matchAndConsume(OPERATOR, ">")) {
-            return new RParserError("Expected '>' for generic impl declaration", file, line).raise();
-        }
-
-        if (implGenerics.size() != type.genericTypes().size()) {
-            return new RParserError("Expected " + type.genericTypes().size() + " generic parameters but got " + implGenerics.size(), file, line).raise();
+        if (typeParameters.size() != type.genericTypes().size()) {
+            return new RParserError("Expected " + type.genericTypes().size() + " generic parameters but got " + typeParameters.size(), file, line).raise();
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
@@ -1462,8 +1440,9 @@ public final class ASTParser {
 
         consume();
 
+        var typeParamsStr = typeParameters.stream().map(TypeParameter::name).toList();
         List<String> old = currentGenericTypes;
-        currentGenericTypes = new ArrayList<>(implGenerics);
+        currentGenericTypes = new ArrayList<>(typeParamsStr);
 
         List<ASTNode> statements = new ArrayList<>();
 
@@ -1472,7 +1451,7 @@ public final class ASTParser {
 
             if (match(EOF) || match(DEDENT)) break;
 
-            ASTNode n = matchAndConsume(KEYWORD, "init") ? parseGenConstructor(line, implGenerics) : parseStatement();
+            ASTNode n = matchAndConsume(KEYWORD, "init") ? parseGenConstructor(line, typeParamsStr) : parseStatement();
             if (n == null) break;
             statements.add(n);
         }
@@ -1502,7 +1481,7 @@ public final class ASTParser {
             constructors.add(new RConstructor(constructorName, cdn.getParameters(), cdn.getBlock()));
         }
 
-        return new GenStructImplNode(line, type, implGenerics, constructors, statements);
+        return new GenStructImplNode(line, type, typeParameters, constructors, statements);
     }
 
     private @SubFunc ASTNode parseGenConstructor(final int line, final List<String> implGenerics) {
@@ -1738,9 +1717,86 @@ public final class ASTParser {
         return new NativeCPPNode(line, isNative, name, functions);
     }
 
+    private @SubFunc ASTNode parseTraitKeyword() {
+        int line = line();
+        String name = identifier();
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for trait declaration", file, line).raise();
+        }
+
+        if (!match(NEWLINE)) {
+            return new RParserError("Expected newline after trait declaration", file, line).raise();
+        }
+        consume();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indented enum body", file, line).raise();
+        }
+        consume();
+
+        Map<String, TraitFunction> functions = new LinkedHashMap<>();
+
+        while (!match(EOF) && !match(DEDENT)) {
+            removeNewlines();
+
+            if (match(EOF) || match(DEDENT)) {
+                break;
+            }
+
+            if (!matchAndConsume(KEYWORD, "func")) {
+                return new RParserError("Expected 'func' for trait declaration", file, line).raise();
+            }
+
+            String fname = identifier();
+
+            List<FunctionParameter> params = parseParamsDeclare(false);
+
+            TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : NoneBuiltinType.INSTANCE;
+
+            if (functions.containsKey(fname)) {
+                return new RParserError("Duplicate trait function: " + fname, file, line).raise();
+            }
+
+            functions.put(fname, new TraitFunction(fname, params, returnType));
+        }
+
+        if (match(DEDENT)) {
+            consume();
+        } else if (!match(EOF)) {
+            return new RParserError("Expected dedent to close enum declaration", file, line).raise();
+        }
+
+        if (!typeMap.containsKey(name))
+            typeMap.put(name, new TraitType(name, functions));
+
+        return new TraitDeclarationNode(line, name, functions);
+    }
+
     /*
     general utils
      */
+
+    private @SubFunc List<TypeParameter> parseTypeParameters() {
+        int line = line();
+        List<TypeParameter> typeParameters = new ArrayList<>();
+
+        if (!matchAndConsume(OPERATOR, "<")) {
+            return new RParserError("Expected '<' for generic struct declaration", file, line).raise();
+        }
+
+        if (!match(OPERATOR, ">")) {
+            do {
+                typeParameters.add(new TypeParameter(identifier(), matchAndConsume(KEYWORD, "inherits") ? identifier() : null));
+            } while (matchAndConsume(DIVIDER, ","));
+        }
+
+        if (!matchAndConsume(OPERATOR, ">")) {
+            return new RParserError("Expected '>' for generic struct declaration", file, line).raise();
+        }
+
+        return typeParameters;
+    }
 
     private @SubFunc Optional<TypeRef> parseOptionalType() {
         int line = line();
@@ -2126,20 +2182,10 @@ public final class ASTParser {
 
         String name = consume().value();
 
-        List<String> generics = new ArrayList<>();
+        List<TypeParameter> generics = new ArrayList<>();
 
         if (generic) {
-            if (!matchAndConsume(OPERATOR, "<")) {
-                new RParserError("Expected '<' for generic type", file, line()).raise();
-            }
-
-            do {
-                generics.add(identifier());
-            } while (matchAndConsume(DIVIDER, ","));
-
-            if (!matchAndConsume(OPERATOR, ">")) {
-                new RParserError("Expected '>' for generic type", file, line()).raise();
-            }
+            generics = parseTypeParameters();
         }
 
         while (!match(OPERATOR, ":") && !match(EOF)) {
@@ -2189,7 +2235,7 @@ public final class ASTParser {
 
         addType(name, type);
     }
-    
+
     private void addType(String name, TypeRef type) {
         if (typeMap.putIfAbsent(name, type) == null) return;
         new RParserError("Type already defined: " + type.getName() + " as " + name, file, line());

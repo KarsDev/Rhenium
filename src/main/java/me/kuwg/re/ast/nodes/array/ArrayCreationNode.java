@@ -48,7 +48,7 @@ public class ArrayCreationNode extends ValueNode {
             return new RVariableTypeError("positive int or long", size.getType().getName(), line).raise();
         }
 
-        TypeRef elementType = evalType(type, cctx);
+        TypeRef elementType = evalType(type, cctx, line);
         String llvmElemType = elementType.getLLVMName();
 
         long bytes = sizeLong * elementType.getSize();
@@ -81,10 +81,10 @@ public class ArrayCreationNode extends ValueNode {
             sizeReg = CastManager.executeCast(line, sizeReg, size.getType(), BuiltinTypes.LONG.getType(), cctx);
         }
 
-        String llvmElemType = evalType(type, cctx).getLLVMName();
+        String llvmElemType = evalType(type, cctx, line).getLLVMName();
 
         String bytesReg = cctx.nextRegister();
-        cctx.emit(bytesReg + " = mul i64 " + sizeReg + ", " + evalType(type, cctx).getSize());
+        cctx.emit(bytesReg + " = mul i64 " + sizeReg + ", " + evalType(type, cctx, line).getSize());
 
         cctx.addIR("declare i8* @malloc(i64)");
 
@@ -98,7 +98,7 @@ public class ArrayCreationNode extends ValueNode {
         String arrReg = cctx.nextRegister();
         cctx.emit(arrReg + " = bitcast i8* " + rawPtr + " to " + llvmElemType + "*");
 
-        setType(new PointerType(evalType(type, cctx)));
+        setType(new PointerType(evalType(type, cctx, line)));
 
         return arrReg;
     }

@@ -547,6 +547,30 @@ enum Cars:
   FORD = "Ford"
   FERRARI = "Ferrari"
 
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
+  STRUCT INHERITANCE
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+trait Vehicle:
+  func wroom()
+
+// Inherits all Vehicles function requirements
+struct Car inherits Vehicle:
+  name: str
+
+impl Car:
+  // override Vehicle#wroom()
+  func wroom():
+    println("The car is running")
+
+// define function wroomVehicle that accepts as parameter a T which must inherit Vehicle trait
+func wroomVehicle<T inherits Vehicle>(vehicle: T):
+  vehicle.wroom()
+
+
 /*
 <=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT

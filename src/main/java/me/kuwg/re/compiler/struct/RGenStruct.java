@@ -7,6 +7,7 @@ import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.ast.nodes.struct.StructImplNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
@@ -25,8 +26,8 @@ public final class RGenStruct extends RDefaultStruct {
     private final Map<List<TypeRef>, RStruct> cache = new HashMap<>();
     private final List<ImplTemplate> impls = new ArrayList<>();
 
-    public RGenStruct(TypeRef type, List<RStructField> fields) {
-        super(false, type, fields);
+    public RGenStruct(final List<String> inherited, TypeRef type, List<RStructField> fields) {
+        super(false, inherited, type, fields);
     }
 
     @Override
@@ -35,34 +36,38 @@ public final class RGenStruct extends RDefaultStruct {
     }
 
     public RStruct instantiate(List<TypeRef> types, CompilationContext cctx) {
+        if (types.size() != type().genericTypes().size()) {
+            throw new RuntimeException(
+                    "Expected " + type().genericTypes().size() + " generic arguments, got " + types.size()
+            );
+        }
+
         if (cache.containsKey(types)) {
             return cache.get(types);
         }
 
-        Map<String, TypeRef> mapping = new HashMap<>();
+        validateGenericConstraints(cctx, types);
 
+        Map<String, TypeRef> mapping = new HashMap<>();
         for (int i = 0; i < type().genericTypes().size(); i++) {
-            mapping.put(type().genericTypes().get(i), types.get(i));
+            mapping.put(type().genericTypes().get(i).name(), types.get(i));
         }
 
         List<RStructField> newFields = new ArrayList<>();
-
         for (RStructField field : fields) {
             TypeRef replaced = replaceGenericType(field.type(), mapping, cctx);
             newFields.add(new RStructField(field.name(), replaced));
         }
 
         String mangledName = mangleName(types);
-
         TypeRef newType = new StructType(mangledName, newFields.stream().map(RStructField::type).toList());
 
-        RStruct specialized = new RStruct(false, newType, newFields);
+        RStruct specialized = new RStruct(false, inherited, newType, newFields);
 
-        cache.put(types, specialized);
-        cctx.addStruct(false, mangledName, newType, newFields);
+        cache.put(List.copyOf(types), specialized);
+        cctx.addStruct(false, mangledName, inherited, newType, newFields);
 
         declareStructIfNeeded(cctx, specialized);
-
         applyImpls(specialized, mapping, cctx);
 
         return specialized;
@@ -121,9 +126,9 @@ public final class RGenStruct extends RDefaultStruct {
     private void applyImpls(RStruct struct, Map<String, TypeRef> mapping, CompilationContext cctx) {
         for (ImplTemplate impl : impls) {
             Map<String, TypeRef> combined = new HashMap<>(mapping);
-            for (String gen : impl.generics) {
-                if (!combined.containsKey(gen)) {
-                    throw new RuntimeException("Unresolved impl generic: " + gen);
+            for (TypeParameter gen : impl.generics) {
+                if (!combined.containsKey(gen.name())) {
+                    throw new RuntimeException("Unresolved impl generic: " + gen.name());
                 }
             }
 
@@ -218,16 +223,62 @@ public final class RGenStruct extends RDefaultStruct {
         return s.replaceAll("[^A-Za-z0-9_]", "_");
     }
 
-    public void addImplTemplate(List<String> generics, List<RConstructor> constructors, List<ASTNode> functions) {
+    public void addImplTemplate(List<TypeParameter> generics, List<RConstructor> constructors, List<ASTNode> functions) {
         impls.add(new ImplTemplate(generics, constructors, functions));
     }
 
+    private void validateGenericConstraints(CompilationContext cctx, List<TypeRef> actualTypes) {
+        List<TypeParameter> params = type().genericTypes();
+
+        for (int i = 0; i < params.size(); i++) {
+            TypeParameter tp = params.get(i);
+            if (tp.inherited() == null) continue;
+
+            TypeRef actual = actualTypes.get(i);
+
+            if (!satisfiesConstraint(cctx, actual.getName(), tp.inherited())) {
+                throw new RuntimeException(
+                        "Type '" + actual.getName() + "' does not satisfy constraint '" + tp.inherited() +
+                                "' for generic '" + tp.name() + "'"
+                );
+            }
+        }
+    }
+
+    private boolean satisfiesConstraint(CompilationContext cctx, String actual, String required) {
+        if (actual.equals(required)) {
+            return true;
+        }
+
+        RDefaultStruct struct = cctx.getStruct(actual);
+        if (struct == null) {
+            return false;
+        }
+
+        return inherits(cctx, struct, required);
+    }
+
+    private boolean inherits(CompilationContext cctx, RDefaultStruct struct, String required) {
+        for (String parent : struct.inherited()) {
+            if (parent.equals(required)) {
+                return true;
+            }
+
+            RDefaultStruct inheritedStruct = cctx.getStruct(parent);
+            if (inheritedStruct != null && inherits(cctx, inheritedStruct, required)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static class ImplTemplate {
-        final List<String> generics;
+        final List<TypeParameter> generics;
         final List<RConstructor> constructors;
         final List<ASTNode> functions;
 
-        ImplTemplate(List<String> generics, List<RConstructor> constructors, List<ASTNode> functions) {
+        ImplTemplate(List<TypeParameter> generics, List<RConstructor> constructors, List<ASTNode> functions) {
             this.generics = generics;
             this.constructors = constructors;
             this.functions = functions;

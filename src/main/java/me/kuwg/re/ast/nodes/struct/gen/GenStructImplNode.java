@@ -3,6 +3,7 @@ package me.kuwg.re.ast.nodes.struct.gen;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.compiler.struct.RConstructor;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
@@ -17,11 +18,11 @@ import java.util.stream.IntStream;
 
 public class GenStructImplNode extends ASTNode implements GlobalNode {
     private final GenStructType type;
-    private final List<String> genericNames;
+    private final List<TypeParameter> genericNames;
     private final List<RConstructor> constructors;
     private final List<ASTNode> functions;
 
-    public GenStructImplNode(int line, GenStructType type, List<String> genericNames,
+    public GenStructImplNode(int line, GenStructType type, List<TypeParameter> genericNames,
                              List<RConstructor> constructors, List<ASTNode> functions) {
         super(line);
         this.type = type;

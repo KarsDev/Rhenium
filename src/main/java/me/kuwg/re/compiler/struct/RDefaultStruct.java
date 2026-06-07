@@ -12,17 +12,23 @@ public class RDefaultStruct {
     protected final List<RFunction> constructors = new ArrayList<>();
     private final boolean builtin;
     protected final TypeRef type;
+    protected final List<String> inherited;
     protected final List<RStructField> fields;
     protected final List<RFunction> functions = new ArrayList<>();
 
-    public RDefaultStruct(final boolean builtin, final TypeRef type, final List<RStructField> fields) {
+    public RDefaultStruct(final boolean builtin, final List<String> inherited, final TypeRef type, final List<RStructField> fields) {
         this.builtin = builtin;
+        this.inherited = inherited;
         this.type = type;
         this.fields = fields;
     }
 
     public boolean builtin() {
         return builtin;
+    }
+
+    public List<String> inherited() {
+        return inherited;
     }
 
     public TypeRef type() {

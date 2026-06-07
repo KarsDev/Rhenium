@@ -1,5 +1,6 @@
 package me.kuwg.re.type.struct;
 
+import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 import org.jetbrains.annotations.NotNull;
@@ -7,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-public record GenStructType(List<String> genericTypes, String name, List<TypeRef> fieldTypes) implements TypeRef {
+public record GenStructType(List<TypeParameter> genericTypes, String name, List<TypeRef> fieldTypes) implements TypeRef {
     @Override
     public boolean isPrimitive() {
         return false;

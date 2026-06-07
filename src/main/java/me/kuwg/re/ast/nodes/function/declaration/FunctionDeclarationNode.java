@@ -94,7 +94,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
-            var pt = evalType(param.type(), cctx);
+            var pt = evalType(param.type(), cctx, line);
 
             func.append(pt.getLLVMName()).append(" %").append(param.name());
             if (i < parameters.size() - 1) func.append(", ");
@@ -120,7 +120,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             }
 
             String paramPtr = "%" + param.name() + ".addr";
-            TypeRef pt = evalType(param.type(), cctx);
+            TypeRef pt = evalType(param.type(), cctx, line);
             cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
             cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 

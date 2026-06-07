@@ -6,7 +6,7 @@ import me.kuwg.re.type.TypeRef;
 import java.util.List;
 
 public final class RStruct extends RDefaultStruct {
-    public RStruct(final boolean builtin, final TypeRef type, final List<RStructField> fields) {
-        super(builtin, type, fields);
+    public RStruct(final boolean builtin, final List<String> inherited, final TypeRef type, final List<RStructField> fields) {
+        super(builtin, inherited, type, fields);
     }
 }

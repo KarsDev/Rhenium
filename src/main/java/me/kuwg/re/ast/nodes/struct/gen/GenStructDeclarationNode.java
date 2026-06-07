@@ -12,12 +12,14 @@ import java.util.Map;
 
 public class GenStructDeclarationNode extends ASTNode {
     private final String name;
+    private final List<String> inherited;
     private final GenStructType type;
     private final List<RStructField> fields;
 
-    public GenStructDeclarationNode(final int line, final String name, final GenStructType type, final List<RStructField> fields) {
+    public GenStructDeclarationNode(final int line, final String name, final List<String> inherited, final GenStructType type, final List<RStructField> fields) {
         super(line);
         this.name = name;
+        this.inherited = inherited;
         this.type = type;
         this.fields = fields;
     }
@@ -33,7 +35,7 @@ public class GenStructDeclarationNode extends ASTNode {
             return;
         }
 
-        cctx.addStruct(false, name, type, fields);
+        cctx.addStruct(false, name, inherited, type, fields);
     }
 
     @Override
