@@ -142,15 +142,6 @@ castResult = cast<ptr -> str>(result)
 println(@castResult)
 ```
 
-## Project Status
-- Parser: complete
-- Type checker: complete
-- LLVM backend: functional
-- Standard library: minimal
-- Breaking changes expected
-
-Rhenium is currently **experimental**. Syntax and semantics may change as the language evolves.
-
 ## Goals
 - Simple, readable syntax without hidden behavior
 - Explicit control over memory and mutability
