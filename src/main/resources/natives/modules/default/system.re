@@ -3,12 +3,14 @@ declare void @exit(i32)
 declare i32 @system(i8*)
 """
 
+// Exits the program with a precise exit code
 _Builtin func exit(code: int) -> none = """
 entry:
     call void @exit(i32 %code)
     ret void
 """
 
+// Runs an executable file
 _Builtin func run(path: str) -> int = """
 entry:
     %result = call i32 @system(i8* %path)
