@@ -54,7 +54,11 @@ public class FunctionCallNode extends FunCall {
 
         String qualifiedName = cctx.qualify(name);
 
-        RFunction fn = cctx.getFunction(qualifiedName, callTypes);
+        RFunction fn  = cctx.getExact(qualifiedName, callTypes);
+
+        if (fn == null) {
+            fn = cctx.getFunction(qualifiedName, callTypes);
+        }
 
         if (fn instanceof RGenFunction genFn) {
             return compileGeneric(cctx, genFn, callTypes, getting);

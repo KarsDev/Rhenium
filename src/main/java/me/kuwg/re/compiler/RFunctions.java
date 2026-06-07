@@ -23,10 +23,6 @@ final class RFunctions {
         functions.add(function);
     }
 
-    void writeAll() {
-        functions.forEach(f -> System.out.println(f.name()));
-    }
-
     RFunction get(String name, List<TypeRef> parameters) {
         RFunction compatible = null;
 
@@ -69,10 +65,11 @@ final class RFunctions {
 
             if (bound == null) {
                 bindings.put(gen.name(), arg);
-                return new MatchResult(true, false);
+                return new MatchResult(true, isConcrete(arg));
             }
 
-            return new MatchResult(bound.equals(arg), false);
+            boolean same = bound.equals(arg);
+            return new MatchResult(same, same && isConcrete(arg));
         }
 
         if (param instanceof AppliedGenStructType pStruct &&
@@ -142,6 +139,19 @@ final class RFunctions {
             if (exact) return fn;
         }
         return null;
+    }
+
+    private boolean isConcrete(TypeRef t) {
+        if (t instanceof GenericType) return false;
+        if (t instanceof AppliedGenStructType s) {
+            for (TypeRef a : s.args()) {
+                if (!isConcrete(a)) return false;
+            }
+            return true;
+        }
+        if (t instanceof ArrayType a) return isConcrete(a.inner());
+        if (t instanceof PointerType p) return isConcrete(p.inner());
+        return true;
     }
 
     private static class MatchResult {

@@ -11,6 +11,16 @@ declare i32 @getchar()
 @fmt_no_newline = private constant [3 x i8] c"%s\00"
 """
 
+// Writeable trait
+trait Writeable:
+    // Returns the object reppresented as a string
+    func toString() -> str
+
+// Print the object to console
+generic func println<T inherits Writeable>(toWrite: T):
+    println(toWrite.toString())
+
+// Print a string to console
 _Builtin func println(s: str) -> none = """
 entry:
     ; Get pointer to the format string

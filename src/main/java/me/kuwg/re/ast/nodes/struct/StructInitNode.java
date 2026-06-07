@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.StructCompiler;
@@ -13,6 +14,7 @@ import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.trait.RInheritanceError;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,12 +88,11 @@ public class StructInitNode extends ValueNode {
     }
 
     private void checkInherited(final Trait trait, final RDefaultStruct struct) {
-        trait.functions().forEach((name, traitFunc) -> {
-
+        trait.functions().forEach((traitFunctionName, traitFunc) -> {
             boolean found = struct.functions().stream().anyMatch(f -> {
-                String[] vmSplit = name.split("\\.");
+                String functionName = extractFunctionName(f);
 
-                if (!vmSplit[vmSplit.length - 1].equals(name)) {
+                if (!functionName.equals(traitFunctionName)) {
                     return false;
                 }
 
@@ -109,8 +110,27 @@ public class StructInitNode extends ValueNode {
             });
 
             if (!found) {
-                new RInheritanceError("Struct '" + this.name + "' does not implement trait function '" + name + "' from trait '" + trait.name() + "'", line).raise();
+                new RInheritanceError("Struct '" + this.name + "' does not implement trait function '" + traitFunctionName + "' from trait '" + trait.name() + "'", line).raise();
             }
         });
+    }
+
+    private static @NotNull String extractFunctionName(final RFunction f) {
+        String functionName;
+        {
+            String s = f.name;
+            if (s.length() >= 2 &&
+                    ((s.startsWith("\"") && s.endsWith("\"")) ||
+                            (s.startsWith("'") && s.endsWith("'")))) {
+            s = s.substring(1, s.length() - 1);
+            }
+
+            int dotIndex = s.lastIndexOf('.');
+            if (dotIndex >= 0 && dotIndex < s.length() - 1) {
+                s = s.substring(dotIndex + 1);
+            }
+            functionName = s;
+        }
+        return functionName;
     }
 }

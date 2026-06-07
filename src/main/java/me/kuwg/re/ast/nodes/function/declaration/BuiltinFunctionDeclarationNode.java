@@ -88,7 +88,8 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
             types.add(i, p.type());
         }
 
-        if (cctx.getFunction(qualifiedName, types) != null) {
+        if (cctx.getExact(qualifiedName, types) != null) {
+            System.out.println(fnObj);
             String paramsToString = types.toString().replace("[", "(").replace("]", ")");
             String error = "While compiling a builtin function, a function with the same name and parameters was found existing: " + name + paramsToString;
             new RFunctionAlreadyExistError(error, line).raise();

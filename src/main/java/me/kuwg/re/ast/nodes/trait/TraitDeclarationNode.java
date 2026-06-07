@@ -36,7 +36,6 @@ public class TraitDeclarationNode extends ASTNode implements GlobalNode {
     @Override
     public void compile(final CompilationContext cctx) {
         cctx.declare("; trait declaration: " + name);
-
         if (cctx.isTraitDeclared(name)) {
             new RTraitAlreadyDeclaredError(name, line).raise();
             return;
