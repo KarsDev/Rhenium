@@ -570,6 +570,9 @@ impl Car:
 func wroomVehicle<T inherits Vehicle>(vehicle: T):
   vehicle.wroom()
 
+// If a struct must inherit multiple traits, they can be inherited by splitting them with ',':
+struct Word inherits LetterContainer, Printable, Writeable:
+  letters: arr -> char
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
