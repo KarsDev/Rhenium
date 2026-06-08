@@ -57,7 +57,7 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
 
         Path path;
         if (isNative)
-            path = ResourceLoader.getResourcePath("/natives/cpp/" + name + ".cpp");
+            path = ResourceLoader.extractResourceToTempFile("/natives/cpp/" + name + ".cpp");
         else {
             File f = new File(name);
             if (!f.exists()) {

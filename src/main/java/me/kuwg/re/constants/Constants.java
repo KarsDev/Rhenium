@@ -89,6 +89,6 @@ public abstract class Constants {
     }
 
     public static final class Parser extends Constants {
-        public static final String DEFAULT_MODULE_NAME = "default\\default";
+        public static final String DEFAULT_MODULE_NAME = "default/default";
     }
 }

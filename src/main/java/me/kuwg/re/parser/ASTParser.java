@@ -497,7 +497,7 @@ public final class ASTParser {
         StringBuilder name = new StringBuilder(identifier());
 
         while (matchAndConsume(OPERATOR, ".")) {
-            name.append("\\").append(identifier());
+            name.append("/").append(identifier());
         }
 
         String pkg;
@@ -2246,7 +2246,7 @@ public final class ASTParser {
         StringBuilder name = new StringBuilder(identifier());
 
         while (matchAndConsume(OPERATOR, ".")) {
-            name.append("\\").append(identifier());
+            name.append("/").append(identifier());
         }
 
         String pkg;
