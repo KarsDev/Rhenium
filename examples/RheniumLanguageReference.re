@@ -574,6 +574,7 @@ func wroomVehicle<T inherits Vehicle>(vehicle: T):
 struct Word inherits LetterContainer, Printable, Writeable:
   letters: arr -> char
 
+
 /*
 <=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT
