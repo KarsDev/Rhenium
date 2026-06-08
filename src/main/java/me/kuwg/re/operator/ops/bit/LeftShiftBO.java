@@ -10,7 +10,7 @@ public final class LeftShiftBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new LeftShiftBO();
 
     LeftShiftBO() {
-        super(10, "<<");
+        super(7, "<<");
     }
 
     @Override

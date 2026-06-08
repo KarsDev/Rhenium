@@ -14,7 +14,7 @@ public final class BitwiseAndBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new BitwiseAndBO();
 
     BitwiseAndBO() {
-        super(7, "&");
+        super(6, "&");
     }
 
     @Override

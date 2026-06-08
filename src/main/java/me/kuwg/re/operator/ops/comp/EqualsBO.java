@@ -15,7 +15,7 @@ public final class EqualsBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new EqualsBO();
 
     EqualsBO() {
-        super(8, "==");
+        super(3, "==");
     }
 
     @Override

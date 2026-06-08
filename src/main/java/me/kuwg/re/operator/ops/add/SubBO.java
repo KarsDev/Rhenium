@@ -10,7 +10,7 @@ public final class SubBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new SubBO();
 
     SubBO() {
-        super(11, "-");
+        super(8, "-");
     }
 
     @Override

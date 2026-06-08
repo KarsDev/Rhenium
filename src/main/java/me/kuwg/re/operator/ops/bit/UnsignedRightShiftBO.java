@@ -10,7 +10,7 @@ public final class UnsignedRightShiftBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new UnsignedRightShiftBO();
 
     UnsignedRightShiftBO() {
-        super(10, ">>>");
+        super(7, ">>>");
     }
 
     @Override

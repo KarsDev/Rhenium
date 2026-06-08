@@ -14,7 +14,7 @@ public final class BitwiseXorBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new BitwiseXorBO();
 
     BitwiseXorBO() {
-        super(6, "^");
+        super(5, "^");
     }
 
     @Override

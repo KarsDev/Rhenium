@@ -12,7 +12,7 @@ public final class OrBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new OrBO();
 
     OrBO() {
-        super(3, "or");
+        super(1, "or");
     }
 
     @Override

@@ -14,7 +14,7 @@ public final class GreaterOrEqualBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new GreaterOrEqualBO();
 
     GreaterOrEqualBO() {
-        super(9, ">=");
+        super(3, ">=");
     }
 
     @Override

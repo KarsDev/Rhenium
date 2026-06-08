@@ -14,7 +14,7 @@ public final class BitwiseOrBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new BitwiseOrBO();
 
     BitwiseOrBO() {
-        super(5, "|");
+        super(4, "|");
     }
 
     @Override

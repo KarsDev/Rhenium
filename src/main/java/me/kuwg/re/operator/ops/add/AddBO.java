@@ -12,7 +12,7 @@ public final class AddBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new AddBO();
 
     AddBO() {
-        super(11, "+");
+        super(8, "+");
     }
 
     @Override

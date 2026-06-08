@@ -11,7 +11,7 @@ public final class ModBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new ModBO();
 
     ModBO() {
-        super(12, "%");
+        super(9, "%");
     }
 
     @Override

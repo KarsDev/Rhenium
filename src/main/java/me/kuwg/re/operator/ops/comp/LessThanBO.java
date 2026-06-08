@@ -14,7 +14,7 @@ public final class LessThanBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new LessThanBO();
 
     LessThanBO() {
-        super(9, "<");
+        super(3, "<");
     }
 
     @Override

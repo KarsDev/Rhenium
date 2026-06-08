@@ -10,7 +10,7 @@ public final class DivBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new DivBO();
 
     DivBO() {
-        super(12, "/");
+        super(9, "/");
     }
 
     @Override

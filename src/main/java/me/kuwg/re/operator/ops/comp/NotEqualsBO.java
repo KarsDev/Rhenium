@@ -15,7 +15,7 @@ public final class NotEqualsBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new NotEqualsBO();
 
     NotEqualsBO() {
-        super(8, "!=");
+        super(3, "!=");
     }
 
     @Override

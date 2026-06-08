@@ -10,7 +10,7 @@ public final class MulBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new MulBO();
 
     MulBO() {
-        super(11, "*");
+        super(9, "*");
     }
 
     @Override
