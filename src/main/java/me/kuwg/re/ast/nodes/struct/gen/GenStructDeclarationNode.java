@@ -30,6 +30,8 @@ public class GenStructDeclarationNode extends ASTNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.declare("; Generic Struct declaration");
+
         if (cctx.getStruct(name) != null) {
             new RStructAlreadyExistsError(name, line).raise();
             return;

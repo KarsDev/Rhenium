@@ -26,6 +26,8 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.emit("; Try-catch");
+
         String catchLabel = cctx.nextLabel("catch_label");
         String endLabel = cctx.nextLabel("try_end");
 

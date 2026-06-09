@@ -44,6 +44,7 @@ public class ReferenceNode extends ValueNode {
 
         setType(new PointerType(type));
 
+        cctx.emit("; Reference node");
         return var.addrReg();
     }
 

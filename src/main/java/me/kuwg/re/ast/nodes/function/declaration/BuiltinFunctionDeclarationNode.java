@@ -63,7 +63,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
 
 
-        StringBuilder func = new StringBuilder();
+        StringBuilder func = new StringBuilder("; Builtin function declaration\n");
         func.append("define ").append(returnType.getLLVMName()).append(" @").append(fnObj.llvmName()).append("(");
 
         for (int i = 0; i < parameters.size(); i++) {
@@ -72,7 +72,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
             if (i < parameters.size() - 1) func.append(", ");
         }
 
-        func.append(") { ; Builtin function\n");
+        func.append(") {\n");
 
         for (String s : llvmBody.split("\n")) {
             func.append(TAB).append(s).append('\n');

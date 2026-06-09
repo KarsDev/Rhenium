@@ -39,6 +39,7 @@ public class StructFunctionCallNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.emit("; Struct (member) function call");
         RFunction fn;
         String mangled;
 

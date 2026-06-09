@@ -46,6 +46,7 @@ public class AsyncDeclarationNode extends ValueNode {
         );
         innerFn.compile(cctx);
 
+        cctx.declare("; Async function declaration");
         cctx.declare("define i8* @" + wrapperName + "() {");
         cctx.declare("entry:");
 
@@ -67,6 +68,7 @@ public class AsyncDeclarationNode extends ValueNode {
         cctx.addIR("declare i8* @rhenium_spawn(i8*)");
 
         final String fnPtr = cctx.nextRegister();
+        cctx.emit("; Async declaration");
         cctx.emit(fnPtr + " = bitcast i8* ()* @" + wrapperName + " to i8*");
 
         final String handle = cctx.nextRegister();

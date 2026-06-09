@@ -32,6 +32,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
     public void compile(final CompilationContext cctx) {
         String catchLabel = cctx.popTryCatchScope();
 
+        cctx.emit("; Raise");
         if (catchLabel == null) {
             if (value == null) {
                 String message = generateLog(line);

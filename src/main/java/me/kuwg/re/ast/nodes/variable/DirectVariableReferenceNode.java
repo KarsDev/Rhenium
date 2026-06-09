@@ -33,6 +33,7 @@ public class DirectVariableReferenceNode extends VariableReference {
 
         setType(var.type());
 
+        cctx.emit("; Direct variable reference");
         if (var.addrReg() != null) {
             String elemLLVM = var.type().getLLVMName();
             String tmp = cctx.nextRegister();

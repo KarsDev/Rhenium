@@ -44,6 +44,7 @@ public class BitwiseNotNode extends ValueNode {
         else mask = "18446744073709551615";                           // 0xFFFFFFFFFFFFFFFF for long
 
         String resReg = cctx.nextRegister();
+        cctx.emit("; Bitwise not");
         cctx.emit(resReg + " = xor " + type.getLLVMName() + " " + valueReg + ", " + mask);
 
         setType(type);

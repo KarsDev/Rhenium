@@ -49,8 +49,9 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
+        cctx.emit("; Struct impl");
 
+        RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
 
         if (cctxStruct == null) {
             new RStructUndefinedError(struct.name(), line).raise();

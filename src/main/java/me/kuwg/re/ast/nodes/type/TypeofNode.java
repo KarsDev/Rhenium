@@ -39,6 +39,7 @@ public class TypeofNode extends ValueNode {
     public String compileAndGet(final CompilationContext cctx) {
         valueNode.compileAndGet(cctx);
 
+        cctx.emit("; Typeof" + (llvm ? " LLVM" : ""));
         return new StringNode(line, llvm ? valueNode.getType().getLLVMName() : valueNode.getType().getName()).compileAndGet(cctx);
     }
 

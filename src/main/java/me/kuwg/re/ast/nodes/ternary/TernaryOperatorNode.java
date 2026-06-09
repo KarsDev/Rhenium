@@ -60,6 +60,8 @@ public class TernaryOperatorNode extends ValueNode {
         String elseLabel = cctx.nextLabel("ternary_else");
         String mergeLabel = cctx.nextLabel("ternary_merge");
 
+
+        cctx.emit("; Ternary operator");
         cctx.emit("br i1 " + condReg + ", label %" + thenLabel + ", label %" + elseLabel);
 
         cctx.emit(thenLabel + ":");

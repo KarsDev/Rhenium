@@ -345,6 +345,7 @@ public final class CompilationContext {
         return Arrays.stream(code.split("\n"))
                 .map(String::trim)
                 .filter(line -> !line.isEmpty())
+                .filter(line -> !line.startsWith(";"))
                 .anyMatch(line -> {
                     String[] parts = line.split("\\s+");
                     return parts.length == 0 || !parts[0].contains("_global_load");

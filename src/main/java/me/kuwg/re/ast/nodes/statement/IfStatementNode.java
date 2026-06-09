@@ -37,6 +37,8 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.emit("; If statement");
+
         String ifLabel = cctx.nextLabel("if_block");
         String endLabel = cctx.nextLabel("if_end");
         String elseLabel = null;

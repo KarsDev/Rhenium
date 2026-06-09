@@ -35,6 +35,8 @@ public class BinaryExpressionNode extends ValueNode {
         TypeRef leftType = left.getType();
         TypeRef rightType = right.getType();
 
+        cctx.emit("; Binary operation: " + leftType.getName() + " " + op.getSymbol() + " " + rightType.getName());
+
         var result = op.compile(new BinaryOperatorContext(leftReg, leftType, rightReg, rightType, line, cctx));
 
         String resultReg = result.code();

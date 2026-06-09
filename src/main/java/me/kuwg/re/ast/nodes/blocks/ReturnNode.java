@@ -24,15 +24,16 @@ public class ReturnNode extends ASTNode implements InterruptNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.emit("; Return statement");
         if (value == null) {
-            cctx.emit("ret void ; return statement");
+            cctx.emit("ret void");
         } else {
             String valueReg = value.compileAndGet(cctx);
             String llvmType = value.getType().getLLVMName();
 
             valueReg = cctx.ensureValue(value, valueReg);
 
-            cctx.emit("ret " + llvmType + " " + valueReg + " ; return statement");
+            cctx.emit("ret " + llvmType + " " + valueReg);
         }
     }
 

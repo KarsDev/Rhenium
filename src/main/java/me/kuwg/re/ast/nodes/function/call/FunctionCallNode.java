@@ -61,6 +61,7 @@ public class FunctionCallNode extends FunCall {
         }
 
         if (fn instanceof RGenFunction genFn) {
+            cctx.emit("; Generic function call");
             return compileGeneric(cctx, genFn, callTypes, getting);
         }
 
@@ -68,6 +69,7 @@ public class FunctionCallNode extends FunCall {
             return tryLambda(cctx, callTypes, true);
         }
 
+        cctx.emit("; Function call");
         return emitCall(cctx, fn, argRegs, callTypes, getting);
     }
 

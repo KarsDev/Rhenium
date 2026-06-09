@@ -47,6 +47,7 @@ public class ArrayAccessNode extends VariableReference {
         String llvmElemType = elementType.getLLVMName();
 
         String loadReg = cctx.nextRegister();
+        cctx.emit("; Array access");
         cctx.emit(loadReg + " = load " + llvmElemType + ", " + llvmElemType + "* " + elemPtr);
 
         setType(elementType);

@@ -50,6 +50,7 @@ public class GenericFunctionCallNode extends FunCall {
     }
 
     private String compile0(CompilationContext cctx, boolean getting) {
+        cctx.emit("; Generic function call");
         List<String> argRegs = new ArrayList<>(parameters.size());
         List<TypeRef> callTypes = new ArrayList<>(parameters.size());
 

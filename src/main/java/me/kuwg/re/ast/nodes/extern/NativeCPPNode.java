@@ -31,6 +31,7 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.emit("; Native CPP");
         functions.forEach(cctx::addFunction);
 
         for (RFunction f : functions) {

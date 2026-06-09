@@ -38,6 +38,8 @@ public class GenStructInitNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.emit("; Generic struct initialization");
+
         RDefaultStruct struct = cctx.getStruct(name);
 
         if (struct == null) {
@@ -51,11 +53,7 @@ public class GenStructInitNode extends ValueNode {
         RGenStruct genStruct = (RGenStruct) struct;
 
         if (genStruct.type().genericTypes().size() != genericTypes.size()) {
-            return new RGenStructInitError(
-                    "Expected " + genStruct.type().genericTypes().size() +
-                            " generic types but got " + genericTypes.size(),
-                    line
-            ).raise();
+            return new RGenStructInitError("Expected " + genStruct.type().genericTypes().size() + " generic types but got " + genericTypes.size(), line).raise();
         }
 
         Map<String, TypeRef> bindings = new HashMap<>();

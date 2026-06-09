@@ -25,6 +25,7 @@ public class BreakNode extends ASTNode implements InterruptNode {
         }
 
         var currentLoop = cctx.getLoopStack().peek();
+        cctx.emit("; Break");
         cctx.emit("br label %" + currentLoop.endLabel());
     }
 

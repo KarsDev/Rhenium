@@ -24,6 +24,7 @@ public class ContinueNode extends ASTNode {
         }
 
         var currentLoop = cctx.getLoopStack().peek();
+        cctx.emit("; Continue");
         cctx.emit("br label %" + currentLoop.startLabel());
     }
 

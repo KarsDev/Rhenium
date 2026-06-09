@@ -28,6 +28,7 @@ public class IsNode extends ValueNode {
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         value.compileAndGet(cctx);
+        cctx.emit("; Instance checking");
         return Boolean.toString(isType.isCompatibleWith(value.getType()));
     }
 

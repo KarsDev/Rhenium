@@ -25,6 +25,7 @@ public class UsingNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.declare("; Using " + name);
         cctx.include(line, sourceFile, name, pkg);
     }
 

@@ -18,6 +18,7 @@ public class NamespaceCallNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.emit("; Namespace call");
         cctx.pushNamespace(name);
         String v = value.compileAndGet(cctx);
         setType(value.getType());

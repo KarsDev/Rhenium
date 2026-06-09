@@ -60,6 +60,8 @@ public class ArraySetNode extends ValueNode {
 
         String valueReg = value.compileAndGet(cctx);
 
+        cctx.emit("; Array set");
+
         if (value.getType() instanceof StructType && value instanceof VariableReference vr) {
             var var = vr.getVariable(cctx);
             if (var != null && var.addrReg() != null && valueReg.equals(var.addrReg())) {

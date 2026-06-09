@@ -68,9 +68,11 @@ public class VariableDeclarationNode extends ValueNode {
         setType(valueType);
 
         if (oldVar != null) {
+            cctx.emit("; Variable reassignment");
             return compileReassignment(cctx, oldVar, valueReg, valueType);
         }
 
+        cctx.emit("; Variable declaration");
         return compileDeclaration(cctx, valueReg, valueType);
     }
 

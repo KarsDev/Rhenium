@@ -35,11 +35,13 @@ public class SizeofNode extends ConstantNode {
     @Override
     public String compileToConstant(final CompilationContext cctx) {
         if (value != null) return new RVariableTypeError("constant", "runtime", line).raise();
+        cctx.emit("; Sizeof");
         return Long.toString(type.getSize());
     }
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.emit("; Sizeof");
         if (type != null) return Long.toString(type.getSize());
 
         value.compileAndGet(cctx);

@@ -43,6 +43,7 @@ public class WhileNode extends ASTNode implements IBlockContainer {
 
         cctx.getLoopStack().push(new LoopContext(startLabel, bodyLabel, endLabel));
 
+        cctx.emit("; While loop");
         cctx.emit("br label %" + startLabel);
 
         cctx.emit(startLabel + ":");

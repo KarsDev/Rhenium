@@ -32,6 +32,8 @@ public class MatchNode extends ASTNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.emit("; Match statement");
+
         final String exprReg = expr.compileAndGet(cctx);
         final String llvmType = evalType(expr.getType(), cctx, line).getLLVMName();
 

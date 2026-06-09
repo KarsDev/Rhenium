@@ -57,6 +57,7 @@ public class ArrayCreationNode extends ValueNode {
         cctx.addIR("declare i8* @memset(i8*, i32, i64)");
 
         String rawPtr = cctx.nextRegister();
+        cctx.emit("; Array creation");
         cctx.emit(rawPtr + " = call i8* @malloc(i64 " + bytes + ")");
 
         cctx.emit("call i8* @memset(i8* " + rawPtr + ", i32 0, i64 " + bytes + ")");
@@ -84,6 +85,7 @@ public class ArrayCreationNode extends ValueNode {
         String llvmElemType = evalType(type, cctx, line).getLLVMName();
 
         String bytesReg = cctx.nextRegister();
+        cctx.emit("; Dynamic array creation");
         cctx.emit(bytesReg + " = mul i64 " + sizeReg + ", " + evalType(type, cctx, line).getSize());
 
         cctx.addIR("declare i8* @malloc(i64)");

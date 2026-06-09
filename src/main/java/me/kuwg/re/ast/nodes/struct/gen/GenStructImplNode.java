@@ -37,6 +37,8 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(CompilationContext cctx) {
+        cctx.declare("; Generic Struct impl");
+
         RDefaultStruct st = cctx.getStruct(type.name());
         if (!(st instanceof RGenStruct genStruct)) {
             new RStructUndefinedError(type.name(), line).raise();

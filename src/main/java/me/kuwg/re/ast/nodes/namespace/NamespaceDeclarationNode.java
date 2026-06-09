@@ -30,6 +30,7 @@ public class NamespaceDeclarationNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.emit("; Namespace declaration");
         cctx.pushNamespace(name);
         block.compile(cctx);
         cctx.popNamespace();

@@ -8,8 +8,10 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.LoopContext;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.error.errors.loop.RLoopError;
 import me.kuwg.re.error.errors.loop.RValueIsNotIterableError;
 import me.kuwg.re.error.errors.variable.RVariableAlreadyExistsError;
+import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.IterableTypeRef;
@@ -46,13 +48,21 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        cctx.emit("; For loop");
+        
         String reg = collection.compileAndGet(cctx);
 
         if (collection.getType() instanceof ArrayType) {
             if (collection instanceof VariableReference varNode) {
-                reg = cctx.getVariable(varNode.getSimpleName()).addrReg();
+                var v = cctx.getVariable(varNode.getSimpleName());
+                if (v == null) {
+                    new RVariableNotFoundError(varNode.getSimpleName(), line).raise();
+                    return;
+                }
+                reg = v.addrReg();
             } else {
-                throw new RuntimeException("Array expression not supported yet (needs pointer)");
+                new RLoopError("Array expression not supported yet (needs pointer)", line).raise();
+                return;
             }
         }
 

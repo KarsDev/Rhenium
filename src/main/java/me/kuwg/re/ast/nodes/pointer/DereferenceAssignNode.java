@@ -37,6 +37,7 @@ public class DereferenceAssignNode extends ValueNode {
         PointerType ptrType = (PointerType) pointer.getType();
         String innerLLVM = ptrType.inner().getLLVMName();
 
+        cctx.emit("; Dereference assign");
         cctx.emit("store " + innerLLVM + " " + valueReg + ", " + innerLLVM + "* " + ptrReg + " ; dereference assign");
 
         setType(ptrType.inner());

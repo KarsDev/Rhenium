@@ -32,6 +32,7 @@ public class LambdaDeclarationNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.declare("; Lambda declaration");
         ValueNode cloned = func.clone();
 
         cctx.pushScope();

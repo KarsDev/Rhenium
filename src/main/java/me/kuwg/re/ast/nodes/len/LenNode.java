@@ -26,9 +26,12 @@ public class LenNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+
         String valReg = value.compileAndGet(cctx);
         TypeRef valueType = value.getType();
         String longReg = cctx.nextRegister();
+
+        cctx.emit("; Len of " + valueType.getName());
 
         if (valueType instanceof StrBuiltinType) {
             cctx.emit(longReg + " = call i64 @strlen(i8* " + valReg + ") ; compute string length");

@@ -88,7 +88,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             types.add(i, p.type());
         }
 
-        StringBuilder func = new StringBuilder();
+        StringBuilder func = new StringBuilder("; Function declaration\n");
 
         func.append("define ").append(returnType.getLLVMName()).append(" @").append(llvmName).append("(");
 

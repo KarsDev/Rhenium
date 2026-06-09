@@ -34,6 +34,8 @@ public class StructFieldAccessNode extends VariableReference {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.emit("; Struct field access");
+
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
             return attemptEnumAccess(cctx);

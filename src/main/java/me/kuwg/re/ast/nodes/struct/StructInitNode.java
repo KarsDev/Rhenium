@@ -38,6 +38,8 @@ public class StructInitNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.emit("; Struct initialization");
+
         RDefaultStruct struct = cctx.getStruct(name);
         if (struct == null) {
             return new RStructUndefinedError(name, line).raise();

@@ -64,6 +64,7 @@ public class ArrayNode extends PointerValueNode {
         String llvmArrType = "[" + size + " x " + llvmElemType + "]";
 
         String arrReg = cctx.nextRegister();
+        cctx.emit("; Array declaration");
         cctx.emit(arrReg + " = alloca " + llvmArrType + " ; allocate array");
 
         for (int i = 0; i < size; i++) {

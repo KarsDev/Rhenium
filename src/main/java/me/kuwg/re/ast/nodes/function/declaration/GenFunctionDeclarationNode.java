@@ -48,6 +48,8 @@ public class GenFunctionDeclarationNode extends ASTNode {
                 block
         );
 
+        cctx.emit("; Generic function declaration");
+
         cctx.addFunction(fn);
         registered = true;
     }

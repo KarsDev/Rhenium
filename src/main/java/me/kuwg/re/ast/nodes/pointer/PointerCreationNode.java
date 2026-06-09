@@ -34,6 +34,7 @@ public class PointerCreationNode extends ValueNode {
         else constant = new CastNode(line, BuiltinTypes.LONG.getType(), value).compileAndGet(cctx);
 
         String result = cctx.nextRegister();
+        cctx.emit("; Pointer creation");
         cctx.emit(result + " = inttoptr i64 " + constant + " to i8*");
 
         setType(BuiltinTypes.ANYPTR.getType());

@@ -14,6 +14,7 @@ public final class CastManager {
         String valReg = value.compileAndGet(cctx);
         TypeRef from = value.getType();
 
+        cctx.emit("; Cast from " + from.getName() + " to " + type.getName());
         return executeCast(line, valReg, from, type, cctx);
     }
 
