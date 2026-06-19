@@ -19,6 +19,10 @@ public interface TypeRef {
 
     boolean equals(TypeRef other);
 
+    default long getAlignment() {
+        return getSize();
+    }
+
     default boolean isPointer() {
         return this instanceof PointerType || this instanceof AnyPointerType;
     }

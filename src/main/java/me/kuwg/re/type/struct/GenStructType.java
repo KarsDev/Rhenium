@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+import static me.kuwg.re.type.struct.StructType.alignTo;
+
 public record GenStructType(List<TypeParameter> genericTypes, String name, List<TypeRef> fieldTypes) implements TypeRef {
     @Override
     public boolean isPrimitive() {
@@ -22,11 +24,29 @@ public record GenStructType(List<TypeParameter> genericTypes, String name, List<
 
     @Override
     public long getSize() {
-        long size = 0;
-        for (TypeRef t : fieldTypes) {
-            size += t.getSize();
+        long offset = 0;
+        long maxAlignment = 1;
+
+        for (TypeRef field : fieldTypes) {
+            long alignment = field.getAlignment();
+            maxAlignment = Math.max(maxAlignment, alignment);
+
+            offset = alignTo(offset, alignment);
+            offset += field.getSize();
         }
-        return size;
+
+        return alignTo(offset, maxAlignment);
+    }
+
+    @Override
+    public long getAlignment() {
+        long max = 1;
+
+        for (TypeRef field : fieldTypes) {
+            max = Math.max(max, field.getAlignment());
+        }
+
+        return max;
     }
 
     @Override

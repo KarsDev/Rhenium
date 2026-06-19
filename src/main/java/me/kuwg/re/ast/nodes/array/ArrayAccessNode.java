@@ -51,6 +51,7 @@ public class ArrayAccessNode extends VariableReference {
         cctx.emit(loadReg + " = load " + llvmElemType + ", " + llvmElemType + "* " + elemPtr);
 
         setType(elementType);
+
         return loadReg;
     }
 
@@ -99,8 +100,12 @@ public class ArrayAccessNode extends VariableReference {
 
             TypeRef arrType = arrVar.type();
 
-            if (arrType instanceof ArrayType) {
-                arrayAddr = arrVar.addrReg();
+            if (arrType instanceof ArrayType arr) {
+                if (arr.size() == ArrayType.UNKNOWN_SIZE) {
+                    arrayAddr = arrVar.valueReg();
+                } else {
+                    arrayAddr = arrVar.addrReg();
+                }
             } else {
                 arrayAddr = arrVar.valueReg();
             }

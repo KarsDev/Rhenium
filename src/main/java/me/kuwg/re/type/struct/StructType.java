@@ -20,11 +20,29 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
 
     @Override
     public long getSize() {
-        long size = 0;
-        for (TypeRef t : fieldTypes) {
-            size += t.getSize();
+        long offset = 0;
+        long maxAlignment = 1;
+
+        for (TypeRef field : fieldTypes) {
+            long alignment = field.getAlignment();
+            maxAlignment = Math.max(maxAlignment, alignment);
+
+            offset = alignTo(offset, alignment);
+            offset += field.getSize();
         }
-        return size;
+
+        return alignTo(offset, maxAlignment);
+    }
+
+    @Override
+    public long getAlignment() {
+        long max = 1;
+
+        for (TypeRef field : fieldTypes) {
+            max = Math.max(max, field.getAlignment());
+        }
+
+        return max;
     }
 
     @Override
@@ -60,5 +78,9 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
         if (!(o instanceof final StructType type)) return false;
 
         return Objects.equals(name, type.name) && Objects.equals(fieldTypes, type.fieldTypes);
+    }
+
+    static long alignTo(long value, long alignment) {
+        return (value + alignment - 1) & -alignment;
     }
 }

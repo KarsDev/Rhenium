@@ -51,51 +51,40 @@ public class ArrayNode extends PointerValueNode {
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         List<String> regs = new ArrayList<>(values.size());
-        IntStream.range(0, values.size()).forEachOrdered(i ->
-                regs.add(i, values.get(i).compileAndGet(cctx))
-        );
+        IntStream.range(0, values.size()).forEachOrdered(i -> regs.add(i, values.get(i).compileAndGet(cctx)));
 
         setType(inferType());
+
         ArrayType arrType = (ArrayType) getType();
         TypeRef elementType = arrType.inner();
         long size = arrType.size();
 
         String llvmElemType = elementType.getLLVMName();
-        String llvmArrType = "[" + size + " x " + llvmElemType + "]";
 
-        String arrReg = cctx.nextRegister();
+        long bytes = size * elementType.getSize();
+
         cctx.emit("; Array declaration");
-        cctx.emit(arrReg + " = alloca " + llvmArrType + " ; allocate array");
+
+        String rawPtr = cctx.nextRegister();
+        cctx.emit(rawPtr + " = call i8* @malloc(i64 " + bytes + ")");
+
+        String arrPtr = cctx.nextRegister();
+        cctx.emit(arrPtr + " = bitcast i8* " + rawPtr + " to " + llvmElemType + "*");
 
         for (int i = 0; i < size; i++) {
             String gepReg = cctx.nextRegister();
-            cctx.emit(
-                    gepReg + " = getelementptr " +
-                            llvmArrType + ", " + llvmArrType + "* " + arrReg +
-                            ", i32 0, i32 " + i +
-                            " ; index into array"
-            );
 
+            cctx.emit(gepReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrPtr + ", i64 " + i);
             if (elementType instanceof ArrayType innerArr) {
-                long bytes = innerArr.size() * innerArr.inner().getSize();
+                long innerBytes = innerArr.size() * innerArr.inner().getSize();
 
-                cctx.emit(
-                        "call void @llvm.memcpy.p0.p0.i64(" +
-                                "ptr " + gepReg + ", " +
-                                "ptr " + regs.get(i) + ", " +
-                                "i64 " + bytes + ", " +
-                                "i1 false)"
-                );
+                cctx.emit("call void @llvm.memcpy.p0.p0.i64(" + "ptr " + gepReg + ", " + "ptr " + regs.get(i) + ", " + "i64 " + innerBytes + ", " + "i1 false)");
             } else {
-                cctx.emit(
-                        "store " + llvmElemType + " " + regs.get(i) +
-                                ", " + llvmElemType + "* " + gepReg
-                );
+                cctx.emit("store " + llvmElemType + " " + regs.get(i) + ", " + llvmElemType + "* " + gepReg);
             }
-
         }
 
-        return arrReg;
+        return arrPtr;
     }
 
     @Override
