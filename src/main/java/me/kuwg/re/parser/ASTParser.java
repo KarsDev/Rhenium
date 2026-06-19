@@ -192,6 +192,10 @@ public final class ASTParser {
             left = new BinaryExpressionNode(line, left, op, right);
         }
 
+        if (matchAndConsume(KEYWORD, "is")) {
+            left = new IsNode(line(), left, parseType(false));
+        }
+
         if (matchAndConsume(KEYWORD, "if")) return parseTernaryOperator(left);
 
         return left;

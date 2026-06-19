@@ -40,3 +40,4 @@ build/
 ### Local Files ###
 files
 out
+/output.exe
