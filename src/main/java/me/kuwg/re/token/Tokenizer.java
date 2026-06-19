@@ -31,6 +31,7 @@ public class Tokenizer {
         int i = 0;
         int line = 1;
         final int n = source.length();
+        boolean continuedLine = false;
 
         List<Integer> indentStack = new ArrayList<>();
         indentStack.add(0);
@@ -62,10 +63,11 @@ public class Tokenizer {
                     line++;
                 }
                 i = scan;
+                continuedLine = false;
                 continue;
             }
 
-            if (lineStart == 0 || source.charAt(lineStart - 1) == '\n') {
+            if (!continuedLine && (lineStart == 0 || source.charAt(lineStart - 1) == '\n')) {
                 int lastIndent = indentStack.get(indentStack.size() - 1);
 
                 if (currentIndent > lastIndent) {
@@ -83,17 +85,6 @@ public class Tokenizer {
             }
 
             char c = source.charAt(i);
-
-            if (c == '\n') {
-                tokens.add(new Token(TokenType.NEWLINE, "", line));
-                line++;
-                i++;
-                continue;
-            }
-            if (Character.isWhitespace(c)) {
-                i++;
-                continue;
-            }
 
             if (c == '/') {
                 if (i + 1 < n && source.charAt(i + 1) == '/') {
@@ -113,6 +104,37 @@ public class Tokenizer {
                     }
                     continue;
                 }
+            }
+
+            if (c == '\\') {
+                if (i + 2 < n &&
+                        source.charAt(i + 1) == '\r' &&
+                        source.charAt(i + 2) == '\n') {
+                    i += 3;
+                    line++;
+                    continuedLine = true;
+                    continue;
+                }
+
+                if (i + 1 < n && source.charAt(i + 1) == '\n') {
+                    i += 2;
+                    line++;
+                    continuedLine = true;
+                    continue;
+                }
+            }
+
+            if (c == '\n') {
+                tokens.add(new Token(TokenType.NEWLINE, "", line));
+                line++;
+                i++;
+                continuedLine = false;
+                continue;
+            }
+
+            if (Character.isWhitespace(c)) {
+                i++;
+                continue;
             }
 
             if (c == '"') {
