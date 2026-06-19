@@ -153,10 +153,10 @@ func testNativeFunctions():
 
     if (sizeof(i) != 4):
         raise "Error with sizeof"
-    if (_Typeof(i) != "int"):
-        raise "Error with _Typeof"
-    if (_TypeofLLVM(i) != "i32"):
-        raise "Error with _TypeofLLVM"
+    if (typeof(i) != "int"):
+        raise "Error with typeof"
+    if (typeofLLVM(i) != "i32"):
+        raise "Error with typeofLLVM"
 
     println("Native functions testing passed successfully")
 

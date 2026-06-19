@@ -379,8 +379,8 @@ public final class ASTParser {
             case "sizeof" -> parseSizeofKeyword();
             case "len" -> parseLenKeyword();
             case "cast" -> parseCastKeyword();
-            case "_Typeof" -> parse_TypeofKeyword(false);
-            case "_TypeofLLVM" -> parse_TypeofKeyword(true);
+            case "typeof" -> parseTypeofKeyword(false);
+            case "typeofLLVM" -> parseTypeofKeyword(true);
             case "impl" -> parseImplKeyword();
             case "self" -> parseIdentifier(true);
             case "global" -> parseGlobal();
@@ -907,7 +907,7 @@ public final class ASTParser {
         return new CastNode(line, type, value);
     }
 
-    private @SubFunc ASTNode parse_TypeofKeyword(boolean llvm) {
+    private @SubFunc ASTNode parseTypeofKeyword(boolean llvm) {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
             return new RParserError("Expected '(' for typeof expression", file, line()).raise();

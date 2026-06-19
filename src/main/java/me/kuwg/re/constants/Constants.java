@@ -15,7 +15,7 @@ public abstract class Constants {
                 "mut", "const", "global",
                 "for", "if", "else", "while", "do", "break", "continue", "match",
                 "_Builtin", "_IR", "_NativeCPP", "extern",
-                "range", "len", "sizeof", "cast", "_Typeof", "_TypeofLLVM",
+                "range", "len", "sizeof", "cast", "typeof", "typeofLLVM",
                 "generic", "func", "return", "inline",
                 "none", "null", "anyptr",
                 "byte", "short", "int", "long",

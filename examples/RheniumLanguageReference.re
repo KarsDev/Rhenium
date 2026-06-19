@@ -29,7 +29,7 @@ Syntax:
 using io
 using math
 using utils.helpers in "my_package"
-using localmodule in self
+using localModule in self
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
@@ -118,16 +118,16 @@ Type queries
 */
 
 // Get the type of the variable a
-ta = _Typeof(a)
+ta = typeof(a)
 
-// Get the LLVM reppresentation of the type of the variable a
-tb = _TypeofLLVM(a)
+// Get the LLVM representation of the type of the variable a
+tb = typeofLLVM(a)
 
 /*
 Type checking
 */
 
-// Checks if a is an istance of an integer
+// Checks if a is an instance of an integer
 is_int = a is int
 
 /*
