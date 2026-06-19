@@ -9,7 +9,8 @@ import java.util.Map;
 public final class ArgumentParser {
 
     private static final Map<String, Option> OPTIONS = Map.ofEntries(
-            opt("-out", true, (b, v) -> b.outputFile(new File(v))),
+            opt("-out", true, (b, v) -> b.executableFile(new File(v))),
+            opt("-llvm-out", true, (b, v) -> b.llvmFile(new File(v))),
             opt("-no-run", false, (b, ignore) -> b.runOutput(false)),
             opt("-keep-llvm", false, (b, ignore) -> b.keepLLVM(true)),
             opt("-dump-ast", false, (b, ignore) -> b.dumpAST(true)),
@@ -68,11 +69,12 @@ public final class ArgumentParser {
                 Usage: rhenium <input.re> [options]
                 
                 Options:
-                  -out <file>           Output LLVM file
-                  -keep-llvm            Keep LLVM IR
+                  -out <file>           Output executable
+                  -llvm-out <file>      Output LLVM IR file
+                  -keep-llvm            Keep LLVM IR after compilation
                   -dump-ast             Print AST
                   -clang-args a,b,c     Extra clang arguments
-                  -no-run               Do not compile output LLVM
+                  -no-run               Do not run executable
                 """);
     }
 }

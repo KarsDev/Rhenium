@@ -240,10 +240,7 @@ public final class CompilationContext {
             var var = vr.getVariable(this);
             if (var != null && var.addrReg() != null && reg.equals(var.addrReg())) {
                 String loaded = nextRegister();
-                emit(loaded + " = load "
-                        + node.getType().getLLVMName() + ", "
-                        + node.getType().getLLVMName() + "* "
-                        + reg);
+                emit(loaded + " = load " + node.getType().getLLVMName() + ", " + node.getType().getLLVMName() + "* " + reg);
                 return loaded;
             }
         }
@@ -276,16 +273,16 @@ public final class CompilationContext {
         return ns.isEmpty() ? name : ns + "$$" + name;
     }
 
-    public String compileAndGet(File output, List<String> clangArgs) throws IOException {
+    public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs) throws IOException {
         var main = getFunction("main", List.of());
 
         if (main == null) {
-            noMain(output);
+            noMain(llvmFile);
         } else {
-            withMain(main, output);
+            withMain(main, llvmFile);
         }
 
-        return getCompilationCommand(output.getAbsolutePath(), clangArgs);
+        return getCompilationCommand(llvmFile.getAbsolutePath(), executableFile.getAbsolutePath(), clangArgs);
     }
 
     private void noMain(File output) throws IOException {
@@ -315,10 +312,7 @@ public final class CompilationContext {
         }
 
         if (!globalCode.isEmpty() && containsInvalidGlobalCode(globalCode.toString())) {
-            new RMainFunctionError(
-                    "You cannot declare code if you declared the main function",
-                    -1
-            ).raise();
+            new RMainFunctionError("You cannot declare code if you declared the main function", -1).raise();
             return;
         }
 
@@ -342,14 +336,10 @@ public final class CompilationContext {
     }
 
     private boolean containsInvalidGlobalCode(String code) {
-        return Arrays.stream(code.split("\n"))
-                .map(String::trim)
-                .filter(line -> !line.isEmpty())
-                .filter(line -> !line.startsWith(";"))
-                .anyMatch(line -> {
-                    String[] parts = line.split("\\s+");
-                    return parts.length == 0 || !parts[0].contains("_global_load");
-                });
+        return Arrays.stream(code.split("\n")).map(String::trim).filter(line -> !line.isEmpty()).filter(line -> !line.startsWith(";")).anyMatch(line -> {
+            String[] parts = line.split("\\s+");
+            return parts.length == 0 || !parts[0].contains("_global_load");
+        });
     }
 
     public void addEnum(String name, REnum rEnum) {
@@ -376,7 +366,7 @@ public final class CompilationContext {
         return traits.containsKey(name);
     }
 
-    private String getCompilationCommand(String name, List<String> clangArgs) {
+    private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
 
         final String extraClangArgs =
@@ -384,11 +374,10 @@ public final class CompilationContext {
                         ? ""
                         : " " + String.join(" ", clangArgs);
 
-        String exeBase = name;
-        int lastDot = exeBase.lastIndexOf('.');
-        if (lastDot > 0) exeBase = exeBase.substring(0, lastDot);
+        String tempBase = executableFile;
+        int lastDot = tempBase.lastIndexOf('.');
+        if (lastDot > 0) tempBase = tempBase.substring(0, lastDot);
 
-        String finalExe = exeBase + (WIN ? ".exe" : ".out");
         String deleteCmd = WIN ? "del /f " : "rm -f ";
         String and = " && ";
 
@@ -410,13 +399,13 @@ public final class CompilationContext {
             bcFiles.add(bc);
         }
 
-        String linked = exeBase + ".linked.bc";
+        String linked = tempBase + ".linked.bc";
 
         if (!bcFiles.isEmpty()) {
             cmd.append("llvm-link -o ")
                     .append(quote.apply(linked))
                     .append(" ")
-                    .append(quote.apply(name));
+                    .append(quote.apply(llvmFile));
 
             for (String bc : bcFiles) {
                 cmd.append(" ").append(quote.apply(bc));
@@ -424,12 +413,12 @@ public final class CompilationContext {
 
             cmd.append(and);
         } else {
-            linked = name;
+            linked = llvmFile;
         }
 
-        String optimized = exeBase + ".opt.bc";
+        String optimized = tempBase + ".opt.bc";
 
-        cmd.append("opt  -passes=\"default<O3>\" ")
+        cmd.append("opt -passes=\"default<O3>\" ")
                 .append(quote.apply(linked))
                 .append(" -o ")
                 .append(quote.apply(optimized))
@@ -448,7 +437,7 @@ public final class CompilationContext {
                 .append(" ")
                 .append(quote.apply(optimized))
                 .append(" -o ")
-                .append(quote.apply(finalExe))
+                .append(quote.apply(executableFile))
                 .append(and);
 
         cmd.append(deleteCmd).append(quote.apply(optimized)).append(" ");
@@ -465,9 +454,7 @@ public final class CompilationContext {
 
     public TypeRef resolveConcrete(TypeRef t) {
         if (t instanceof AppliedGenStructType a) {
-            List<TypeRef> args = a.args().stream()
-                    .map(this::resolveConcrete)
-                    .toList();
+            List<TypeRef> args = a.args().stream().map(this::resolveConcrete).toList();
             RGenStruct gen = (RGenStruct) getStruct(a.base().name());
             return gen.instantiate(args, this).type();
         }

@@ -26,11 +26,12 @@ public final class CompilerPipeline {
             CompilationContext cctx = new CompilationContext(frontend.typeMap);
             ast.compile(cctx);
 
-            String command = cctx.compileAndGet(args.outputFile(), args.clangArgs());
+            String command = cctx.compileAndGet(args.llvmFile(), args.executableFile(), args.clangArgs());
 
             if (args.dumpAST()) dumpAST(ast);
             if (args.runOutput()) CommandRunner.run(command);
-            if (!args.keepLLVM()) args.outputFile().delete();
+            if (!args.keepLLVM()) args.llvmFile().delete();
+
         } catch (Exception e) {
             System.err.println("Compilation failed");
             e.printStackTrace(System.err);
