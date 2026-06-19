@@ -32,7 +32,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "fds";
+    private static final String ERROR_LINE = "\" ERROR LINE\"";
 
     private final Map<String, TypeRef> typeMap;
     private final List<String> irCode = new ArrayList<>();

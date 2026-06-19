@@ -41,7 +41,7 @@ public class EnumDeclarationNode extends ASTNode implements GlobalNode {
         List<REnumField> enumFields = new ArrayList<>();
 
         fields.forEach((name, value) -> {
-            String vr = value.compileAndGet(cctx);
+            String vr = value.compileToConstant(cctx);
             enumFields.add(new REnumField(name, value.getType(), vr));
         });
 
