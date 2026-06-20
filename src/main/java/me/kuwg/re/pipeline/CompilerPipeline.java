@@ -23,7 +23,7 @@ public final class CompilerPipeline {
             Frontend frontend = new Frontend(args.inputFile());
             var ast = frontend.parse();
 
-            CompilationContext cctx = new CompilationContext(frontend.typeMap);
+            CompilationContext cctx = new CompilationContext(args.inputFile().getName(), frontend.typeMap);
             ast.compile(cctx);
 
             String command = cctx.compileAndGet(args.llvmFile(), args.executableFile(), args.clangArgs());

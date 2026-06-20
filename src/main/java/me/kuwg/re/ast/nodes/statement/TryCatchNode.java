@@ -12,8 +12,8 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
     private final BlockNode tryBlock;
     private final BlockNode catchBlock;
 
-    public TryCatchNode(final int line, final BlockNode tryBlock, final BlockNode catchBlock) {
-        super(line);
+    public TryCatchNode(final String fileName, final int line, final BlockNode tryBlock, final BlockNode catchBlock) {
+        super(fileName, line);
         this.tryBlock = tryBlock;
         this.catchBlock = catchBlock;
     }
@@ -54,7 +54,7 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
 
     @Override
     public TryCatchNode clone() {
-        return new TryCatchNode(line, tryBlock.clone(), catchBlock.clone());
+        return new TryCatchNode(fileName, line, tryBlock.clone(), catchBlock.clone());
     }
 
     @Override

@@ -12,8 +12,8 @@ public class UsingNode extends ASTNode implements GlobalNode {
     private final String name;
     private final String pkg;
 
-    public UsingNode(final int line, final String sourceFile, final String name, final String pkg) {
-        super(line);
+    public UsingNode(final String fileName, final int line, final String sourceFile, final String name, final String pkg) {
+        super(fileName, line);
         this.sourceFile = sourceFile;
         this.name = name.toLowerCase();
         this.pkg = pkg;

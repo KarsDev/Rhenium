@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RDerefNotPointerError extends RError {
-    public RDerefNotPointerError(final String name, final int line) {
-        super("Dereferencing a variable that is not a pointer: " + name, line);
+    public RDerefNotPointerError(final String name, final String fileName, final int line) {
+        super("Dereferencing a variable that is not a pointer: " + name, fileName, line);
     }
 
     @Override

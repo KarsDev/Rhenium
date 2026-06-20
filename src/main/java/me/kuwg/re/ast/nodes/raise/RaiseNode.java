@@ -18,8 +18,8 @@ import java.util.Map;
 public class RaiseNode extends ASTNode implements InterruptNode {
     private final ValueNode value;
 
-    public RaiseNode(final int line, final ValueNode value) {
-        super(line);
+    public RaiseNode(final String fileName, final int line, final ValueNode value) {
+        super(fileName, line);
         this.value = value;
     }
 
@@ -38,24 +38,24 @@ public class RaiseNode extends ASTNode implements InterruptNode {
                 String message = generateLog(line);
 
                 new FunctionCallNode(
-                        line,
+                        fileName, line,
                         "println",
-                        List.of(new StringNode(line, message))
+                        List.of(new StringNode(fileName, line, message))
                 ).compile(cctx);
             } else {
                 String valueReg = value.compileAndGet(cctx);
 
                 if (!(value.getType() instanceof StrBuiltinType)) {
-                    new RVariableTypeError("str", value.getType().getName(), line).raise();
+                    new RVariableTypeError("str", value.getType().getName(), fileName, line).raise();
                     return;
                 }
 
                 String message = generateLog(line);
 
                 new FunctionCallNode(
-                        line,
+                        fileName, line,
                         "println",
-                        List.of(new ValueNode(line, BuiltinTypes.STR.getType()) {
+                        List.of(new ValueNode(fileName, line, BuiltinTypes.STR.getType()) {
 
                             @Override
                             public void write(final StringBuilder sb, final String indent) {
@@ -73,7 +73,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
 
                             @Override
                             public String compileAndGet(final CompilationContext cctx) {
-                                String strReg = new StringNode(line, message).compileAndGet(cctx);
+                                String strReg = new StringNode(fileName, line, message).compileAndGet(cctx);
                                 String msgReg = cctx.nextRegister();
 
                                 cctx.include(-1, null, "string", null);
@@ -96,9 +96,9 @@ public class RaiseNode extends ASTNode implements InterruptNode {
             }
 
             new FunctionCallNode(
-                    line,
+                    fileName, line,
                     "exit",
-                    List.of(new NumberNode(line, "1"))
+                    List.of(new NumberNode(fileName, line, "1"))
             ).compile(cctx);
 
             cctx.emit("unreachable");
@@ -117,7 +117,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
 
     @Override
     public RaiseNode clone() {
-        return new RaiseNode(line, value.clone());
+        return new RaiseNode(fileName, line, value.clone());
     }
 
     private static String generateLog(int line) {

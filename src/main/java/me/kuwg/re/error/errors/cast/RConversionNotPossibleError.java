@@ -5,8 +5,8 @@ import me.kuwg.re.error.manager.RError;
 import me.kuwg.re.type.TypeRef;
 
 public @SuppressWarnings("unused") class RConversionNotPossibleError extends RError {
-    public RConversionNotPossibleError(final TypeRef type, final int line) {
-        super("Conversion is not supported for " + type.getName(), line);
+    public RConversionNotPossibleError(final TypeRef type, final String fileName, final int line) {
+        super("Conversion is not supported for " + type.getName(), fileName, line);
     }
 
     @Override

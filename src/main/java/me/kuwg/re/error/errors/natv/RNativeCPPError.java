@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RNativeCPPError extends RError {
-    public RNativeCPPError(final String message, final int line) {
-        super(message, line);
+    public RNativeCPPError(final String message, final String fileName, final int line) {
+        super(message, fileName, line);
     }
 
     @Override

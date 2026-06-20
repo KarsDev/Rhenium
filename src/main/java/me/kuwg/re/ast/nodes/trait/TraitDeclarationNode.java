@@ -14,8 +14,8 @@ public class TraitDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
     private final Map<String, TraitFunction> functions;
 
-    public TraitDeclarationNode(final int line, final String name, final Map<String, TraitFunction> functions) {
-        super(line);
+    public TraitDeclarationNode(final String fileName, final int line, final String name, final Map<String, TraitFunction> functions) {
+        super(fileName, line);
         this.name = name;
         this.functions = functions;
     }
@@ -37,7 +37,7 @@ public class TraitDeclarationNode extends ASTNode implements GlobalNode {
     public void compile(final CompilationContext cctx) {
         cctx.declare("; Trait declaration: " + name);
         if (cctx.isTraitDeclared(name)) {
-            new RTraitAlreadyDeclaredError(name, line).raise();
+            new RTraitAlreadyDeclaredError(name, line, fileName).raise();
             return;
         }
 

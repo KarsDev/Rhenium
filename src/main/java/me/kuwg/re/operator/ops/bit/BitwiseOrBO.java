@@ -34,7 +34,7 @@ public final class BitwiseOrBO extends BinaryOperator {
             llvmType = "i64";
         } else {
             return new RUnsupportedBinaryExpressionError(
-                    leftType.getName(), getSymbol(), rightType.getName(), c.line()
+                    leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
             ).raise();
         }
 

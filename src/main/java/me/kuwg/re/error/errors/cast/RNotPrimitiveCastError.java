@@ -5,8 +5,8 @@ import me.kuwg.re.error.manager.RError;
 import me.kuwg.re.type.TypeRef;
 
 public class RNotPrimitiveCastError extends RError {
-    public RNotPrimitiveCastError(final TypeRef type, final int line) {
-        super("Cannot do a primitive cast for <" + type.getName() + "> since it is not primitive", line);
+    public RNotPrimitiveCastError(final TypeRef type, final String fileName, final int line) {
+        super("Cannot do a primitive cast for <" + type.getName() + "> since it is not primitive", fileName, line);
     }
 
     @Override

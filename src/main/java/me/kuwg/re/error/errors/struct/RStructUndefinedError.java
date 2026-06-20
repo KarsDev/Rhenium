@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RStructUndefinedError extends RError {
-    public RStructUndefinedError(final String name, final int line) {
-        super("Struct not found: " + name, line);
+    public RStructUndefinedError(final String name, final String fileName, final int line) {
+        super("Struct not found: " + name, fileName, line);
     }
 
     @Override

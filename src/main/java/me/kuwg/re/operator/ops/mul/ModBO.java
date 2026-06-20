@@ -67,7 +67,7 @@ public final class ModBO extends BinaryOperator {
             resultType = leftType;
         } else {
             return new RUnsupportedBinaryExpressionError(
-                    leftType.getName(), getSymbol(), rightType.getName(), c.line()
+                    leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
             ).raise();
         }
 

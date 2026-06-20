@@ -9,8 +9,8 @@ import me.kuwg.re.type.iterable.range.RangeType;
 import java.util.Map;
 
 public class RangeNode extends ValueNode {
-    public RangeNode(final int line, final ValueNode start, final ValueNode end, final ValueNode step) {
-        super(line, new RangeType(start, end, step));
+    public RangeNode(final String fileName, final int line, final ValueNode start, final ValueNode end, final ValueNode step) {
+        super(fileName, line, new RangeType(start, end, step));
     }
 
     @Override
@@ -48,6 +48,6 @@ public class RangeNode extends ValueNode {
     @Override
     public RangeNode clone() {
         RangeType t = (RangeType) type;
-        return new RangeNode(line, t.start().clone(), t.end().clone(), t.step().clone());
+        return new RangeNode(fileName, line, t.start().clone(), t.end().clone(), t.step().clone());
     }
 }

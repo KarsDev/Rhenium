@@ -19,15 +19,15 @@ public class LambdaDeclarationNode extends ValueNode {
     private final List<FunctionParameter> params;
     private final ValueNode func;
 
-    public LambdaDeclarationNode(final int line, final List<FunctionParameter> params, final ValueNode func) {
-        super(line);
+    public LambdaDeclarationNode(final String fileName, final int line, final List<FunctionParameter> params, final ValueNode func) {
+        super(fileName, line);
         this.params = params;
         this.func = func;
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("lambda", line).raise();
+        new RValueMustBeUsedError("lambda", fileName, line).raise();
     }
 
     @Override
@@ -50,9 +50,9 @@ public class LambdaDeclarationNode extends ValueNode {
 
         String lambdaName = "__lambda_" + System.identityHashCode(this);
 
-        BlockNode block = new BlockNode(List.of(returnType instanceof NoneBuiltinType ? func : new ReturnNode(line, func)));
+        BlockNode block = new BlockNode(fileName, List.of(returnType instanceof NoneBuiltinType ? func : new ReturnNode(fileName, line, func)));
 
-        FunctionDeclarationNode fn = new FunctionDeclarationNode(line, false, lambdaName, params, returnType, block);
+        FunctionDeclarationNode fn = new FunctionDeclarationNode(fileName, line, false, lambdaName, params, returnType, block);
 
         fn.compile(cctx);
 
@@ -63,7 +63,7 @@ public class LambdaDeclarationNode extends ValueNode {
 
     @Override
     public LambdaDeclarationNode clone() {
-        return new LambdaDeclarationNode(line, params, func.clone());
+        return new LambdaDeclarationNode(fileName, line, params, func.clone());
     }
 
     @Override

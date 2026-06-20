@@ -10,8 +10,8 @@ public class NamespaceCallNode extends ValueNode {
     private final String name;
     private final ValueNode value;
 
-    public NamespaceCallNode(final int line, final String name, final ValueNode value) {
-        super(line);
+    public NamespaceCallNode(final String fileName, final int line, final String name, final ValueNode value) {
+        super(fileName, line);
         this.name = name;
         this.value = value;
     }
@@ -28,7 +28,7 @@ public class NamespaceCallNode extends ValueNode {
 
     @Override
     public ValueNode clone() {
-        return new NamespaceCallNode(line, name, value.clone());
+        return new NamespaceCallNode(fileName, line, name, value.clone());
     }
 
     @Override

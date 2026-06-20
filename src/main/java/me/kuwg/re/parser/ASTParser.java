@@ -93,34 +93,34 @@ import static me.kuwg.re.token.TokenType.*;
 
 public final class ASTParser {
     public final Map<String, TypeRef> typeMap;
-    private final String file;
+    private final String fileName;
     private final Token[] tokens;
     private final boolean initial;
     private List<String> currentGenericTypes = new ArrayList<>();
     private int tokenIndex;
 
-    public ASTParser(final String file, final Token[] tokens) {
-        this.file = file;
+    public ASTParser(final String fileName, final Token[] tokens) {
+        this.fileName = fileName;
         this.tokens = tokens;
         this.initial = true;
         this.typeMap = new HashMap<>();
     }
 
-    public ASTParser(final String file, final Token[] tokens, final Map<String, TypeRef> typeMap) {
-        this.file = file;
+    public ASTParser(final String fileName, final Token[] tokens, final Map<String, TypeRef> typeMap) {
+        this.fileName = fileName;
         this.tokens = tokens;
         this.initial = true;
         this.typeMap = typeMap;
-        if (typeMap.isEmpty() && !file.contains("default")) throw new RuntimeException("name=" + file);
+        if (typeMap.isEmpty() && !fileName.contains("default")) throw new RuntimeException("name=" + fileName);
     }
 
     private void includeInitialModules(AST ast) {
-        ModuleLoadingHelper.collectModuleTypes(0, file, Constants.Parser.DEFAULT_MODULE_NAME, null, typeMap).forEach(typeMap::putIfAbsent);
-        ast.addChild(new UsingNode(0, null, Constants.Parser.DEFAULT_MODULE_NAME, null));
+        ModuleLoadingHelper.collectModuleTypes(fileName, 0, fileName, Constants.Parser.DEFAULT_MODULE_NAME, null, typeMap).forEach(typeMap::putIfAbsent);
+        ast.addChild(new UsingNode(fileName, 0, null, Constants.Parser.DEFAULT_MODULE_NAME, null));
     }
 
     public AST parse() {
-        AST ast = new AST();
+        AST ast = new AST(fileName);
 
         if (initial) {
             includeInitialModules(ast);
@@ -142,7 +142,7 @@ public final class ASTParser {
         removeNewlines();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indented block", file, line()).raise();
+            return new RParserError("Expected indented block", fileName, line()).raise();
         }
 
         consume();
@@ -159,14 +159,14 @@ public final class ASTParser {
             statements.add(stmt);
         }
 
-        if (match(EOF)) return new BlockNode(statements);
+        if (match(EOF)) return new BlockNode(fileName, statements);
         if (match(DEDENT)) {
             consume();
         } else {
-            return new RParserError("Expected dedent to close block", file, line()).raise();
+            return new RParserError("Expected dedent to close block", fileName, line()).raise();
         }
 
-        return new BlockNode(statements);
+        return new BlockNode(fileName, statements);
     }
 
     private ValueNode parseExpression(int minPrecedence) {
@@ -190,11 +190,11 @@ public final class ASTParser {
             consume();
             ValueNode right = parseExpression(op.getPrecedence() + 1);
 
-            left = new BinaryExpressionNode(line, left, op, right);
+            left = new BinaryExpressionNode(line, fileName, left, op, right);
         }
 
         if (matchAndConsume(KEYWORD, "is")) {
-            left = new IsNode(line(), left, parseType(false));
+            left = new IsNode(fileName, line(), left, parseType(false));
         }
 
         if (matchAndConsume(KEYWORD, "if")) return parseTernaryOperator(left);
@@ -210,7 +210,7 @@ public final class ASTParser {
         int line = line();
 
         ASTNode n = switch (current().type()) {
-            case INDENT -> new RParserError("Unexpected indent", file, line).raise();
+            case INDENT -> new RParserError("Unexpected indent", fileName, line).raise();
             case KEYWORD -> parseKeyword();
             case IDENTIFIER -> parseIdentifier(false);
             case NUMBER -> parseNumber();
@@ -220,11 +220,11 @@ public final class ASTParser {
                 if (matchAndConsume(OPERATOR, "@")) yield parseDereferenceOperator();
                 else if (matchAndConsume(OPERATOR, "~")) yield parseBitwiseNotOperator();
                 else
-                    yield new RParserError("Unexpected operator in statement: " + current().value(), file, line).raise();
+                    yield new RParserError("Unexpected operator in statement: " + current().value(), fileName, line).raise();
             }
             case DIVIDER -> parseDivider();
             default ->
-                    new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line).raise();
+                    new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), fileName, line).raise();
         };
 
         if (match(EOF) || match(DEDENT)) {
@@ -232,7 +232,7 @@ public final class ASTParser {
         }
         if (!previous().matches(DEDENT)) {
             if (!match(NEWLINE)) {
-                return new RParserError("Expected newline after statement, got " + current().value(), file, line()).raise();
+                return new RParserError("Expected newline after statement, got " + current().value(), fileName, line()).raise();
             }
             consume();
         }
@@ -249,7 +249,7 @@ public final class ASTParser {
             case STRING -> node = parseString();
             case IDENTIFIER -> {
                 ASTNode n2 = parseIdentifier(false);
-                if (!(n2 instanceof ValueNode v)) return new RParserError("Expected a value", file, line()).raise();
+                if (!(n2 instanceof ValueNode v)) return new RParserError("Expected a value", fileName, line()).raise();
                 node = v;
             }
             case OPERATOR -> {
@@ -260,11 +260,11 @@ public final class ASTParser {
                     }
                     case "-" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), NumberNode.ZERO, SubBO.INSTANCE, parseValue());
+                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, SubBO.INSTANCE, parseValue());
                     }
                     case "+" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), NumberNode.ZERO, AddBO.INSTANCE, parseValue());
+                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, AddBO.INSTANCE, parseValue());
                     }
                     case "~" -> {
                         consume();
@@ -272,10 +272,10 @@ public final class ASTParser {
                     }
                     case "not" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), parseValue(), EqualsBO.INSTANCE, new BooleanNode(line(), false));
+                        node = new BinaryExpressionNode(line(), fileName, parseValue(), EqualsBO.INSTANCE, new BooleanNode(fileName, line(), false));
                     }
                     default -> {
-                        return new RParserError("Unexpected operator: " + token.value(), file, line()).raise();
+                        return new RParserError("Unexpected operator: " + token.value(), fileName, line()).raise();
                     }
                 }
             }
@@ -285,19 +285,19 @@ public final class ASTParser {
                 } else if (matchAndConsume(DIVIDER, "(")) {
                     node = parseExpression(0);
                     if (!matchAndConsume(DIVIDER, ")")) {
-                        return new RParserError("Expected ')'", file, line()).raise();
+                        return new RParserError("Expected ')'", fileName, line()).raise();
                     }
                 } else {
-                    return new RParserError("Unexpected divider: " + token.value(), file, line()).raise();
+                    return new RParserError("Unexpected divider: " + token.value(), fileName, line()).raise();
                 }
             }
             case BOOLEAN -> {
                 if (matchAndConsume(BOOLEAN, "true")) {
-                    return new BooleanNode(previous().line(), true);
+                    return new BooleanNode(fileName, previous().line(), true);
                 } else if (matchAndConsume(BOOLEAN, "false")) {
-                    return new BooleanNode(previous().line(), false);
+                    return new BooleanNode(fileName, previous().line(), false);
                 } else {
-                    return new RParserError("Expected boolean value", file, line()).raise();
+                    return new RParserError("Expected boolean value", fileName, line()).raise();
                 }
             }
             case KEYWORD -> {
@@ -305,12 +305,12 @@ public final class ASTParser {
                 if (n2 instanceof ValueNode value) {
                     node = value;
                 } else {
-                    return new RParserError("Expected value", file, n2.getLine()).raise();
+                    return new RParserError("Expected value", fileName, n2.getLine()).raise();
                 }
             }
             case CHARACTER -> node = parseCharacter();
             default -> {
-                return new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), file, line()).raise();
+                return new RParserError("Unexpected token: " + current().value() + ", type: " + current().type(), fileName, line()).raise();
             }
         }
 
@@ -320,32 +320,32 @@ public final class ASTParser {
             if (match(DIVIDER, "(")) {
                 var args = parseParamsCall();
                 if (!(node instanceof DirectVariableReferenceNode vr)) {
-                    return new RParserError("Expected reference for function call", file, line).raise();
+                    return new RParserError("Expected reference for function call", fileName, line).raise();
                 }
-                node = new FunctionCallNode(line, vr.getSimpleName(), args);
+                node = new FunctionCallNode(fileName, line, vr.getSimpleName(), args);
             } else if (match(DIVIDER, "[")) {
                 consume();
                 ValueNode index = parseValue();
                 if (!matchAndConsume(DIVIDER, "]")) {
-                    return new RParserError("Expected ']'", file, line).raise();
+                    return new RParserError("Expected ']'", fileName, line).raise();
                 }
 
                 if (matchAndConsume(OPERATOR, "=")) {
                     ValueNode value = parseValue();
-                    node = new ArraySetNode(line, node, index, value);
+                    node = new ArraySetNode(fileName, line, node, index, value);
                 } else {
-                    node = new ArrayAccessNode(line, node, index);
+                    node = new ArrayAccessNode(fileName, line, node, index);
                 }
             } else if (match(OPERATOR, "@")) {
                 consume();
                 if (matchAndConsume(OPERATOR, "=")) {
                     ValueNode value = parseValue();
-                    node = new DereferenceAssignNode(line, node, value);
+                    node = new DereferenceAssignNode(fileName, line, node, value);
                 } else {
                     if (!(node instanceof VariableReference vr)) {
-                        return new RParserError("Expected any type of variable reference for pointer type declaration", file, line()).raise();
+                        return new RParserError("Expected any type of variable reference for pointer type declaration", fileName, line()).raise();
                     }
-                    node = new DereferenceNode(line, vr);
+                    node = new DereferenceNode(fileName, line, vr);
                 }
             } else {
                 break;
@@ -399,7 +399,7 @@ public final class ASTParser {
             case "enum" -> parseEnumKeyword();
             case "extern" -> parseExternKeyword();
             case "trait" -> parseTraitKeyword();
-            default -> new RParserError("Unexpected keyword: " + kw, file, line()).raise();
+            default -> new RParserError("Unexpected keyword: " + kw, fileName, line()).raise();
         };
     }
 
@@ -407,7 +407,7 @@ public final class ASTParser {
         int line = line();
         String name = self ? "self" : consume().value();
 
-        ValueNode node = new DirectVariableReferenceNode(line, name);
+        ValueNode node = new DirectVariableReferenceNode(fileName, line, name);
 
         node = parseSubExpr(line, self, name, node);
 
@@ -420,7 +420,7 @@ public final class ASTParser {
                 consume();
 
                 ValueNode value = parseValue();
-                yield new VariableDeclarationNode(line, variable, false, null, value);
+                yield new VariableDeclarationNode(fileName, line, variable, false, null, value);
             }
             case ":" -> {
                 consume();
@@ -433,19 +433,19 @@ public final class ASTParser {
                 else type = null;
 
                 if (!matchAndConsume(OPERATOR, "=")) {
-                    yield new RParserError("Expected '=' for variable assignment", file, line()).raise();
+                    yield new RParserError("Expected '=' for variable assignment", fileName, line()).raise();
                 }
 
                 ValueNode value = parseValue();
-                yield new VariableDeclarationNode(line, variable, mutable, type, value);
+                yield new VariableDeclarationNode(fileName, line, variable, mutable, type, value);
             }
 
-            default -> new RParserError("TODO var reference or other assignment ops", file, line()).raise();
+            default -> new RParserError("TODO var reference or other assignment ops", fileName, line()).raise();
         };
     }
 
     private ValueNode parseNumber() {
-        return new NumberNode(line(), consume().value());
+        return new NumberNode(fileName, line(), consume().value());
     }
 
     private @SubFunc ASTNode parse_BuiltinKeyword() {
@@ -456,7 +456,7 @@ public final class ASTParser {
         boolean keepName = matchAndConsume(KEYWORD, "global");
 
         if (!matchAndConsume(KEYWORD, "func")) {
-            return new RParserError("Expected 'func' for builtin function declaration", file, line).raise();
+            return new RParserError("Expected 'func' for builtin function declaration", fileName, line).raise();
         }
 
         String name = identifier();
@@ -464,36 +464,36 @@ public final class ASTParser {
         var params = parseParamsDeclare(false);
 
         if (!matchAndConsume(OPERATOR, "->")) {
-            return new RParserError("Expected \"->\" for builtin function type declaration", file, line).raise();
+            return new RParserError("Expected \"->\" for builtin function type declaration", fileName, line).raise();
         }
 
         TypeRef returnType = parseType(false);
 
         if (!matchAndConsume(OPERATOR, "=")) {
-            return new RParserError("Expected '=' for builtin function declaration", file, line).raise();
+            return new RParserError("Expected '=' for builtin function declaration", fileName, line).raise();
         }
 
         if (!match(STRING)) {
-            return new RParserError("Expected string literal for builtin function body", file, line).raise();
+            return new RParserError("Expected string literal for builtin function body", fileName, line).raise();
         }
 
         String body = consume().value();
 
-        return new BuiltinFunctionDeclarationNode(line, keepName, name, params, returnType, body);
+        return new BuiltinFunctionDeclarationNode(fileName, line, keepName, name, params, returnType, body);
     }
 
     private @SubFunc ASTNode parse_IRKeyword() {
         int line = line();
 
         if (!match(STRING)) {
-            return new RParserError("Expected string literal for IR declaration", file, line).raise();
+            return new RParserError("Expected string literal for IR declaration", fileName, line).raise();
         }
 
-        return new IRDeclarationNode(line, consume().value());
+        return new IRDeclarationNode(fileName, line, consume().value());
     }
 
     private ValueNode parseString() {
-        return new StringNode(line(), consume().value());
+        return new StringNode(fileName, line(), consume().value());
     }
 
     private @SubFunc ASTNode parseUsingKeyword() {
@@ -511,7 +511,7 @@ public final class ASTParser {
             if (matchAndConsume(KEYWORD, "self")) {
                 pkg = "self";
             } else if (!match(STRING)) {
-                return new RParserError("Expected string literal for using package", file, line).raise();
+                return new RParserError("Expected string literal for using package", fileName, line).raise();
             } else {
                 pkg = consume().value();
             }
@@ -519,28 +519,28 @@ public final class ASTParser {
             pkg = null;
         }
 
-        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
+        ModuleLoadingHelper.collectModuleTypes(fileName, line, fileName, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
 
-        return new UsingNode(line, file, name.toString(), pkg);
+        return new UsingNode(fileName, line, fileName, name.toString(), pkg);
     }
 
     private @SubFunc ASTNode parsePtrKeyword() {
         int line = line();
 
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for pointer type declaration", file, line).raise();
+            return new RParserError("Expected '(' for pointer type declaration", fileName, line).raise();
 
         ValueNode value = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for pointer type declaration", file, line).raise();
+            return new RParserError("Expected ')' for pointer type declaration", fileName, line).raise();
 
-        if (value instanceof NumberNode n) return new PointerCreationNode(line, n);
+        if (value instanceof NumberNode n) return new PointerCreationNode(fileName, line, n);
 
         if (!(value instanceof VariableReference vr))
-            return new RParserError("Expected any type of variable reference for pointer type declaration", file, line).raise();
+            return new RParserError("Expected any type of variable reference for pointer type declaration", fileName, line).raise();
 
-        return new ReferenceNode(line, vr);
+        return new ReferenceNode(fileName, line, vr);
     }
 
     private @SubFunc ValueNode parseDereferenceOperator() {
@@ -548,17 +548,17 @@ public final class ASTParser {
         VariableReference holder;
 
         if (matchAndConsume(KEYWORD, "self")) {
-            holder = new DirectVariableReferenceNode(line, "self");
+            holder = new DirectVariableReferenceNode(fileName, line, "self");
         } else if (matchAndConsume(KEYWORD, "this")) {
-            holder = new DereferenceNode(line, new DirectVariableReferenceNode(line, "self"));
+            holder = new DereferenceNode(fileName, line, new DirectVariableReferenceNode(fileName, line, "self"));
         } else if (matchAndConsume(DIVIDER, "(")) {
             ASTNode v = parseValue();
             if (!(v instanceof VariableReference vr))
-                return new RParserError("Expected variable reference for dereference operator", file, line).raise();
+                return new RParserError("Expected variable reference for dereference operator", fileName, line).raise();
             holder = vr;
-            if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')'", file, line).raise();
+            if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')'", fileName, line).raise();
         } else {
-            holder = new DirectVariableReferenceNode(line, identifier());
+            holder = new DirectVariableReferenceNode(fileName, line, identifier());
         }
 
         if (match(OPERATOR, ".")) {
@@ -566,15 +566,15 @@ public final class ASTParser {
         }
 
         if (match(OPERATOR, ":")) {
-            return new RParserError("You can't declare mutability or type with dereference operator", file, line).raise();
+            return new RParserError("You can't declare mutability or type with dereference operator", fileName, line).raise();
         }
 
         if (matchAndConsume(OPERATOR, "=")) {
             ValueNode v2 = parseValue();
-            return new DereferenceAssignNode(line, holder, v2);
+            return new DereferenceAssignNode(fileName, line, holder, v2);
         }
 
-        return new DereferenceNode(line, holder);
+        return new DereferenceNode(fileName, line, holder);
     }
 
     private @SubFunc ASTNode parseWhileKeyword() {
@@ -583,20 +583,20 @@ public final class ASTParser {
         ValueNode condition = parseCondition();
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' after while loop condition", file, line()).raise();
+            return new RParserError("Expected ':' after while loop condition", fileName, line()).raise();
         }
 
         var block = parseBlock();
 
-        return new WhileNode(line, condition, block);
+        return new WhileNode(fileName, line, condition, block);
     }
 
     private @SubFunc ASTNode parseBreakKeyword() {
-        return new BreakNode(previous().line());
+        return new BreakNode(fileName, previous().line());
     }
 
     private @SubFunc ASTNode parseContinueKeyword() {
-        return new ContinueNode(previous().line());
+        return new ContinueNode(fileName, previous().line());
     }
 
     private @SubFunc ASTNode parseFuncKeyword() {
@@ -611,15 +611,15 @@ public final class ASTParser {
         TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : NoneBuiltinType.INSTANCE;
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for function declaration", file, line).raise();
+            return new RParserError("Expected ':' for function declaration", fileName, line).raise();
         }
 
         BlockNode block = parseBlock();
 
-        FunctionDeclarationNode fdn = new FunctionDeclarationNode(line, false, name, params, inline, returnType, block);
+        FunctionDeclarationNode fdn = new FunctionDeclarationNode(fileName, line, false, name, params, inline, returnType, block);
 
         if (fdn.isMain() && inline) {
-            return new RParserError("Cannot inline main function", file, line).raise();
+            return new RParserError("Cannot inline main function", fileName, line).raise();
         }
 
         return fdn;
@@ -628,61 +628,61 @@ public final class ASTParser {
     private @SubFunc ASTNode parseForKeyword() {
         int line = line();
 
-        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for for loop", file, line).raise();
+        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for for loop", fileName, line).raise();
 
         String name = identifier();
 
         if (!matchAndConsume(OPERATOR, "in")) {
-            return new RParserError("Expected 'in' for for loop", file, line).raise();
+            return new RParserError("Expected 'in' for for loop", fileName, line).raise();
         }
 
         var collection = parseValue();
 
-        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for for loop", file, line).raise();
+        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for for loop", fileName, line).raise();
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' after for loop collection", file, line()).raise();
+            return new RParserError("Expected ':' after for loop collection", fileName, line()).raise();
         }
 
         var block = parseBlock();
 
-        return new ForLoopNode(line, name, collection, block);
+        return new ForLoopNode(fileName, line, name, collection, block);
     }
 
     private @SubFunc ASTNode parseRangeKeyword() {
         int line = line();
 
         if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for range declaration", file, line()).raise();
+            return new RParserError("Expected '(' for range declaration", fileName, line()).raise();
         }
 
         ValueNode first = parseValue();
 
         if (matchAndConsume(DIVIDER, ")")) {
-            return new RangeNode(line, new NumberNode(line, "0"), first, new NumberNode(line, "1"));
+            return new RangeNode(fileName, line, new NumberNode(fileName, line, "0"), first, new NumberNode(fileName, line, "1"));
         }
 
         if (!matchAndConsume(DIVIDER, ",")) {
-            return new RParserError("Expected ',' or ')' in range declaration", file, line()).raise();
+            return new RParserError("Expected ',' or ')' in range declaration", fileName, line()).raise();
         }
 
         ValueNode second = parseValue();
 
         if (matchAndConsume(DIVIDER, ")")) {
-            return new RangeNode(line, first, second, new NumberNode(line, "1"));
+            return new RangeNode(fileName, line, first, second, new NumberNode(fileName, line, "1"));
         }
 
         if (!matchAndConsume(DIVIDER, ",")) {
-            return new RParserError("Expected ',' before step in range", file, line()).raise();
+            return new RParserError("Expected ',' before step in range", fileName, line()).raise();
         }
 
         ValueNode step = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' at end of range", file, line()).raise();
+            return new RParserError("Expected ')' at end of range", fileName, line()).raise();
         }
 
-        return new RangeNode(line, first, second, step);
+        return new RangeNode(fileName, line, first, second, step);
     }
 
     private @SubFunc ASTNode parseReturnKeyword() {
@@ -690,11 +690,11 @@ public final class ASTParser {
 
         if (match(KEYWORD, "none") || match(NEWLINE)) {
             consume();
-            return new ReturnNode(line, null);
+            return new ReturnNode(fileName, line, null);
         }
 
         ValueNode value = parseValue();
-        return new ReturnNode(line, value);
+        return new ReturnNode(fileName, line, value);
     }
 
     private @SubFunc ASTNode parseStructKeyword(boolean builtin) {
@@ -709,15 +709,15 @@ public final class ASTParser {
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for struct declaration", file, line()).raise();
+            return new RParserError("Expected ':' for struct declaration", fileName, line()).raise();
         }
         if (!match(NEWLINE)) {
-            return new RParserError("Expected newline after struct declaration", file, line()).raise();
+            return new RParserError("Expected newline after struct declaration", fileName, line()).raise();
         }
         consume();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indent for struct field declaration", file, line()).raise();
+            return new RParserError("Expected indent for struct field declaration", fileName, line()).raise();
         }
         consume();
 
@@ -740,11 +740,11 @@ public final class ASTParser {
             String fieldName = identifier();
 
             if (!matchAndConsume(OPERATOR, ":")) {
-                return new RParserError("Expected ':' for struct field declaration", file, line()).raise();
+                return new RParserError("Expected ':' for struct field declaration", fileName, line()).raise();
             }
 
             if (match(KEYWORD, "mut")) {
-                return new RParserError("You can't declare fields as mutable", file, line()).raise();
+                return new RParserError("You can't declare fields as mutable", fileName, line()).raise();
             }
 
             TypeRef fieldType = parseType(false);
@@ -756,7 +756,7 @@ public final class ASTParser {
         var type = new StructType(name, types);
 
         addType(name, type);
-        return new StructDeclarationNode(line, builtin, name, inherited, type, fields);
+        return new StructDeclarationNode(fileName, line, builtin, name, inherited, type, fields);
     }
 
     private @SubFunc ASTNode parseInitKeyword() {
@@ -764,7 +764,7 @@ public final class ASTParser {
 
         if (matchAndConsume(KEYWORD, "arr")) {
             if (!matchAndConsume(OPERATOR, "->")) {
-                return new RParserError("Expected '->' for array type declaration", file, line()).raise();
+                return new RParserError("Expected '->' for array type declaration", fileName, line()).raise();
             }
             return parseArrayCreation(parseType(false));
         }
@@ -773,11 +773,11 @@ public final class ASTParser {
             var params = parseParamsDeclare(false);
 
             if (!matchAndConsume(OPERATOR, ":")) {
-                new RParserError("Expected ':' for function declaration", file, line()).raise();
+                new RParserError("Expected ':' for function declaration", fileName, line()).raise();
             }
 
             BlockNode block = parseBlock();
-            return new ConstructorDeclarationNode(line, file, params, block);
+            return new ConstructorDeclarationNode(fileName, line, params, block);
         }
 
         String name = identifier();
@@ -787,15 +787,15 @@ public final class ASTParser {
         }
 
         if (!match(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for struct initialization", file, line()).raise();
+            return new RParserError("Expected '(' for struct initialization", fileName, line()).raise();
         }
 
         if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for parameters call", file, line()).raise();
+            return new RParserError("Expected '(' for parameters call", fileName, line()).raise();
         }
 
         if (matchAndConsume(DIVIDER, ")")) {
-            return new StructInitNode(line, name, List.of());
+            return new StructInitNode(fileName, line, name, List.of());
         }
 
         List<RParamValue> args = new ArrayList<>();
@@ -812,112 +812,112 @@ public final class ASTParser {
         } while (matchAndConsume(DIVIDER, ","));
 
         if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' for parameters call", file, line()).raise();
+            return new RParserError("Expected ')' for parameters call", fileName, line()).raise();
         }
 
-        return new StructInitNode(line, name, args);
+        return new StructInitNode(fileName, line, name, args);
     }
 
     private @SubFunc IfStatementNode parseIfKeyword() {
         int line = line();
         ValueNode condition = parseCondition();
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' after if condition", file, line()).raise();
+            return new RParserError("Expected ':' after if condition", fileName, line()).raise();
         }
 
         BlockNode block = parseBlock();
 
         if (!matchAndConsume(KEYWORD, "else")) {
-            return new IfStatementNode(line, condition, block, null, null);
+            return new IfStatementNode(fileName, line, condition, block, null, null);
         }
 
         if (matchAndConsume(KEYWORD, "if")) {
             IfStatementNode elif = parseIfKeyword();
-            return new IfStatementNode(line, condition, block, elif, null);
+            return new IfStatementNode(fileName, line, condition, block, elif, null);
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' after else block", file, line()).raise();
+            return new RParserError("Expected ':' after else block", fileName, line()).raise();
         }
 
         BlockNode elseBlock = parseBlock();
 
-        return new IfStatementNode(line, condition, block, null, elseBlock);
+        return new IfStatementNode(fileName, line, condition, block, null, elseBlock);
     }
 
     private @SubFunc ASTNode parseSizeofKeyword() {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for sizeof expression", file, line()).raise();
+            return new RParserError("Expected '(' for sizeof expression", fileName, line()).raise();
 
         Optional<TypeRef> type = parseOptionalType();
 
         if (type.isPresent()) {
             if (!matchAndConsume(DIVIDER, ")"))
-                return new RParserError("Expected ')' for sizeof expression", file, line()).raise();
+                return new RParserError("Expected ')' for sizeof expression", fileName, line()).raise();
 
-            return new SizeofNode(line, type.get());
+            return new SizeofNode(fileName, line, type.get());
         }
 
         ValueNode value = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for sizeof expression", file, line()).raise();
-        return new SizeofNode(line, value);
+            return new RParserError("Expected ')' for sizeof expression", fileName, line()).raise();
+        return new SizeofNode(fileName, line, value);
     }
 
     private @SubFunc ASTNode parseLenKeyword() {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for len expression", file, line()).raise();
+            return new RParserError("Expected '(' for len expression", fileName, line()).raise();
 
         ValueNode value = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for len expression", file, line()).raise();
-        return new LenNode(line, value);
+            return new RParserError("Expected ')' for len expression", fileName, line()).raise();
+        return new LenNode(fileName, line, value);
     }
 
     private ValueNode parseCharacter() {
         String value = consume().value();
         if (value.length() != 1) {
-            return new RParserError("Expected single character literal", file, line()).raise();
+            return new RParserError("Expected single character literal", fileName, line()).raise();
         }
-        return new CharacterNode(line(), value.charAt(0));
+        return new CharacterNode(fileName, line(), value.charAt(0));
     }
 
     private @SubFunc ASTNode parseCastKeyword() {
         int line = line();
 
         if (!matchAndConsume(OPERATOR, "<"))
-            return new RParserError("Expected '<' for cast expression", file, line()).raise();
+            return new RParserError("Expected '<' for cast expression", fileName, line()).raise();
 
         TypeRef type = parseType(false);
 
         if (!matchAndConsume(OPERATOR, ">"))
-            return new RParserError("Expected '>' for cast expression", file, line()).raise();
+            return new RParserError("Expected '>' for cast expression", fileName, line()).raise();
 
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for cast expression", file, line()).raise();
+            return new RParserError("Expected '(' for cast expression", fileName, line()).raise();
 
         ValueNode value = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for cast expression", file, line()).raise();
+            return new RParserError("Expected ')' for cast expression", fileName, line()).raise();
 
-        return new CastNode(line, type, value);
+        return new CastNode(fileName, line, type, value);
     }
 
     private @SubFunc ASTNode parseTypeofKeyword(boolean llvm) {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for typeof expression", file, line()).raise();
+            return new RParserError("Expected '(' for typeof expression", fileName, line()).raise();
 
         ValueNode value = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for typeof expression", file, line()).raise();
-        return new TypeofNode(line, value, llvm);
+            return new RParserError("Expected ')' for typeof expression", fileName, line()).raise();
+        return new TypeofNode(fileName, line, value, llvm);
     }
 
     private @SubFunc ASTNode parseImplKeyword() {
@@ -928,13 +928,13 @@ public final class ASTParser {
         TypeRef tmp = typeMap.get(name);
 
         if (!matchAndConsume(OPERATOR, ":") && !(tmp instanceof GenStructType)) {
-            return new RParserError("Expected ':' for impl declaration", file, line).raise();
+            return new RParserError("Expected ':' for impl declaration", fileName, line).raise();
         }
 
         if (tmp instanceof GenStructType gen) return parseGenericImpl(line, gen);
 
         if (!(tmp instanceof StructType struct))
-            return new RParserError("Struct not found: '" + name + "' for impl declaration", file, line).raise();
+            return new RParserError("Struct not found: '" + name + "' for impl declaration", fileName, line).raise();
 
         BlockNode block = parseBlock();
 
@@ -946,10 +946,10 @@ public final class ASTParser {
             var next = iterator.next();
 
             if (next.getClass().getSimpleName().contains("Gen"))
-                return new RParserError("Generic functions in structs are not supported", file, line).raise();
+                return new RParserError("Generic functions in structs are not supported", fileName, line).raise();
             if (next.getClass().getSimpleName().contains("FunctionDeclarationNode")) continue;
             if (!(next instanceof ConstructorDeclarationNode cdn))
-                return new RImplNotFunctionError(next.getLine()).raise();
+                return new RImplNotFunctionError(fileName, next.getLine()).raise();
 
             iterator.remove();
 
@@ -958,7 +958,7 @@ public final class ASTParser {
             constructors.add(constructor);
         }
 
-        return new StructImplNode(line, struct, constructors, block.getNodes());
+        return new StructImplNode(fileName, line, struct, constructors, block.getNodes());
     }
 
     private @SubFunc ASTNode parseGlobal() {
@@ -969,17 +969,17 @@ public final class ASTParser {
 
         if (matchAndConsume(OPERATOR, ":")) {
             if (matchAndConsume(KEYWORD, "mut"))
-                return new RParserError("Global variables cannot be mutable", file, line).raise();
+                return new RParserError("Global variables cannot be mutable", fileName, line).raise();
             type = parseType(false);
         }
 
         if (!matchAndConsume(OPERATOR, "=")) {
-            return new RParserError("Expected '=' for global variable declaration", file, line).raise();
+            return new RParserError("Expected '=' for global variable declaration", fileName, line).raise();
         }
 
         var value = parseValue();
 
-        return new GlobalVariableDeclarationNode(line, name, type, value);
+        return new GlobalVariableDeclarationNode(fileName, line, name, type, value);
     }
 
     private @SubFunc ASTNode parseRaise() {
@@ -993,26 +993,26 @@ public final class ASTParser {
             value = parseValue();
         }
 
-        return new RaiseNode(line, value);
+        return new RaiseNode(fileName, line, value);
     }
 
     private @SubFunc ASTNode parseTry() {
         int line = line();
 
         if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for try declaration", file, line).raise();
+            return new RParserError("Expected ':' for try declaration", fileName, line).raise();
 
         BlockNode tryBlock = parseBlock();
 
         if (!matchAndConsume(KEYWORD, "catch"))
-            return new RParserError("Expected catch block after try declaration", file, line).raise();
+            return new RParserError("Expected catch block after try declaration", fileName, line).raise();
 
         if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for catch declaration", file, line).raise();
+            return new RParserError("Expected ':' for catch declaration", fileName, line).raise();
 
         BlockNode catchBlock = parseBlock();
 
-        return new TryCatchNode(line, tryBlock, catchBlock);
+        return new TryCatchNode(fileName, line, tryBlock, catchBlock);
     }
 
     private @SubFunc ASTNode parse_NativeCPPKeyword() {
@@ -1020,26 +1020,26 @@ public final class ASTParser {
     }
 
     private ASTNode parseNullKeyword() {
-        return new NullNode(previous().line());
+        return new NullNode(fileName, previous().line());
     }
 
     private @SubFunc ValueNode parseBitwiseNotOperator() {
         int line = line();
         ValueNode value = parseValue();
 
-        return new BitwiseNotNode(line, value);
+        return new BitwiseNotNode(fileName, line, value);
     }
 
     private @SubFunc ASTNode parseDivider() {
         int line = line();
 
         if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Unexpected divider: " + current().value(), file, line).raise();
+            return new RParserError("Unexpected divider: " + current().value(), fileName, line).raise();
         }
         ValueNode value = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected closing divider ')'", file, line).raise();
+            return new RParserError("Expected closing divider ')'", fileName, line).raise();
         }
 
         return parseSubExpr(line, false, null, value);
@@ -1052,37 +1052,37 @@ public final class ASTParser {
 
             if (match(DIVIDER, "(")) {
                 if (self) {
-                    return new RParserError("Using self as function call", file, line).raise();
+                    return new RParserError("Using self as function call", fileName, line).raise();
                 }
                 if (name == null) {
-                    return new RParserError("You can't call a function here", file, line).raise();
+                    return new RParserError("You can't call a function here", fileName, line).raise();
                 }
                 var args = parseParamsCall();
 
                 if (node instanceof DirectVariableReferenceNode) {
-                    node = new FunctionCallNode(line, name, args);
+                    node = new FunctionCallNode(fileName, line, name, args);
                     continue;
                 }
 
-                return new RParserError("Invalid parenthesis", file, line).raise();
+                return new RParserError("Invalid parenthesis", fileName, line).raise();
             }
 
             if (matchAndConsume(DIVIDER, "[")) {
                 if (self) {
-                    return new RParserError("Using self as array access", file, line).raise();
+                    return new RParserError("Using self as array access", fileName, line).raise();
                 }
 
                 ValueNode index = parseValue();
 
                 if (!matchAndConsume(DIVIDER, "]")) {
-                    return new RParserError("Expected ']'", file, line).raise();
+                    return new RParserError("Expected ']'", fileName, line).raise();
                 }
 
                 if (matchAndConsume(OPERATOR, "=")) {
                     ValueNode value = parseValue();
-                    node = new ArraySetNode(line, node, index, value);
+                    node = new ArraySetNode(fileName, line, node, index, value);
                 } else {
-                    node = new ArrayAccessNode(line, node, index);
+                    node = new ArrayAccessNode(fileName, line, node, index);
                 }
                 continue;
             }
@@ -1090,36 +1090,36 @@ public final class ASTParser {
             if (matchAndConsume(OPERATOR, "@")) {
                 if (matchAndConsume(OPERATOR, "=")) {
                     ValueNode value = parseValue();
-                    node = new DereferenceAssignNode(line, node, value);
+                    node = new DereferenceAssignNode(fileName, line, node, value);
                     continue;
                 }
 
                 if (!(node instanceof VariableReference vr)) {
-                    return new RParserError("Expected variable reference for dereference operator", file, line).raise();
+                    return new RParserError("Expected variable reference for dereference operator", fileName, line).raise();
                 }
 
-                node = new DereferenceNode(line, vr);
+                node = new DereferenceNode(fileName, line, vr);
                 continue;
             }
 
             if (matchAndConsume(OPERATOR, ".")) {
                 String fieldName = identifier();
                 if (!(node instanceof VariableReference vr)) {
-                    return new RParserError("Expected reference for struct access", file, line).raise();
+                    return new RParserError("Expected reference for struct access", fileName, line).raise();
                 }
 
                 if (!match(DIVIDER, "(")) {
-                    node = new StructFieldAccessNode(line, vr, fieldName);
+                    node = new StructFieldAccessNode(fileName, line, vr, fieldName);
                     continue;
                 }
 
                 var args = parseParamsCall();
 
-                node = new StructFunctionCallNode(line, node, fieldName, args);
+                node = new StructFunctionCallNode(fileName, line, node, fieldName, args);
             }
 
             if (matchAndConsume(OPERATOR, "::")) {
-                if (self) return new RParserError("Self for namespace is not allowed", file, line).raise();
+                if (self) return new RParserError("Self for namespace is not allowed", fileName, line).raise();
 
                 String fieldName = identifier();
 
@@ -1133,25 +1133,25 @@ public final class ASTParser {
                     }
 
                     if (!matchAndConsume(OPERATOR, ">")) {
-                        return new RParserError("Expected '>' for generic function declaration", file, line).raise();
+                        return new RParserError("Expected '>' for generic function declaration", fileName, line).raise();
                     }
 
                     var params = parseParamsCall();
 
-                    var inner = new GenericFunctionCallNode(line, fieldName, genTypes, params);
+                    var inner = new GenericFunctionCallNode(fileName, line, fieldName, genTypes, params);
 
-                    node = new NamespaceCallNode(line, name, inner);
+                    node = new NamespaceCallNode(fileName, line, name, inner);
                     continue;
                 }
 
                 if (!match(DIVIDER, "(")) {
-                    node = new NamespaceCallNode(line, name, new DirectVariableReferenceNode(line, fieldName));
+                    node = new NamespaceCallNode(fileName, line, name, new DirectVariableReferenceNode(fileName, line, fieldName));
                     continue;
                 }
 
                 var args = parseParamsCall();
 
-                node = new NamespaceCallNode(line, name, new FunctionCallNode(line, fieldName, args));
+                node = new NamespaceCallNode(fileName, line, name, new FunctionCallNode(fileName, line, fieldName, args));
             }
 
             if (matchAndConsume(OPERATOR, "<")) {
@@ -1171,12 +1171,12 @@ public final class ASTParser {
                 }
 
                 if (!matchAndConsume(OPERATOR, ">")) {
-                    return new RParserError("Expected '>' for generic function declaration", file, line).raise();
+                    return new RParserError("Expected '>' for generic function declaration", fileName, line).raise();
                 }
 
                 var params = parseParamsCall();
 
-                node = new GenericFunctionCallNode(line, name, genTypes, params);
+                node = new GenericFunctionCallNode(fileName, line, name, genTypes, params);
                 break;
             }
 
@@ -1186,10 +1186,10 @@ public final class ASTParser {
         if (matchAndConsume(KEYWORD, "is")) {
             if (matchAndConsume(OPERATOR, "not")) {
                 TypeRef type = parseType(false);
-                return new BinaryExpressionNode(line, new IsNode(line, node, type), EqualsBO.INSTANCE, new BooleanNode(line, false));
+                return new BinaryExpressionNode(line, fileName, new IsNode(fileName, line, node, type), EqualsBO.INSTANCE, new BooleanNode(fileName, line, false));
             }
             TypeRef type = parseType(false);
-            return new IsNode(line, node, type);
+            return new IsNode(fileName, line, node, type);
         }
 
         if (match(OPERATOR, ":")) {
@@ -1202,13 +1202,13 @@ public final class ASTParser {
             tokenIndex = preIndex;
             if (t.isPresent() || mut) {
                 if (!(node instanceof VariableReference vr)) {
-                    return new RParserError("Expected reference for assignment", file, line).raise();
+                    return new RParserError("Expected reference for assignment", fileName, line).raise();
                 }
                 return parseVariableAssignment(line, vr);
             }
         } else if (match(OPERATOR, "=")) {
             if (!(node instanceof VariableReference vr)) {
-                return new RParserError("Expected reference for assignment", file, line).raise();
+                return new RParserError("Expected reference for assignment", fileName, line).raise();
             }
             return parseVariableAssignment(line, vr);
         }
@@ -1226,14 +1226,14 @@ public final class ASTParser {
             if (opAssign == null) return node;
 
             if (!(node instanceof VariableReference leftRef)) {
-                return new RParserError("Expected variable reference for assignment operation", file, line).raise();
+                return new RParserError("Expected variable reference for assignment operation", fileName, line).raise();
             }
 
             consume();
 
-            ValueNode value = new BinaryExpressionNode(line, node, opAssign, parseValue());
+            ValueNode value = new BinaryExpressionNode(line, fileName, node, opAssign, parseValue());
 
-            return new VariableDeclarationNode(line, leftRef, false, null, value);
+            return new VariableDeclarationNode(fileName, line, leftRef, false, null, value);
         }
 
         return node;
@@ -1245,12 +1245,12 @@ public final class ASTParser {
         ValueNode condition = parseValue();
 
         if (!matchAndConsume(KEYWORD, "else")) {
-            return new RParserError("Expected 'else' for ternary operator", file, line).raise();
+            return new RParserError("Expected 'else' for ternary operator", fileName, line).raise();
         }
 
         ValueNode elseExpr = parseValue();
 
-        return new TernaryOperatorNode(line, condition, thenExpr, elseExpr);
+        return new TernaryOperatorNode(fileName, line, condition, thenExpr, elseExpr);
     }
 
     private @SubFunc ValueNode parseAsyncKeyword() {
@@ -1261,22 +1261,22 @@ public final class ASTParser {
         if (matchAndConsume(DIVIDER, "(")) {
             returnType = parseType(false);
             if (!matchAndConsume(DIVIDER, ")")) {
-                return new RParserError("Expected ')' for async function declaration", file, line).raise();
+                return new RParserError("Expected ')' for async function declaration", fileName, line).raise();
             }
         } else {
             returnType = NoneBuiltinType.INSTANCE;
         }
 
         if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for async declaration", file, line).raise();
+            return new RParserError("Expected ':' for async declaration", fileName, line).raise();
 
-        if (!match(NEWLINE)) new RParserError("Expected newline after async declaration", file, line).raise();
+        if (!match(NEWLINE)) new RParserError("Expected newline after async declaration", fileName, line).raise();
 
         consume();
 
         BlockNode block = parseBlock();
 
-        return new AsyncDeclarationNode(line, returnType, block);
+        return new AsyncDeclarationNode(fileName, line, returnType, block);
     }
 
     private @SubFunc ASTNode parseGenericKeyword() {
@@ -1288,7 +1288,7 @@ public final class ASTParser {
             return parseGenericStruct(line);
         }
 
-        return new RParserError("Expected 'func' or 'struct' for generic function declaration", file, line).raise();
+        return new RParserError("Expected 'func' or 'struct' for generic function declaration", fileName, line).raise();
     }
 
     private @SubFunc ASTNode parseGenericFunc(int line) {
@@ -1302,14 +1302,14 @@ public final class ASTParser {
         TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : NoneBuiltinType.INSTANCE;
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for function declaration", file, line).raise();
+            return new RParserError("Expected ':' for function declaration", fileName, line).raise();
         }
 
         BlockNode block = parseBlock();
 
         currentGenericTypes = old;
 
-        return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block);
+        return new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, block);
     }
 
     private @SubFunc ASTNode parseGenericStruct(int line) {
@@ -1325,16 +1325,16 @@ public final class ASTParser {
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for struct declaration", file, line).raise();
+            return new RParserError("Expected ':' for struct declaration", fileName, line).raise();
         }
 
         if (!match(NEWLINE)) {
-            return new RParserError("Expected newline after struct declaration", file, line).raise();
+            return new RParserError("Expected newline after struct declaration", fileName, line).raise();
         }
         consume();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indent for struct field declaration", file, line).raise();
+            return new RParserError("Expected indent for struct field declaration", fileName, line).raise();
         }
         consume();
 
@@ -1352,11 +1352,11 @@ public final class ASTParser {
             String fieldName = identifier();
 
             if (!matchAndConsume(OPERATOR, ":")) {
-                return new RParserError("Expected ':' for struct field declaration", file, line).raise();
+                return new RParserError("Expected ':' for struct field declaration", fileName, line).raise();
             }
 
             if (match(KEYWORD, "mut")) {
-                return new RParserError("You can't declare fields as mutable", file, line).raise();
+                return new RParserError("You can't declare fields as mutable", fileName, line).raise();
             }
 
             TypeRef fieldType = parseType(true);
@@ -1369,26 +1369,26 @@ public final class ASTParser {
 
         addType(name, type);
 
-        return new GenStructDeclarationNode(line, name, inherited, type, fields);
+        return new GenStructDeclarationNode(fileName, line, name, inherited, type, fields);
     }
 
     private @SubFunc ValueNode parseArrayCreation(TypeRef type) {
         int line = line();
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for array creation", file, line()).raise();
+            return new RParserError("Expected '(' for array creation", fileName, line()).raise();
 
         ValueNode size = parseValue();
 
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for array creation", file, line()).raise();
+            return new RParserError("Expected ')' for array creation", fileName, line()).raise();
 
-        return new ArrayCreationNode(line, type, size);
+        return new ArrayCreationNode(fileName, line, type, size);
     }
 
     private @SubFunc ValueNode parseThisKeyword() {
         int line = line();
 
-        ValueNode node = new DereferenceNode(line, new DirectVariableReferenceNode(line, "self"));
+        ValueNode node = new DereferenceNode(fileName, line, new DirectVariableReferenceNode(fileName, line, "self"));
 
         node = parseSubExpr(line, false, null, node);
 
@@ -1404,16 +1404,16 @@ public final class ASTParser {
                 genericTypes.add(parseType(false));
             } while (matchAndConsume(DIVIDER, ","));
             if (!matchAndConsume(OPERATOR, ">")) {
-                return new RParserError("Expected '>' for generic struct initialization", file, line).raise();
+                return new RParserError("Expected '>' for generic struct initialization", fileName, line).raise();
             }
         }
 
         if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for parameters call", file, line()).raise();
+            return new RParserError("Expected '(' for parameters call", fileName, line()).raise();
         }
 
         if (matchAndConsume(DIVIDER, ")")) {
-            return new GenStructInitNode(line, name, genericTypes, List.of());
+            return new GenStructInitNode(fileName, line, name, genericTypes, List.of());
         }
 
         List<RParamValue> args = new ArrayList<>();
@@ -1430,27 +1430,27 @@ public final class ASTParser {
         } while (matchAndConsume(DIVIDER, ","));
 
         if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' for parameters call", file, line()).raise();
+            return new RParserError("Expected ')' for parameters call", fileName, line()).raise();
         }
 
-        return new GenStructInitNode(line, name, genericTypes, args);
+        return new GenStructInitNode(fileName, line, name, genericTypes, args);
     }
 
     private @SubFunc ASTNode parseGenericImpl(final int line, final GenStructType type) {
         var typeParameters = parseTypeParameters();
 
         if (typeParameters.size() != type.genericTypes().size()) {
-            return new RParserError("Expected " + type.genericTypes().size() + " generic parameters but got " + typeParameters.size(), file, line).raise();
+            return new RParserError("Expected " + type.genericTypes().size() + " generic parameters but got " + typeParameters.size(), fileName, line).raise();
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for generic impl declaration", file, line).raise();
+            return new RParserError("Expected ':' for generic impl declaration", fileName, line).raise();
         }
 
         removeNewlines();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indented block", file, line()).raise();
+            return new RParserError("Expected indented block", fileName, line()).raise();
         }
 
         consume();
@@ -1477,7 +1477,7 @@ public final class ASTParser {
             if (match(DEDENT)) {
                 consume();
             } else {
-                return new RParserError("Expected dedent to close block", file, line()).raise();
+                return new RParserError("Expected dedent to close block", fileName, line()).raise();
             }
         }
 
@@ -1489,14 +1489,14 @@ public final class ASTParser {
             if (next.getClass().getSimpleName().contains("FunctionDeclarationNode")) continue;
 
             if (!(next instanceof ConstructorDeclarationNode cdn))
-                return new RImplNotFunctionError(next.getLine()).raise();
+                return new RImplNotFunctionError(fileName, next.getLine()).raise();
 
             iterator.remove();
             String constructorName = "constructor." + constructors.size();
             constructors.add(new RConstructor(constructorName, cdn.getParameters(), cdn.getBlock()));
         }
 
-        return new GenStructImplNode(line, type, typeParameters, constructors, statements);
+        return new GenStructImplNode(fileName, line, type, typeParameters, constructors, statements);
     }
 
     private @SubFunc ASTNode parseGenConstructor(final int line, final List<String> implGenerics) {
@@ -1517,37 +1517,37 @@ public final class ASTParser {
 
                 if (implGenerics.contains(gen.name())) break;
 
-                return new RParserError("Unknown generic type: " + gen.name(), file, line).raise();
+                return new RParserError("Unknown generic type: " + gen.name(), fileName, line).raise();
             }
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            new RParserError("Expected ':' for function declaration", file, line()).raise();
+            new RParserError("Expected ':' for function declaration", fileName, line()).raise();
         }
 
         BlockNode block = parseBlock();
-        return new ConstructorDeclarationNode(line, file, params, block);
+        return new ConstructorDeclarationNode(fileName, line, params, block);
     }
 
     private @SubFunc ASTNode parseMatchKeyword() {
         int line = line();
 
         if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for match declaration", file, line).raise();
+            return new RParserError("Expected '(' for match declaration", fileName, line).raise();
         }
         ValueNode value = parseValue();
         if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' for match declaration", file, line).raise();
+            return new RParserError("Expected ')' for match declaration", fileName, line).raise();
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for match declaration", file, line).raise();
+            return new RParserError("Expected ':' for match declaration", fileName, line).raise();
         }
 
         removeNewlines();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indented block", file, line()).raise();
+            return new RParserError("Expected indented block", fileName, line()).raise();
         }
 
         consume();
@@ -1566,11 +1566,11 @@ public final class ASTParser {
             if (match(DEDENT)) {
                 consume();
             } else {
-                return new RParserError("Expected dedent to close block", file, line()).raise();
+                return new RParserError("Expected dedent to close block", fileName, line()).raise();
             }
         }
 
-        return new MatchNode(line, value, cases);
+        return new MatchNode(fileName, line, value, cases);
     }
 
     private @SubFunc MatchNode.MatchCase parseMatchCase() {
@@ -1581,7 +1581,7 @@ public final class ASTParser {
         else v = parseValue();
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for match case declaration", file, line).raise();
+            return new RParserError("Expected ':' for match case declaration", fileName, line).raise();
         }
 
         BlockNode b = parseBlock();
@@ -1594,29 +1594,29 @@ public final class ASTParser {
         var params = parseParamsDeclare(false);
 
         if (!matchAndConsume(OPERATOR, "=")) {
-            return new RParserError("Expected '=' for lambda declaration", file, line).raise();
+            return new RParserError("Expected '=' for lambda declaration", fileName, line).raise();
         }
 
         ValueNode value = parseValue();
 
-        return new LambdaDeclarationNode(line, params, value);
+        return new LambdaDeclarationNode(fileName, line, params, value);
     }
 
     private @SubFunc NamespaceDeclarationNode parseNamespaceKeyword() {
         int line = line();
         String name = identifier();
         if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for namespace declaration", file, line).raise();
+            return new RParserError("Expected ':' for namespace declaration", fileName, line).raise();
 
         BlockNode block = parseBlock();
-        return new NamespaceDeclarationNode(line, name, block);
+        return new NamespaceDeclarationNode(fileName, line, name, block);
     }
 
     private @SubFunc ASTNode parseTypeKeyword() {
         int line = line();
         String name = identifier();
         if (!matchAndConsume(OPERATOR, "=")) {
-            return new RParserError("Expected '=' for type declaration", file, line).raise();
+            return new RParserError("Expected '=' for type declaration", fileName, line).raise();
         }
         TypeRef type = parseType(false);
 
@@ -1630,16 +1630,16 @@ public final class ASTParser {
         String name = identifier();
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for enum declaration", file, line).raise();
+            return new RParserError("Expected ':' for enum declaration", fileName, line).raise();
         }
 
         if (!match(NEWLINE)) {
-            return new RParserError("Expected newline after enum declaration", file, line).raise();
+            return new RParserError("Expected newline after enum declaration", fileName, line).raise();
         }
         consume();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indented enum body", file, line).raise();
+            return new RParserError("Expected indented enum body", fileName, line).raise();
         }
         consume();
 
@@ -1668,11 +1668,11 @@ public final class ASTParser {
             if (withValues == null) {
                 withValues = value != null;
             } else if (withValues == (value == null)) {
-                return new RParserError("Either all enum fields must have values, or none of them may have values", file, fieldLine).raise();
+                return new RParserError("Either all enum fields must have values, or none of them may have values", fileName, fieldLine).raise();
             }
 
             if (value == null) {
-                value = new NumberNode(line, String.valueOf(idx));
+                value = new NumberNode(fileName, line, String.valueOf(idx));
                 idx++;
             }
 
@@ -1687,10 +1687,10 @@ public final class ASTParser {
         if (match(DEDENT)) {
             consume();
         } else if (!match(EOF)) {
-            return new RParserError("Expected dedent to close enum declaration", file, line).raise();
+            return new RParserError("Expected dedent to close enum declaration", fileName, line).raise();
         }
 
-        return new EnumDeclarationNode(line, name, fields);
+        return new EnumDeclarationNode(fileName, line, name, fields);
     }
 
     private @SubFunc NativeCPPNode parseExternKeyword() {
@@ -1702,18 +1702,18 @@ public final class ASTParser {
         String ncn = isNative ? "Native CPP" : "extern";
 
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for " + ncn + " declaration", file, line).raise();
+            return new RParserError("Expected '(' for " + ncn + " declaration", fileName, line).raise();
 
         if (!match(STRING))
-            return new RParserError("Expected a string for file name in " + ncn + " declaration", file, line).raise();
+            return new RParserError("Expected a string for file name in " + ncn + " declaration", fileName, line).raise();
 
         String name = consume().value();
 
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for " + ncn + " declaration", file, line).raise();
+            return new RParserError("Expected ')' for " + ncn + " declaration", fileName, line).raise();
 
         if (matchAndConsume(KEYWORD, "_Builtin")) {
-            return new NativeCPPNode(line, isNative, name, List.of());
+            return new NativeCPPNode(fileName, line, isNative, name, List.of());
         }
 
         List<RFunction> functions = new ArrayList<>();
@@ -1725,7 +1725,7 @@ public final class ASTParser {
             functions.add(new RDefFunction(funcName, funcName, type, params));
         } while (matchAndConsume(OPERATOR, "and"));
 
-        return new NativeCPPNode(line, isNative, name, functions);
+        return new NativeCPPNode(fileName, line, isNative, name, functions);
     }
 
     private @SubFunc ASTNode parseTraitKeyword() {
@@ -1733,16 +1733,16 @@ public final class ASTParser {
         String name = identifier();
 
         if (!matchAndConsume(OPERATOR, ":")) {
-            return new RParserError("Expected ':' for trait declaration", file, line).raise();
+            return new RParserError("Expected ':' for trait declaration", fileName, line).raise();
         }
 
         if (!match(NEWLINE)) {
-            return new RParserError("Expected newline after trait declaration", file, line).raise();
+            return new RParserError("Expected newline after trait declaration", fileName, line).raise();
         }
         consume();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indented enum body", file, line).raise();
+            return new RParserError("Expected indented enum body", fileName, line).raise();
         }
         consume();
 
@@ -1756,7 +1756,7 @@ public final class ASTParser {
             }
 
             if (!matchAndConsume(KEYWORD, "func")) {
-                return new RParserError("Expected 'func' for trait declaration", file, line).raise();
+                return new RParserError("Expected 'func' for trait declaration", fileName, line).raise();
             }
 
             String fname = identifier();
@@ -1766,7 +1766,7 @@ public final class ASTParser {
             TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : NoneBuiltinType.INSTANCE;
 
             if (functions.containsKey(fname)) {
-                return new RParserError("Duplicate trait function: " + fname, file, line).raise();
+                return new RParserError("Duplicate trait function: " + fname, fileName, line).raise();
             }
 
             functions.put(fname, new TraitFunction(fname, params, returnType));
@@ -1775,13 +1775,13 @@ public final class ASTParser {
         if (match(DEDENT)) {
             consume();
         } else if (!match(EOF)) {
-            return new RParserError("Expected dedent to close enum declaration", file, line).raise();
+            return new RParserError("Expected dedent to close enum declaration", fileName, line).raise();
         }
 
         if (!typeMap.containsKey(name))
             typeMap.put(name, new TraitType(name, functions));
 
-        return new TraitDeclarationNode(line, name, functions);
+        return new TraitDeclarationNode(fileName, line, name, functions);
     }
 
     /*
@@ -1793,7 +1793,7 @@ public final class ASTParser {
         List<TypeParameter> typeParameters = new ArrayList<>();
 
         if (!matchAndConsume(OPERATOR, "<")) {
-            return new RParserError("Expected '<' for generic struct declaration", file, line).raise();
+            return new RParserError("Expected '<' for generic struct declaration", fileName, line).raise();
         }
 
         if (!match(OPERATOR, ">")) {
@@ -1803,7 +1803,7 @@ public final class ASTParser {
         }
 
         if (!matchAndConsume(OPERATOR, ">")) {
-            return new RParserError("Expected '>' for generic struct declaration", file, line).raise();
+            return new RParserError("Expected '>' for generic struct declaration", fileName, line).raise();
         }
 
         return typeParameters;
@@ -1831,7 +1831,7 @@ public final class ASTParser {
                 case "struct" -> {
                     type = typeMap.get(typeName);
                     if (!(type instanceof StructType || type instanceof GenStructType))
-                        return new RParserError("Expected struct type", file, line()).raise();
+                        return new RParserError("Expected struct type", fileName, line()).raise();
                     break LABEL_TYPE;
                 }
                 case "lambda" -> {
@@ -1858,7 +1858,7 @@ public final class ASTParser {
 
     private @SubFunc TypeRef parseType0(final boolean generics) {
         if (!match(IDENTIFIER) && !match(KEYWORD)) {
-            return new RParserError("Expected type name", file, line()).raise();
+            return new RParserError("Expected type name", fileName, line()).raise();
         }
 
         int line = line();
@@ -1875,7 +1875,7 @@ public final class ASTParser {
             case "struct" -> {
                 var type = typeMap.get(identifier());
                 if (!(type instanceof StructType)) {
-                    return new RParserError("Expected struct type", file, line()).raise();
+                    return new RParserError("Expected struct type", fileName, line()).raise();
                 }
                 return type;
             }
@@ -1895,7 +1895,7 @@ public final class ASTParser {
                 return new GenericType(typeName);
             }
             typeMap.forEach((n, t) -> System.out.println(n + " = " + t));
-            return new RParserError("Unknown type: " + typeName, file, line).raise();
+            return new RParserError("Unknown type: " + typeName, fileName, line).raise();
         }
 
         addType(typeName, type);
@@ -1922,11 +1922,11 @@ public final class ASTParser {
             } else if (match(OPERATOR, ">>>")) {
                 tokens[tokenIndex] = new Token(OPERATOR, ">>", current().line());
             } else if (!matchAndConsume(OPERATOR, ">")) {
-                return new RParserError("Expected '>' for generic type", file, line()).raise();
+                return new RParserError("Expected '>' for generic type", fileName, line()).raise();
             }
 
             if (gen.genericTypes().size() != genericTypes.size()) {
-                return new RParserError("Expected " + gen.genericTypes().size() + " generic arguments but got " + genericTypes.size(), file, line()).raise();
+                return new RParserError("Expected " + gen.genericTypes().size() + " generic arguments but got " + genericTypes.size(), fileName, line()).raise();
             }
 
             return new AppliedGenStructType(gen, genericTypes);
@@ -1937,23 +1937,23 @@ public final class ASTParser {
 
     private @SubFunc TypeRef parsePointerType(int line, boolean generics) {
         if (!matchAndConsume(OPERATOR, "->"))
-            return new RParserError("Expected \"->\" for pointer type declaration", file, line).raise();
+            return new RParserError("Expected \"->\" for pointer type declaration", fileName, line).raise();
 
         TypeRef inner = parseType(generics);
         if (inner instanceof NoneBuiltinType)
-            return new RParserError("You can't declare a void pointer, please use 'anyptr' instead", file, line).raise();
+            return new RParserError("You can't declare a void pointer, please use 'anyptr' instead", fileName, line).raise();
         return new PointerType(inner);
     }
 
     private @SubFunc TypeRef parseArrayType(int line, boolean generics) {
         if (!matchAndConsume(OPERATOR, "->")) {
-            return new RParserError("Expected \"->\" for array type declaration", file, line).raise();
+            return new RParserError("Expected \"->\" for array type declaration", fileName, line).raise();
         }
 
         TypeRef inner = parseType(generics);
 
         if (inner instanceof NoneBuiltinType) {
-            return new RArrayTypeIsNoneError(line).raise();
+            return new RArrayTypeIsNoneError(fileName, line).raise();
         }
 
         return new ArrayType(ArrayType.UNKNOWN_SIZE, inner);
@@ -1961,7 +1961,7 @@ public final class ASTParser {
 
     private @SubFunc TypeRef parseLambdaType(int line, boolean generics) {
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for lambda type declaration", file, line).raise();
+            return new RParserError("Expected '(' for lambda type declaration", fileName, line).raise();
         List<TypeRef> params = new ArrayList<>();
         if (!matchAndConsume(DIVIDER, ")")) {
             do {
@@ -1969,11 +1969,11 @@ public final class ASTParser {
             } while (matchAndConsume(DIVIDER, ","));
 
             if (!matchAndConsume(DIVIDER, ")"))
-                return new RParserError("Expected ')' for lambda type declaration", file, line).raise();
+                return new RParserError("Expected ')' for lambda type declaration", fileName, line).raise();
         }
 
         if (!matchAndConsume(OPERATOR, "->"))
-            return new RParserError("Expected \"->\" for lambda type declaration", file, line).raise();
+            return new RParserError("Expected \"->\" for lambda type declaration", fileName, line).raise();
 
         TypeRef inner = parseType(generics);
         return new LambdaType(params, inner);
@@ -1981,7 +1981,7 @@ public final class ASTParser {
 
     private @SubFunc List<FunctionParameter> parseParamsDeclare(final boolean generics) {
         if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for parameters declaration", file, line()).raise();
+            return new RParserError("Expected '(' for parameters declaration", fileName, line()).raise();
         }
 
         if (matchAndConsume(DIVIDER, ")")) {
@@ -1993,7 +1993,7 @@ public final class ASTParser {
         do {
             String name = identifier();
             if (!matchAndConsume(OPERATOR, ":")) {
-                return new RParserError("Expected ':' for parameters type declaration", file, line()).raise();
+                return new RParserError("Expected ':' for parameters type declaration", fileName, line()).raise();
             }
 
             boolean mutable = matchAndConsume(KEYWORD, "mut");
@@ -2001,7 +2001,7 @@ public final class ASTParser {
             TypeRef type = parseType(generics);
 
             if (type instanceof RangeType) {
-                return new RRangeTypeError(line()).raise();
+                return new RRangeTypeError(fileName, line()).raise();
             }
 
             var param = new FunctionParameter(name, mutable, type);
@@ -2010,7 +2010,7 @@ public final class ASTParser {
         } while (matchAndConsume(DIVIDER, ","));
 
         if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' for parameters declaration", file, line()).raise();
+            return new RParserError("Expected ')' for parameters declaration", fileName, line()).raise();
         }
 
         return params;
@@ -2018,7 +2018,7 @@ public final class ASTParser {
 
     private @SubFunc List<ValueNode> parseParamsCall() {
         if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for parameters call", file, line()).raise();
+            return new RParserError("Expected '(' for parameters call", fileName, line()).raise();
         }
 
         if (matchAndConsume(DIVIDER, ")")) {
@@ -2032,7 +2032,7 @@ public final class ASTParser {
         } while (matchAndConsume(DIVIDER, ","));
 
         if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' for parameters call", file, line()).raise();
+            return new RParserError("Expected ')' for parameters call", fileName, line()).raise();
         }
 
         return args;
@@ -2040,10 +2040,10 @@ public final class ASTParser {
 
     private @SubFunc ValueNode parseCondition() {
         if (!matchAndConsume(DIVIDER, "("))
-            return new RParserError("Expected '(' for the condition", file, line()).raise();
+            return new RParserError("Expected '(' for the condition", fileName, line()).raise();
         ValueNode condition = parseValue();
         if (!matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for the condition", file, line()).raise();
+            return new RParserError("Expected ')' for the condition", fileName, line()).raise();
 
         return condition;
     }
@@ -2052,16 +2052,16 @@ public final class ASTParser {
         int line = line();
         List<ValueNode> values = new ArrayList<>();
 
-        if (matchAndConsume(DIVIDER, "]")) return new ArrayNode(line, List.of());
+        if (matchAndConsume(DIVIDER, "]")) return new ArrayNode(fileName, line, List.of());
 
         do {
             values.add(parseValue());
         } while (matchAndConsume(DIVIDER, ","));
 
         if (!matchAndConsume(DIVIDER, "]"))
-            return new RParserError("Expected ']' for array declaration", file, line()).raise();
+            return new RParserError("Expected ']' for array declaration", fileName, line()).raise();
 
-        return new ArrayNode(line, values);
+        return new ArrayNode(fileName, line, values);
     }
 
     /*
@@ -2079,7 +2079,7 @@ public final class ASTParser {
 
     private String identifier() {
         if (!match(IDENTIFIER)) {
-            return new RParserError("Expected identifier", file, line()).raise();
+            return new RParserError("Expected identifier", fileName, line()).raise();
         }
 
         return consume().value();
@@ -2094,7 +2094,7 @@ public final class ASTParser {
             return;
         }
 
-        new RParserError("Unexpected end of file", file, previous().line()).raise();
+        new RParserError("Unexpected end of file", fileName, previous().line()).raise();
     }
 
     private Token consume() {
@@ -2275,7 +2275,7 @@ public final class ASTParser {
             pkg = null;
         }
 
-        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
+        ModuleLoadingHelper.collectModuleTypes(fileName, line, fileName, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
     }
 
     private void collectEnumTypes() {

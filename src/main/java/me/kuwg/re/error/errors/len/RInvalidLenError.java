@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RInvalidLenError extends RError {
-    public RInvalidLenError(final String type, final int line) {
-        super("Cannot take len() of type: " + type, line);
+    public RInvalidLenError(final String type, final String fileName, final int line) {
+        super("Cannot take len() of type: " + type, fileName, line);
     }
 
     @Override

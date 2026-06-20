@@ -18,8 +18,8 @@ public class MatchNode extends ASTNode {
     private final ValueNode expr;
     private final List<MatchCase> cases;
 
-    public MatchNode(final int line, final ValueNode expr, final List<MatchCase> cases) {
-        super(line);
+    public MatchNode(final String fileName, final int line, final ValueNode expr, final List<MatchCase> cases) {
+        super(fileName, line);
         this.expr = expr;
         this.cases = cases;
     }
@@ -35,7 +35,7 @@ public class MatchNode extends ASTNode {
         cctx.emit("; Match statement");
 
         final String exprReg = expr.compileAndGet(cctx);
-        final String llvmType = evalType(expr.getType(), cctx, line).getLLVMName();
+        final String llvmType = evalType(expr.getType(), cctx, fileName, line).getLLVMName();
 
         final String endLabel = cctx.nextLabel("match_end");
 
@@ -68,15 +68,15 @@ public class MatchNode extends ASTNode {
             ValueNode v = mc.value;
 
             if (!v.isConstant(cctx)) {
-                new RNotConstantError("Expected constant value for match case", line).raise();
+                new RNotConstantError("Expected constant value for match case", fileName, line).raise();
                 return;
             }
             final String constVal = v.compileToConstant(cctx);
 
-            TypeRef t = evalType(expr.getType(), cctx, line);
+            TypeRef t = evalType(expr.getType(), cctx, fileName, line);
 
             if (!v.getType().equals(t)) {
-                new RVariableTypeError(v.getType().getName(), t.getName(), line).raise();
+                new RVariableTypeError(v.getType().getName(), t.getName(), fileName, line).raise();
                 return;
             }
 
@@ -132,7 +132,7 @@ public class MatchNode extends ASTNode {
     public MatchNode clone() {
         List<MatchCase> casesCloned = new ArrayList<>();
         IntStream.range(0, cases.size()).forEach(i -> casesCloned.add(i, cases.get(i).clone()));
-        return new MatchNode(line, expr.clone(), casesCloned);
+        return new MatchNode(fileName, line, expr.clone(), casesCloned);
     }
 
     public List<MatchCase> getCases() {

@@ -22,8 +22,8 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
     private TypeRef returnType;
     private final String llvmBody;
 
-    public BuiltinFunctionDeclarationNode(final int line, final boolean keepName, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
-        super(line);
+    public BuiltinFunctionDeclarationNode(final String fileName, final int line, final boolean keepName, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
+        super(fileName, line);
         this.keepName = keepName;
         this.name = name;
         this.parameters = parameters;
@@ -31,7 +31,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         this.llvmBody = llvmBody;
 
         if (returnType instanceof RangeType) {
-            new RRangeTypeError(line).raise();
+            new RRangeTypeError(fileName, line).raise();
         }
     }
 
@@ -56,7 +56,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         if (keepName) {
             llvmName = name;
             if (!cctx.currentNamespace().isEmpty()) {
-                new RGlobalFunctionInNamespace(line).raise();
+                new RGlobalFunctionInNamespace(fileName, line).raise();
             }
         } else llvmName = getLLVMName(cctx);
 
@@ -92,7 +92,7 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
             System.out.println(fnObj);
             String paramsToString = types.toString().replace("[", "(").replace("]", ")");
             String error = "While compiling a builtin function, a function with the same name and parameters was found existing: " + name + paramsToString;
-            new RFunctionAlreadyExistError(error, line).raise();
+            new RFunctionAlreadyExistError(error, fileName, line).raise();
         }
 
         cctx.addFunction(fnObj);

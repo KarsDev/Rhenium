@@ -25,8 +25,8 @@ public class StructInitNode extends ValueNode {
     private final String name;
     private final List<RParamValue> values;
 
-    public StructInitNode(final int line, final String name, final List<RParamValue> values) {
-        super(line);
+    public StructInitNode(final String fileName, final int line, final String name, final List<RParamValue> values) {
+        super(fileName, line);
         this.name = name;
         this.values = values;
     }
@@ -42,25 +42,25 @@ public class StructInitNode extends ValueNode {
 
         RDefaultStruct struct = cctx.getStruct(name);
         if (struct == null) {
-            return new RStructUndefinedError(name, line).raise();
+            return new RStructUndefinedError(name, fileName, line).raise();
         }
 
         if (struct.builtin()) {
-            return new RStructAccessError("This struct can't be initialized: " + name, line).raise();
+            return new RStructAccessError("This struct can't be initialized: " + name, fileName, line).raise();
         }
 
         if (struct instanceof RGenStruct) {
-            return new RGenStructInitError("Add generic types for generic struct initialization", line).raise();
+            return new RGenStructInitError("Add generic types for generic struct initialization", fileName, line).raise();
         }
 
         checkInheritance(struct, cctx);
 
-        return StructCompiler.compile(line, cctx, struct, values, this);
+        return StructCompiler.compile(fileName, line, cctx, struct, values, this);
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Struct Initialization", line).raise();
+        new RValueMustBeUsedError("Struct Initialization", fileName, line).raise();
     }
 
     @Override
@@ -75,14 +75,14 @@ public class StructInitNode extends ValueNode {
     public StructInitNode clone() {
         List<RParamValue> valuesCloned = new ArrayList<>();
         IntStream.range(0, values.size()).forEach(i -> valuesCloned.add(i, values.get(i).clone()));
-        return new StructInitNode(line, name, valuesCloned);
+        return new StructInitNode(fileName, line, name, valuesCloned);
     }
 
     private void checkInheritance(RDefaultStruct struct, CompilationContext cctx) {
         struct.inherited().forEach(i -> {
             Trait trait = cctx.getTrait(i);
             if (trait == null) {
-                new RInheritanceError("Trait not found: " + i, line).raise();
+                new RInheritanceError("Trait not found: " + i, fileName, line).raise();
                 return;
             }
             checkInherited(trait, struct);
@@ -112,7 +112,7 @@ public class StructInitNode extends ValueNode {
             });
 
             if (!found) {
-                new RInheritanceError("Struct '" + this.name + "' does not implement trait function '" + traitFunctionName + "' from trait '" + trait.name() + "'", line).raise();
+                new RInheritanceError("Struct '" + this.name + "' does not implement trait function '" + traitFunctionName + "' from trait '" + trait.name() + "'", fileName, line).raise();
             }
         });
     }

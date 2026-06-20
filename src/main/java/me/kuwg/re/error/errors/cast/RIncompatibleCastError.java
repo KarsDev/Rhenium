@@ -5,8 +5,8 @@ import me.kuwg.re.error.manager.RError;
 import me.kuwg.re.type.TypeRef;
 
 public class RIncompatibleCastError extends RError {
-    public RIncompatibleCastError(final TypeRef from, final TypeRef to, final int line) {
-        super("Incompatible cast from " + from.getName() + " to " + to.getName(), line);
+    public RIncompatibleCastError(final TypeRef from, final TypeRef to, final String fileName, final int line) {
+        super("Incompatible cast from " + from.getName() + " to " + to.getName(), fileName, line);
     }
 
     @Override

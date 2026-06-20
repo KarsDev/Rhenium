@@ -12,8 +12,8 @@ import java.util.Map;
 public class ReturnNode extends ASTNode implements InterruptNode {
     private final ValueNode value;
 
-    public ReturnNode(final int line, final ValueNode value) {
-        super(line);
+    public ReturnNode(final String fileName, final int line, final ValueNode value) {
+        super(fileName, line);
         this.value = value;
     }
 
@@ -52,6 +52,6 @@ public class ReturnNode extends ASTNode implements InterruptNode {
 
     @Override
     public ReturnNode clone() {
-        return new ReturnNode(line, value == null ? null : value.clone());
+        return new ReturnNode(fileName, line, value == null ? null : value.clone());
     }
 }

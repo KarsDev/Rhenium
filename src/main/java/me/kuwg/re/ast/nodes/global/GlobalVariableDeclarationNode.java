@@ -18,8 +18,8 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
     private TypeRef type;
     private final ValueNode value;
 
-    public GlobalVariableDeclarationNode(final int line, final String name, final TypeRef type, final ValueNode value) {
-        super(line);
+    public GlobalVariableDeclarationNode(final String fileName, final int line, final String name, final TypeRef type, final ValueNode value) {
+        super(fileName, line);
         this.name = name;
         this.type = type;
         this.value = value;
@@ -34,18 +34,18 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
     @Override
     public void compile(final CompilationContext cctx) {
         if (!cctx.emptyScope()) {
-            new RGlobalVariableScopeError(name, line);
+            new RGlobalVariableScopeError(name, fileName, line);
         }
 
         if (!value.isConstant(cctx)) {
-            new RNotConstantError("Expected constant value for global variable declaration", line).raise();
+            new RNotConstantError("Expected constant value for global variable declaration", fileName, line).raise();
             return;
         }
         String initialValue = value.compileToConstant(cctx);
         TypeRef varType = type != null ? type : value.getType();
 
         if (type != null && !type.isCompatibleWith(value.getType())) {
-            new RVariableTypeError(value.getType().getName(), type.getName(), line).raise();
+            new RVariableTypeError(value.getType().getName(), type.getName(), fileName, line).raise();
         }
 
         String llvmDecl;
@@ -89,6 +89,6 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
 
     @Override
     public GlobalVariableDeclarationNode clone() {
-        return new GlobalVariableDeclarationNode(line, name, type, value.clone());
+        return new GlobalVariableDeclarationNode(fileName, line, name, type, value.clone());
     }
 }

@@ -23,8 +23,8 @@ public class GenStructInitNode extends ValueNode {
     private final List<TypeRef> genericTypes;
     private final List<RParamValue> values;
 
-    public GenStructInitNode(final int line, final String name, final List<TypeRef> genericTypes, final List<RParamValue> values) {
-        super(line);
+    public GenStructInitNode(final String fileName, final int line, final String name, final List<TypeRef> genericTypes, final List<RParamValue> values) {
+        super(fileName, line);
         this.name = name;
         this.genericTypes = genericTypes;
         this.values = values;
@@ -43,17 +43,17 @@ public class GenStructInitNode extends ValueNode {
         RDefaultStruct struct = cctx.getStruct(name);
 
         if (struct == null) {
-            return new RStructUndefinedError(name, line).raise();
+            return new RStructUndefinedError(name, fileName, line).raise();
         }
 
         if (struct instanceof RStruct) {
-            return new RGenStructInitError("Struct is not generic: " + name, line).raise();
+            return new RGenStructInitError("Struct is not generic: " + name, fileName, line).raise();
         }
 
         RGenStruct genStruct = (RGenStruct) struct;
 
         if (genStruct.type().genericTypes().size() != genericTypes.size()) {
-            return new RGenStructInitError("Expected " + genStruct.type().genericTypes().size() + " generic types but got " + genericTypes.size(), line).raise();
+            return new RGenStructInitError("Expected " + genStruct.type().genericTypes().size() + " generic types but got " + genericTypes.size(), fileName, line).raise();
         }
 
         Map<String, TypeRef> bindings = new HashMap<>();
@@ -68,12 +68,12 @@ public class GenStructInitNode extends ValueNode {
 
         RStruct specialized = genStruct.instantiate(genericTypes, cctx);
 
-        return StructCompiler.compile(line, cctx, specialized, values, this);
+        return StructCompiler.compile(fileName, line, cctx, specialized, values, this);
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Generic Struct Initialization", line).raise();
+        new RValueMustBeUsedError("Generic Struct Initialization", fileName, line).raise();
     }
 
     @Override
@@ -90,6 +90,6 @@ public class GenStructInitNode extends ValueNode {
     public GenStructInitNode clone() {
         List<RParamValue> valuesCloned = new ArrayList<>();
         IntStream.range(0, values.size()).forEach(i -> valuesCloned.add(i, values.get(i).clone()));
-        return new GenStructInitNode(line, name, genericTypes, valuesCloned);
+        return new GenStructInitNode(fileName, line, name, genericTypes, valuesCloned);
     }
 }

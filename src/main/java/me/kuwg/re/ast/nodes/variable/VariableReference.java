@@ -5,8 +5,8 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 
 public abstract class VariableReference extends ValueNode {
-    protected VariableReference(final int line) {
-        super(line);
+    protected VariableReference(final String fileName, final int line) {
+        super(fileName, line);
     }
 
     public abstract RVariable getVariable(CompilationContext cctx);

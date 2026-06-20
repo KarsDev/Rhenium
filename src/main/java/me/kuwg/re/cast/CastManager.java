@@ -10,42 +10,42 @@ import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.ptr.PointerType;
 
 public final class CastManager {
-    public static String executeCast(int line, ValueNode value, TypeRef type, CompilationContext cctx) {
+    public static String executeCast(final String fileName, int line, ValueNode value, TypeRef type, CompilationContext cctx) {
         String valReg = value.compileAndGet(cctx);
         TypeRef from = value.getType();
 
         cctx.emit("; Cast from " + from.getName() + " to " + type.getName());
-        return executeCast(line, valReg, from, type, cctx);
+        return executeCast(fileName, line, valReg, from, type, cctx);
     }
 
-    public static String executeCast(int line, String valReg, TypeRef from, TypeRef type, CompilationContext cctx) {
+    public static String executeCast(final String fileName, int line, String valReg, TypeRef from, TypeRef type, CompilationContext cctx) {
         if (from.equals(type)) return valReg;
 
-        if (from instanceof NullType) return fromNull(line, type, cctx);
-        if (from instanceof LongBuiltinType) return fromLong(line, valReg, type, cctx);
-        if (from instanceof IntBuiltinType) return fromInt(line, valReg, type, cctx);
-        if (from instanceof ShortBuiltinType) return fromShort(line, valReg, type, cctx);
-        if (from instanceof ByteBuiltinType) return fromByte(line, valReg, type, cctx);
-        if (from instanceof FloatBuiltinType) return fromFloat(line, valReg, type, cctx);
-        if (from instanceof DoubleBuiltinType) return fromDouble(line, valReg, type, cctx);
-        if (from instanceof BoolBuiltinType) return fromBool(line, valReg, type, cctx);
-        if (from instanceof CharBuiltinType) return fromChar(line, valReg, type, cctx);
-        if (from instanceof AnyPointerType) return fromAnyPointer(line, valReg, type, cctx);
-        if (from instanceof PointerType ptr) return fromPointer(line, ptr.inner(), valReg, type, cctx);
-        if (from instanceof ArrayType arr) return fromArray(line, arr, valReg, type, cctx);
+        if (from instanceof NullType) return fromNull(fileName, line, type, cctx);
+        if (from instanceof LongBuiltinType) return fromLong(fileName, line, valReg, type, cctx);
+        if (from instanceof IntBuiltinType) return fromInt(fileName, line, valReg, type, cctx);
+        if (from instanceof ShortBuiltinType) return fromShort(fileName, line, valReg, type, cctx);
+        if (from instanceof ByteBuiltinType) return fromByte(fileName, line, valReg, type, cctx);
+        if (from instanceof FloatBuiltinType) return fromFloat(fileName, line, valReg, type, cctx);
+        if (from instanceof DoubleBuiltinType) return fromDouble(fileName, line, valReg, type, cctx);
+        if (from instanceof BoolBuiltinType) return fromBool(fileName, line, valReg, type, cctx);
+        if (from instanceof CharBuiltinType) return fromChar(fileName, line, valReg, type, cctx);
+        if (from instanceof AnyPointerType) return fromAnyPointer(fileName, line, valReg, type, cctx);
+        if (from instanceof PointerType ptr) return fromPointer(fileName, line, ptr.inner(), valReg, type, cctx);
+        if (from instanceof ArrayType arr) return fromArray(fileName, line, arr, valReg, type, cctx);
 
-        return new RIncompatibleCastError(from, type, line).raise();
+        return new RIncompatibleCastError(from, type, fileName, line).raise();
     }
 
-    private static String fromNull(int line, TypeRef to, CompilationContext cctx) {
+    private static String fromNull(final String fileName, int line, TypeRef to, CompilationContext cctx) {
         if (!(to instanceof PointerType || to instanceof AnyPointerType))
-            return new RIncompatibleCastError(NullType.INSTANCE, to, line).raise();
+            return new RIncompatibleCastError(NullType.INSTANCE, to, fileName, line).raise();
         String result = cctx.nextRegister();
         cctx.emit(result + " = bitcast ptr null to " + to.getLLVMName());
         return result;
     }
 
-    private static String fromLong(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromLong(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof LongBuiltinType) return valReg;
         String result = cctx.nextRegister();
         if (to instanceof IntBuiltinType) {
@@ -73,10 +73,10 @@ public final class CastManager {
             return result;
         }
 
-        return new RIncompatibleCastError(BuiltinTypes.LONG.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.LONG.getType(), to, fileName, line).raise();
     }
 
-    private static String fromInt(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromInt(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof IntBuiltinType) return valReg;
         String result = cctx.nextRegister();
         if (to instanceof LongBuiltinType) {
@@ -103,10 +103,10 @@ public final class CastManager {
             cctx.emit(result + " = inttoptr i32 " + valReg + " to i8*");
             return result;
         }
-        return new RIncompatibleCastError(BuiltinTypes.INT.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.INT.getType(), to, fileName, line).raise();
     }
 
-    private static String fromShort(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromShort(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof ShortBuiltinType) return valReg;
         String result = cctx.nextRegister();
         if (to instanceof LongBuiltinType) {
@@ -129,10 +129,10 @@ public final class CastManager {
             cctx.emit(result + " = sitofp i16 " + valReg + " to double");
             return result;
         }
-        return new RIncompatibleCastError(BuiltinTypes.SHORT.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.SHORT.getType(), to, fileName, line).raise();
     }
 
-    private static String fromByte(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromByte(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof ByteBuiltinType) return valReg;
         String result = cctx.nextRegister();
         if (to instanceof ShortBuiltinType) {
@@ -155,10 +155,10 @@ public final class CastManager {
             cctx.emit(result + " = sitofp i8 " + valReg + " to double");
             return result;
         }
-        return new RIncompatibleCastError(BuiltinTypes.BYTE.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.BYTE.getType(), to, fileName, line).raise();
     }
 
-    private static String fromFloat(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromFloat(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof FloatBuiltinType) return valReg;
         String result = cctx.nextRegister();
         if (to instanceof DoubleBuiltinType) {
@@ -181,10 +181,10 @@ public final class CastManager {
             cctx.emit(result + " = fptosi float " + valReg + " to i8");
             return result;
         }
-        return new RIncompatibleCastError(BuiltinTypes.FLOAT.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.FLOAT.getType(), to, fileName, line).raise();
     }
 
-    private static String fromDouble(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromDouble(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof DoubleBuiltinType) return valReg;
         String result = cctx.nextRegister();
         if (to instanceof FloatBuiltinType) {
@@ -207,10 +207,10 @@ public final class CastManager {
             cctx.emit(result + " = fptosi double " + valReg + " to i8");
             return result;
         }
-        return new RIncompatibleCastError(BuiltinTypes.DOUBLE.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.DOUBLE.getType(), to, fileName, line).raise();
     }
 
-    private static String fromBool(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromBool(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof BoolBuiltinType) return valReg;
         String result = cctx.nextRegister();
         if (to instanceof ByteBuiltinType) {
@@ -237,10 +237,10 @@ public final class CastManager {
             cctx.emit(result + " = uitofp i1 " + valReg + " to double");
             return result;
         }
-        return new RIncompatibleCastError(BuiltinTypes.BOOL.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.BOOL.getType(), to, fileName, line).raise();
     }
 
-    private static String fromChar(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromChar(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof CharBuiltinType) return valReg;
         if (to instanceof ByteBuiltinType) return valReg;
         String result = cctx.nextRegister();
@@ -264,10 +264,10 @@ public final class CastManager {
             cctx.emit(result + " = uitofp i8 " + valReg + " to double");
             return result;
         }
-        return new RIncompatibleCastError(BuiltinTypes.CHAR.getType(), to, line).raise();
+        return new RIncompatibleCastError(BuiltinTypes.CHAR.getType(), to, fileName, line).raise();
     }
 
-    private static String fromAnyPointer(int line, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromAnyPointer(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
         String result = cctx.nextRegister();
 
         if (to instanceof ArrayType arrType) {
@@ -277,7 +277,7 @@ public final class CastManager {
             return result;
         } else if (!(to instanceof PointerType)) {
             if (to instanceof AnyPointerType) return valReg;
-            return new RIncompatibleCastError(BuiltinTypes.ANYPTR.getType(), to, line).raise();
+            return new RIncompatibleCastError(BuiltinTypes.ANYPTR.getType(), to, fileName, line).raise();
         }
 
         cctx.emit(result + " = bitcast i8* " + valReg + " to " + to.getLLVMName());
@@ -285,7 +285,7 @@ public final class CastManager {
 
     }
 
-    private static String fromPointer(int line, TypeRef fromInner, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromPointer(final String fileName, int line, TypeRef fromInner, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof PointerType toPtr) {
             PointerType fromPtr = new PointerType(fromInner);
 
@@ -312,10 +312,10 @@ public final class CastManager {
             return result;
         }
 
-        return new RIncompatibleCastError(new PointerType(fromInner), to, line).raise();
+        return new RIncompatibleCastError(new PointerType(fromInner), to, fileName, line).raise();
     }
 
-    private static String fromArray(int line, ArrayType from, String valReg, TypeRef to, CompilationContext cctx) {
+    private static String fromArray(final String fileName, int line, ArrayType from, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof AnyPointerType) {
             String result = cctx.nextRegister();
             PointerType ptrToElem = new PointerType(from.inner());
@@ -330,6 +330,6 @@ public final class CastManager {
             return result;
         }
 
-        return new RIncompatibleCastError(from, to, line).raise();
+        return new RIncompatibleCastError(from, to, fileName, line).raise();
     }
 }

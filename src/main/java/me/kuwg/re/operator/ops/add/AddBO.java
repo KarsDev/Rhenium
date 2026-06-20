@@ -29,7 +29,7 @@ public final class AddBO extends BinaryOperator {
 
         TypeRef resultType = promoteNumeric(leftType, rightType);
         if (resultType == null) {
-            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.line()).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
         String leftReg = convertToType(c.leftReg(), leftType, resultType, c);
@@ -50,18 +50,18 @@ public final class AddBO extends BinaryOperator {
 
         if (!(c.leftType() instanceof StrBuiltinType)) {
             left = c.cctx().nextRegister();
-            c.cctx().emit(left + " = " + convertToString(c.line(), c.leftReg(), c.leftType()));
+            c.cctx().emit(left + " = " + convertToString(c.fileName(), c.line(), c.leftReg(), c.leftType()));
         }
 
         if (!(c.rightType() instanceof StrBuiltinType)) {
             right = c.cctx().nextRegister();
-            c.cctx().emit(right + " = " + convertToString(c.line(), c.rightReg(), c.rightType()));
+            c.cctx().emit(right + " = " + convertToString(c.fileName(), c.line(), c.rightReg(), c.rightType()));
         }
 
         return "call i8* @strConcat(i8* " + left + ", i8* " + right + ")";
     }
 
-    private String convertToString(int line, String reg, TypeRef type) {
+    private String convertToString(String fileName, int line, String reg, TypeRef type) {
         if (type instanceof ByteBuiltinType)  return "call i8* @byteToStr(i8 " + reg + ")";
         if (type instanceof ShortBuiltinType) return "call i8* @shortToStr(i16 " + reg + ")";
         if (type instanceof IntBuiltinType)   return "call i8* @intToStr(i32 " + reg + ")";
@@ -72,6 +72,6 @@ public final class AddBO extends BinaryOperator {
         if (type instanceof CharBuiltinType)  return "call i8* @charToStrAscii(i8 " + reg + ")";
         if (type instanceof AnyPointerType)  return "call i8* @ptrToStr(i8* " + reg + ")";
 
-        return new RStringConversionError(type.getName(), line).raise();
+        return new RStringConversionError(type.getName(), fileName, line).raise();
     }
 }

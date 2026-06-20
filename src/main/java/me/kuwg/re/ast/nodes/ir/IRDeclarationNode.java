@@ -10,8 +10,8 @@ import java.util.Map;
 public class IRDeclarationNode extends ASTNode implements GlobalNode {
     private final String content;
 
-    public IRDeclarationNode(final int line, final String content) {
-        super(line);
+    public IRDeclarationNode(final String fileName, final int line, final String content) {
+        super(fileName, line);
         this.content = content;
     }
 

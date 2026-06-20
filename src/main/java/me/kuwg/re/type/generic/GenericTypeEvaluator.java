@@ -11,17 +11,17 @@ import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.trait.TraitType;
 
 public interface GenericTypeEvaluator {
-    default @SuppressWarnings("unchecked") <T extends TypeRef> T evalType(T type, CompilationContext cctx, final int line) {
+    default @SuppressWarnings("unchecked") <T extends TypeRef> T evalType(T type, CompilationContext cctx, final String fileName, final int line) {
         if (type instanceof AppliedGenStructType ags) {
             String structName = ags.base().name();
             RGenStruct struct = (RGenStruct) cctx.getStruct(structName);
             type = (T) struct.instantiate(ags.args(), cctx).type();
         } else if (type instanceof PointerType ptr) {
-            type = (T) new PointerType(evalType(ptr.inner(), cctx, line));
+            type = (T) new PointerType(evalType(ptr.inner(), cctx, fileName, line));
         } else if (type instanceof ArrayType arr) {
-            type = (T) new ArrayType(arr.size(), evalType(arr.inner(), cctx, line));
+            type = (T) new ArrayType(arr.size(), evalType(arr.inner(), cctx, fileName, line));
         } else if (type instanceof TraitType) {
-            return new RInheritanceError("Trait is not usable as a parameter", line).raise();
+            return new RInheritanceError("Trait is not usable as a parameter", fileName, line).raise();
         }
 
         if (type instanceof AppliedGenStructType) throw new RInternalError();

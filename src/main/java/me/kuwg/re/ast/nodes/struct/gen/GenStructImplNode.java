@@ -22,9 +22,9 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
     private final List<RConstructor> constructors;
     private final List<ASTNode> functions;
 
-    public GenStructImplNode(int line, GenStructType type, List<TypeParameter> genericNames,
+    public GenStructImplNode(final String fileName, int line, GenStructType type, List<TypeParameter> genericNames,
                              List<RConstructor> constructors, List<ASTNode> functions) {
-        super(line);
+        super(fileName, line);
         this.type = type;
         this.genericNames = genericNames;
         this.constructors = constructors;
@@ -41,7 +41,7 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
 
         RDefaultStruct st = cctx.getStruct(type.name());
         if (!(st instanceof RGenStruct genStruct)) {
-            new RStructUndefinedError(type.name(), line).raise();
+            new RStructUndefinedError(type.name(), fileName, line).raise();
             return;
         }
 
@@ -65,6 +65,6 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
         List<ASTNode> functionsCloned = new ArrayList<>();
         IntStream.range(0, functions.size()).forEach(i -> functionsCloned.add(i, functions.get(i).clone()));
 
-        return new GenStructImplNode(line, type, genericNames, constructorsCloned, functionsCloned);
+        return new GenStructImplNode(fileName, line, type, genericNames, constructorsCloned, functionsCloned);
     }
 }

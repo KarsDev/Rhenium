@@ -26,7 +26,7 @@ public final class EqualsBO extends BinaryOperator {
         if ((leftType instanceof NullType && !(rightType instanceof AnyPointerType)) ||
                 (rightType instanceof NullType && !(leftType instanceof AnyPointerType))) {
             return new RUnsupportedBinaryExpressionError(
-                    leftType.getName(), getSymbol(), rightType.getName(), c.line()
+                    leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
             ).raise();
         }
 
@@ -70,7 +70,7 @@ public final class EqualsBO extends BinaryOperator {
             var structDef = c.cctx().getStruct(lt.name());
             if (structDef == null) {
                 return new RUnsupportedBinaryExpressionError(
-                        leftType.getName(), getSymbol(), rightType.getName(), c.line()
+                        leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
                 ).raise();
             }
 
@@ -117,7 +117,7 @@ public final class EqualsBO extends BinaryOperator {
 
         TypeRef resultType = promoteNumeric(leftType, rightType);
         if (resultType == null) {
-            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.line()).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
         String leftReg = convertToType(c.leftReg(), leftType, resultType, c);

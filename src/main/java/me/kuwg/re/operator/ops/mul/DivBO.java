@@ -21,7 +21,7 @@ public final class DivBO extends BinaryOperator {
         TypeRef resultType = promoteNumeric(leftType, rightType);
         if (resultType == null) {
             return new RUnsupportedBinaryExpressionError(
-                    leftType.getName(), getSymbol(), rightType.getName(), c.line()
+                    leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
             ).raise();
         }
 

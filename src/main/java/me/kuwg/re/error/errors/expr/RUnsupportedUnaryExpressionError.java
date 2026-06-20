@@ -5,8 +5,8 @@ import me.kuwg.re.error.manager.RError;
 import me.kuwg.re.type.TypeRef;
 
 public class RUnsupportedUnaryExpressionError extends RError {
-    public RUnsupportedUnaryExpressionError(final String op, final TypeRef type, final int line) {
-        super("Unsupported type for unary operator: " + op + ", " + type.getName(), line);
+    public RUnsupportedUnaryExpressionError(final String op, final TypeRef type, final String fileName, final int line) {
+        super("Unsupported type for unary operator: " + op + ", " + type.getName(), fileName, line);
     }
 
     @Override

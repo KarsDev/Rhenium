@@ -34,12 +34,12 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     private TypeRef returnType;
     private boolean registered = false;
 
-    public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
-        this(line, isGeneric, name, parameters, false, returnType, block);
+    public FunctionDeclarationNode(final String fileName, final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
+        this(fileName, line, isGeneric, name, parameters, false, returnType, block);
     }
 
-    public FunctionDeclarationNode(final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final boolean inline, final TypeRef returnType, final BlockNode block) {
-        super(line);
+    public FunctionDeclarationNode(final String fileName, final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final boolean inline, final TypeRef returnType, final BlockNode block) {
+        super(fileName, line);
         this.isGeneric = isGeneric;
         this.name = name;
 
@@ -49,7 +49,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         this.block = block.clone();
 
         if (returnType instanceof RangeType) {
-            new RRangeTypeError(line).raise();
+            new RRangeTypeError(fileName, line).raise();
         }
     }
 
@@ -94,7 +94,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
-            var pt = evalType(param.type(), cctx, line);
+            var pt = evalType(param.type(), cctx, fileName, line);
 
             func.append(pt.getLLVMName()).append(" %").append(param.name());
             if (i < parameters.size() - 1) func.append(", ");
@@ -120,7 +120,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             }
 
             String paramPtr = "%" + param.name() + ".addr";
-            TypeRef pt = evalType(param.type(), cctx, line);
+            TypeRef pt = evalType(param.type(), cctx, fileName, line);
             cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
             cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 
@@ -160,7 +160,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         cctx.declare(func.toString());
 
         if (main && !returnType.equals(BuiltinTypes.INT.getType())) {
-            new RMainFunctionError("main() function should return int", line).raise();
+            new RMainFunctionError("main() function should return int", fileName, line).raise();
         }
 
         if (registered) return;
@@ -168,7 +168,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         var oldFunc = cctx.getExact(qualifiedName, types);
 
         if (oldFunc != null && !(isGeneric && oldFunc.parameters.stream().anyMatch(p -> p.type() instanceof GenericType))) {
-            new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: " + name + types.toString().replace("[", "(").replace("]", ")"), line).raise();
+            new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: " + name + types.toString().replace("[", "(").replace("]", ")"), fileName, line).raise();
         }
 
         RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
@@ -188,7 +188,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     @Override
     public FunctionDeclarationNode clone() {
-        return new FunctionDeclarationNode(line, isGeneric, name, parameters, returnType, block.clone());
+        return new FunctionDeclarationNode(fileName, line, isGeneric, name, parameters, returnType, block.clone());
     }
 
     public void register(final CompilationContext cctx) {

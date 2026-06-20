@@ -37,7 +37,7 @@ public final class GreaterOrEqualBO extends BinaryOperator {
 
         TypeRef resultType = promoteNumeric(leftType, rightType);
         if (resultType == null) {
-            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.line()).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
         String leftReg = convertToType(c.leftReg(), leftType, resultType, c);

@@ -16,8 +16,8 @@ public class GenStructDeclarationNode extends ASTNode {
     private final GenStructType type;
     private final List<RStructField> fields;
 
-    public GenStructDeclarationNode(final int line, final String name, final List<String> inherited, final GenStructType type, final List<RStructField> fields) {
-        super(line);
+    public GenStructDeclarationNode(final String fileName, final int line, final String name, final List<String> inherited, final GenStructType type, final List<RStructField> fields) {
+        super(fileName, line);
         this.name = name;
         this.inherited = inherited;
         this.type = type;
@@ -33,7 +33,7 @@ public class GenStructDeclarationNode extends ASTNode {
         cctx.declare("; Generic Struct declaration");
 
         if (cctx.getStruct(name) != null) {
-            new RStructAlreadyExistsError(name, line).raise();
+            new RStructAlreadyExistsError(name, fileName, line).raise();
             return;
         }
 

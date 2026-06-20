@@ -29,8 +29,8 @@ public class VariableDeclarationNode extends ValueNode {
     private final ValueNode value;
     private TypeRef type;
 
-    public VariableDeclarationNode(final int line, final VariableReference variable, final boolean mutable, final TypeRef type, final ValueNode value) {
-        super(line);
+    public VariableDeclarationNode(final String fileName, final int line, final VariableReference variable, final boolean mutable, final TypeRef type, final ValueNode value) {
+        super(fileName, line);
         this.variable = variable;
         this.mutable = mutable;
         this.type = type;
@@ -49,7 +49,7 @@ public class VariableDeclarationNode extends ValueNode {
         var oldVar = variable.getVariable(cctx);
 
         if (variable instanceof StructFieldAccessNode && oldVar == null) {
-            return new RVariableNotFoundError(variable.getCompleteName(), line).raise();
+            return new RVariableNotFoundError(variable.getCompleteName(), fileName, line).raise();
         }
 
         String valueReg = value.compileAndGet(cctx);
@@ -60,7 +60,7 @@ public class VariableDeclarationNode extends ValueNode {
         if (targetType instanceof TraitType t) {
             checkTraitType(valueType, t, cctx);
         } else if (!targetType.equals(valueType)) {
-            ValueNode castNode = new CastNode(line, targetType, value);
+            ValueNode castNode = new CastNode(fileName, line, targetType, value);
             valueReg = castNode.compileAndGet(cctx);
             valueType = targetType;
         }
@@ -78,17 +78,17 @@ public class VariableDeclarationNode extends ValueNode {
 
     private String compileReassignment(final CompilationContext cctx, final RVariable oldVar, String valueReg, TypeRef valueType) {
         if (type != null) {
-            new RVariableReassignmentTypeError(variable.getCompleteName(), line).raise();
+            new RVariableReassignmentTypeError(variable.getCompleteName(), fileName, line).raise();
         }
 
         if (!oldVar.mutable()) {
-            new RVariableIsNotMutableError(variable.getCompleteName(), line).raise();
+            new RVariableIsNotMutableError(variable.getCompleteName(), fileName, line).raise();
         }
 
         TypeRef varType = oldVar.type();
 
         if (!varType.equals(valueType)) {
-            ValueNode castNode = new CastNode(line, varType, value);
+            ValueNode castNode = new CastNode(fileName, line, varType, value);
             valueReg = castNode.compileAndGet(cctx);
         }
 
@@ -103,12 +103,12 @@ public class VariableDeclarationNode extends ValueNode {
     }
 
     private String compileDeclaration(final CompilationContext cctx, String valueReg, TypeRef valueType) {
-        TypeRef varType = evalType(type == null || type instanceof TraitType ? valueType : type, cctx, line);
+        TypeRef varType = evalType(type == null || type instanceof TraitType ? valueType : type, cctx, fileName, line);
 
         if (valueType instanceof ArrayType arrType) {
             varType = new ArrayType(arrType.size(), arrType.inner());
             if (arrType.inner() instanceof NoneBuiltinType) {
-                return new RArrayTypeIsNoneError(line).raise();
+                return new RArrayTypeIsNoneError(fileName, line).raise();
             }
         }
 
@@ -138,7 +138,7 @@ public class VariableDeclarationNode extends ValueNode {
         }
 
         if (varType instanceof RangeType) {
-            return new RRangeTypeError(line).raise();
+            return new RRangeTypeError(fileName, line).raise();
         }
 
         cctx.emit(addrReg + " = alloca " + varType.getLLVMName());
@@ -158,18 +158,18 @@ public class VariableDeclarationNode extends ValueNode {
     private void checkTraitType(TypeRef type, TraitType traitType, CompilationContext cctx) {
         Trait t = cctx.getTrait(traitType.getName());
         if (t == null) {
-            new RInheritanceError("Trait not found: " + traitType.name(), line).raise();
+            new RInheritanceError("Trait not found: " + traitType.name(), fileName, line).raise();
             return;
         }
 
         if (!(type instanceof StructType s)) {
-            new RVariableTypeError(type.getName(), traitType.getName(), line).raise();
+            new RVariableTypeError(type.getName(), traitType.getName(), fileName, line).raise();
             return;
         }
 
         RDefaultStruct struct = cctx.getStruct(s.getName());
         if (!struct.inherited().contains(t.name()))
-            new RVariableTypeError(type.getName(), traitType.getName(), line).raise();
+            new RVariableTypeError(type.getName(), traitType.getName(), fileName, line).raise();
 
 
     }
@@ -197,6 +197,6 @@ public class VariableDeclarationNode extends ValueNode {
 
     @Override
     public VariableDeclarationNode clone() {
-        return new VariableDeclarationNode(line, variable.clone(), mutable, type, value.clone());
+        return new VariableDeclarationNode(fileName, line, variable.clone(), mutable, type, value.clone());
     }
 }

@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RFunctionAlreadyExistError extends RError {
-    public RFunctionAlreadyExistError(final String message, final int line) {
-        super(message, line);
+    public RFunctionAlreadyExistError(final String message, final String fileName, final int line) {
+        super(message, fileName, line);
     }
 
     @Override

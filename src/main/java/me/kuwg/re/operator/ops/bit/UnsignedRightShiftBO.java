@@ -20,7 +20,7 @@ public final class UnsignedRightShiftBO extends BinaryOperator {
 
         if (!isInteger(leftType) || !isInteger(rightType)) {
             return new RUnsupportedBinaryExpressionError(
-                    leftType.getName(), getSymbol(), rightType.getName(), c.line()
+                    leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
             ).raise();
         }
 

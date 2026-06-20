@@ -5,8 +5,8 @@ import me.kuwg.re.error.manager.RError;
 import me.kuwg.re.type.TypeRef;
 
 public class RFunctionReturnTypeMismatchError extends RError {
-    public RFunctionReturnTypeMismatchError(final TypeRef fnType, final TypeRef retType, final int line) {
-        super("Function type mismatch, expected " + fnType.getName() + " and got " + retType.getName(), line);
+    public RFunctionReturnTypeMismatchError(final TypeRef fnType, final TypeRef retType, final String fileName, final int line) {
+        super("Function type mismatch, expected " + fnType.getName() + " and got " + retType.getName(), fileName, line);
     }
 
     @Override

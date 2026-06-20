@@ -15,8 +15,8 @@ import java.util.Map;
 public class DereferenceNode extends VariableReference {
     public final VariableReference value;
 
-    public DereferenceNode(final int line, final VariableReference value) {
-        super(line);
+    public DereferenceNode(final String fileName, final int line, final VariableReference value) {
+        super(fileName, line);
         this.value = value;
     }
 
@@ -29,12 +29,12 @@ public class DereferenceNode extends VariableReference {
     public String compileAndGet(final CompilationContext cctx) {
         RVariable var = value.getVariable(cctx);
         if (var == null)
-            return new RVariableNotFoundError(value.getCompleteName(), line).raise();
+            return new RVariableNotFoundError(value.getCompleteName(), fileName, line).raise();
 
         if (!(var.type() instanceof PointerType ptr))
-            return new RDerefNotPointerError(value.getCompleteName(), line).raise();
+            return new RDerefNotPointerError(value.getCompleteName(), fileName, line).raise();
 
-        ptr = evalType(ptr, cctx, line);
+        ptr = evalType(ptr, cctx, fileName, line);
 
         setType(ptr.inner());
 
@@ -67,7 +67,7 @@ public class DereferenceNode extends VariableReference {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Dereference", line).raise();
+        new RValueMustBeUsedError("Dereference", fileName, line).raise();
     }
 
     @Override
@@ -80,12 +80,12 @@ public class DereferenceNode extends VariableReference {
     public RVariable getVariable(final CompilationContext cctx) {
         RVariable var = value.getVariable(cctx);
         if (var == null)
-            return new RVariableNotFoundError(value.getCompleteName(), line).raise();
+            return new RVariableNotFoundError(value.getCompleteName(), fileName, line).raise();
 
         if (!(var.type() instanceof PointerType ptr))
-            return new RDerefNotPointerError(value.getCompleteName(), line).raise();
+            return new RDerefNotPointerError(value.getCompleteName(), fileName, line).raise();
 
-        ptr = evalType(ptr, cctx, line);
+        ptr = evalType(ptr, cctx, fileName, line);
 
         String ptrValueReg;
 
@@ -135,6 +135,6 @@ public class DereferenceNode extends VariableReference {
 
     @Override
     public DereferenceNode clone() {
-        return new DereferenceNode(line, value.clone());
+        return new DereferenceNode(fileName, line, value.clone());
     }
 }

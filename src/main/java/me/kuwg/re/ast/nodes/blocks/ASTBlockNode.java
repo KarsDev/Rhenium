@@ -20,8 +20,8 @@ import java.util.Map;
 public class ASTBlockNode extends ASTNode {
     private final List<ASTNode> nodes;
 
-    public ASTBlockNode() {
-        super(0);
+    public ASTBlockNode(final String fileName) {
+        super(fileName, 0);
         this.nodes = new ArrayList<>();
     }
 

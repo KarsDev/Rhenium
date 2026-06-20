@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class REnumFieldNotFoundError extends RError {
-    public REnumFieldNotFoundError(final String name, final int line) {
-        super("Enum field not found: " + name, line);
+    public REnumFieldNotFoundError(final String name, final String fileName, final int line) {
+        super("Enum field not found: " + name, fileName, line);
     }
 
     @Override

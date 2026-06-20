@@ -15,8 +15,8 @@ import java.util.Map;
 public class ReferenceNode extends ValueNode {
     private final VariableReference value;
 
-    public ReferenceNode(final int line, final VariableReference value) {
-        super(line);
+    public ReferenceNode(final String fileName, final int line, final VariableReference value) {
+        super(fileName, line);
         this.value = value;
     }
 
@@ -30,13 +30,13 @@ public class ReferenceNode extends ValueNode {
         RVariable var = value.getVariable(cctx);
 
         if (var == null) {
-            return new RVariableNotFoundError(value.getCompleteName(), line).raise();
+            return new RVariableNotFoundError(value.getCompleteName(), fileName, line).raise();
         }
 
         if (var.addrReg() == null) {
             return new RNotAddressableError(
                     "Cannot take reference of non-addressable value: " + value.getCompleteName(),
-                    line
+                    fileName, line
             ).raise();
         }
 
@@ -50,7 +50,7 @@ public class ReferenceNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Pointer", line).raise();
+        new RValueMustBeUsedError("Pointer", fileName, line).raise();
     }
 
     @Override
@@ -61,6 +61,6 @@ public class ReferenceNode extends ValueNode {
 
     @Override
     public ReferenceNode clone() {
-        return new ReferenceNode(line, value.clone());
+        return new ReferenceNode(fileName, line, value.clone());
     }
 }

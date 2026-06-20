@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RStructInitParamsError extends RError {
-    public RStructInitParamsError(final String message, final int line) {
-        super(message, line);
+    public RStructInitParamsError(final String message, final String fileName, final int line) {
+        super(message, fileName, line);
     }
 
     @Override

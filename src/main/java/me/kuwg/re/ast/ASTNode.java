@@ -17,9 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ASTNode implements Compilable, Writeable, GenericTypeEvaluator, Cloneable {
+    protected final String fileName;
     protected final int line;
 
-    protected ASTNode(int line) {
+    protected ASTNode(final String fileName, int line) {
+        this.fileName = fileName;
         this.line = line;
     }
 

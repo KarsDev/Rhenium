@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RImplNotFunctionError extends RError {
-    public RImplNotFunctionError(final int line) {
-        super("Impl for struct can only contain function declarations", line);
+    public RImplNotFunctionError(final String fileName, final int line) {
+        super("Impl for struct can only contain function declarations", fileName, line);
     }
 
     @Override

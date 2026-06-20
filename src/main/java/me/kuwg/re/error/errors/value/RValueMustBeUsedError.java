@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RValueMustBeUsedError extends RError {
-    public RValueMustBeUsedError(final String name, final int line) {
-        super(name + " values must be used", line);
+    public RValueMustBeUsedError(final String name, final String fileName, final int line) {
+        super(name + " values must be used", fileName, line);
     }
 
     @Override

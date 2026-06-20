@@ -14,8 +14,8 @@ public class BinaryExpressionNode extends ValueNode {
     private final BinaryOperator op;
     private final ValueNode right;
 
-    public BinaryExpressionNode(final int line, final ValueNode left, final BinaryOperator op, final ValueNode right) {
-        super(line);
+    public BinaryExpressionNode(final int line, final String fileName, final ValueNode left, final BinaryOperator op, final ValueNode right) {
+        super(fileName, line);
         this.left = left;
         this.op = op;
         this.right = right;
@@ -37,7 +37,7 @@ public class BinaryExpressionNode extends ValueNode {
 
         cctx.emit("; Binary operation: " + leftType.getName() + " " + op.getSymbol() + " " + rightType.getName());
 
-        var result = op.compile(new BinaryOperatorContext(leftReg, leftType, rightReg, rightType, line, cctx));
+        var result = op.compile(new BinaryOperatorContext(leftReg, leftType, rightReg, rightType, fileName, line, cctx));
 
         String resultReg = result.code();
 
@@ -48,7 +48,7 @@ public class BinaryExpressionNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Binary Expression", line).raise();
+        new RValueMustBeUsedError("Binary Expression", fileName, line).raise();
     }
 
     @Override
@@ -61,6 +61,6 @@ public class BinaryExpressionNode extends ValueNode {
 
     @Override
     public BinaryExpressionNode clone() {
-        return new BinaryExpressionNode(line, left.clone(), op, right.clone());
+        return new BinaryExpressionNode(line, fileName, left.clone(), op, right.clone());
     }
 }

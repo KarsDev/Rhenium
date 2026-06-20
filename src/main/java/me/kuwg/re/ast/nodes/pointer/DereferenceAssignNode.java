@@ -11,8 +11,8 @@ public class DereferenceAssignNode extends ValueNode {
     private final ValueNode pointer;
     private final ValueNode value;
 
-    public DereferenceAssignNode(final int line, final ValueNode pointer, final ValueNode value) {
-        super(line);
+    public DereferenceAssignNode(final String fileName, final int line, final ValueNode pointer, final ValueNode value) {
+        super(fileName, line);
         this.pointer = pointer;
         this.value = value;
     }
@@ -53,6 +53,6 @@ public class DereferenceAssignNode extends ValueNode {
 
     @Override
     public DereferenceAssignNode clone() {
-        return new DereferenceAssignNode(line, pointer.clone(), value.clone());
+        return new DereferenceAssignNode(fileName, line, pointer.clone(), value.clone());
     }
 }

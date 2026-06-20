@@ -8,8 +8,8 @@ import me.kuwg.re.type.TypeRef;
 import java.util.Map;
 
 public class ContinueNode extends ASTNode {
-    public ContinueNode(final int line) {
-        super(line);
+    public ContinueNode(final String fileName, final int line) {
+        super(fileName, line);
     }
 
     @Override
@@ -19,7 +19,7 @@ public class ContinueNode extends ASTNode {
     @Override
     public void compile(final CompilationContext cctx) {
         if (cctx.getLoopStack().isEmpty()) {
-            new RLoopError("Continue statement not inside a loop", line).raise();
+            new RLoopError("Continue statement not inside a loop", fileName, line).raise();
             return;
         }
 

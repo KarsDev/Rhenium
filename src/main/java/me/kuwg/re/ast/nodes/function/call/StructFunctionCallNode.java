@@ -23,9 +23,9 @@ public class StructFunctionCallNode extends ValueNode {
     private final String name;
     private final List<ValueNode> params;
 
-    public StructFunctionCallNode(final int line, final ValueNode struct,
+    public StructFunctionCallNode(final String fileName, final int line, final ValueNode struct,
                                   final String name, final List<ValueNode> params) {
-        super(line);
+        super(fileName, line);
         this.struct = struct;
         this.name = name;
         this.params = params;
@@ -50,13 +50,13 @@ public class StructFunctionCallNode extends ValueNode {
             var var = vr.getVariable(cctx);
 
             if (var == null) {
-                return new RVariableNotFoundError(vr.getCompleteName(), line).raise();
+                return new RVariableNotFoundError(vr.getCompleteName(), fileName, line).raise();
             }
 
-            selfType = evalType(var.type(), cctx, line);
+            selfType = evalType(var.type(), cctx, fileName, line);
 
             if (!(selfType instanceof StructType)) {
-                return new RVariableTypeError("struct", selfType.getName(), line).raise();
+                return new RVariableTypeError("struct", selfType.getName(), fileName, line).raise();
             }
 
             selfValue = var.addrReg();
@@ -66,7 +66,7 @@ public class StructFunctionCallNode extends ValueNode {
             selfType = struct.getType();
 
             if (!(selfType instanceof StructType structType)) {
-                return new RVariableTypeError("struct", selfType.getName(), line).raise();
+                return new RVariableTypeError("struct", selfType.getName(), fileName, line).raise();
             }
 
             String addr = cctx.nextRegister();
@@ -136,7 +136,7 @@ public class StructFunctionCallNode extends ValueNode {
             if (i < argTypes.size() - 1) sig.append(", ");
         }
         sig.append(")");
-        return new RFunctionNotFoundError(name, sig.toString(), line).raise();
+        return new RFunctionNotFoundError(name, sig.toString(), fileName, line).raise();
     }
 
     @Override
@@ -158,6 +158,6 @@ public class StructFunctionCallNode extends ValueNode {
     public StructFunctionCallNode clone() {
         List<ValueNode> paramsCloned = new ArrayList<>();
         IntStream.range(0, params.size()).forEach(i -> paramsCloned.add(i, params.get(i).clone()));
-        return new StructFunctionCallNode(line, struct, name, paramsCloned);
+        return new StructFunctionCallNode(fileName, line, struct, name, paramsCloned);
     }
 }

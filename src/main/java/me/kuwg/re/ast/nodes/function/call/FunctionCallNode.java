@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 public class FunctionCallNode extends FunCall {
-    public FunctionCallNode(final int line, final String name, final List<ValueNode> parameters) {
-        super(line, name, parameters);
+    public FunctionCallNode(final String fileName, final int line, final String name, final List<ValueNode> parameters) {
+        super(fileName, line, name, parameters);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class FunctionCallNode extends FunCall {
 
         for (var tp : genFn.typeParameters()) {
             if (!bindings.containsKey(tp.name())) {
-                new RFunctionGenericsError("Could not infer type parameter " + tp + ". Please declare type parameters using fn<[T]...>([args]...)", line).raise();
+                new RFunctionGenericsError("Could not infer type parameter " + tp + ". Please declare type parameters using fn<[T]...>([args]...)", fileName, line).raise();
             }
         }
 
@@ -96,7 +96,7 @@ public class FunctionCallNode extends FunCall {
         RFunction existing = genFn.getInstantiation(bindings);
         if (existing == null) {
             String mangledName = genFn.name() + "__" + bindings.values().stream().map(TypeRef::getName).reduce((a, b) -> a + "_" + b).orElse("");
-            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(line, true, mangledName, concreteParams, concreteReturnType, genFn.block().clone());
+            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(fileName, line, true, mangledName, concreteParams, concreteReturnType, genFn.block().clone());
             concreteFnNode.replaceGenerics(bindings, cctx);
 
             concreteFnNode.compile(cctx);
@@ -126,7 +126,7 @@ public class FunctionCallNode extends FunCall {
             if (existing == null) {
                 map.put(gen.name(), callType);
             } else if (!existing.equals(callType)) {
-                new RFunctionGenericsError("Conflicting types for " + gen.name() + ": " + existing.getName() + " vs " + callType.getName(), line).raise();
+                new RFunctionGenericsError("Conflicting types for " + gen.name() + ": " + existing.getName() + " vs " + callType.getName(), fileName, line).raise();
             }
         } else if (paramType instanceof ArrayType arr && callType instanceof ArrayType callArr) {
             inferTypeBindings(arr.inner(), callArr.inner(), map);
@@ -157,7 +157,7 @@ public class FunctionCallNode extends FunCall {
             TypeRef actual = callTypes.get(i);
 
             if (!actual.equals(expected)) {
-                CastNode cast = new CastNode(line, expected, parameters.get(i));
+                CastNode cast = new CastNode(fileName, line, expected, parameters.get(i));
                 argRegs.set(i, cast.compileAndGet(cctx));
                 callTypes.set(i, expected);
             }
@@ -202,6 +202,6 @@ public class FunctionCallNode extends FunCall {
     public FunctionCallNode clone() {
         List<ValueNode> paramsCloned = new ArrayList<>();
         IntStream.range(0, parameters.size()).forEach(i -> paramsCloned.add(i, parameters.get(i).clone()));
-        return new FunctionCallNode(line, name, paramsCloned);
+        return new FunctionCallNode(fileName, line, name, paramsCloned);
     }
 }

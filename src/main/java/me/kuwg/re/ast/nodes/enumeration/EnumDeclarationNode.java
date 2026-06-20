@@ -18,15 +18,15 @@ public class EnumDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
     private final Map<String, ValueNode> fields;
 
-    public EnumDeclarationNode(final int line, final String name, final Map<String, ValueNode> fields) {
-        super(line);
+    public EnumDeclarationNode(final String fileName, final int line, final String name, final Map<String, ValueNode> fields) {
+        super(fileName, line);
         this.name = name;
         this.fields = fields;
     }
 
     @Override
     public ASTNode clone() {
-        return new EnumDeclarationNode(line, name, fields);
+        return new EnumDeclarationNode(fileName, line, name, fields);
     }
 
     @Override
@@ -36,14 +36,14 @@ public class EnumDeclarationNode extends ASTNode implements GlobalNode {
     @Override
     public void compile(final CompilationContext cctx) {
         if (cctx.isEnumDeclared(name)) {
-            new REnumIsAlreadyDeclaredError(name, line).raise();
+            new REnumIsAlreadyDeclaredError(name, fileName, line).raise();
             return;
         }
         List<REnumField> enumFields = new ArrayList<>();
 
         fields.forEach((name, value) -> {
             if (!value.isConstant(cctx)) {
-                new RNotConstantError("Expected constant value for enum declaration", line).raise();
+                new RNotConstantError("Expected constant value for enum declaration", fileName, line).raise();
                 return;
             }
             String vr = value.compileToConstant(cctx);
@@ -57,7 +57,7 @@ public class EnumDeclarationNode extends ASTNode implements GlobalNode {
                 continue;
             }
             if (!type.isCompatibleWith(enumField.type())) {
-                new REnumFieldTypesError("Enum fields cannot have multiple types", line).raise();
+                new REnumFieldTypesError("Enum fields cannot have multiple types", fileName, line).raise();
                 return;
             }
         }

@@ -15,8 +15,8 @@ import java.util.Map;
 public class BitwiseNotNode extends ValueNode {
     private final ValueNode value;
 
-    public BitwiseNotNode(final int line, final ValueNode value) {
-        super(line);
+    public BitwiseNotNode(final String fileName, final int line, final ValueNode value) {
+        super(fileName, line);
         this.value = value;
     }
 
@@ -34,7 +34,7 @@ public class BitwiseNotNode extends ValueNode {
                 || type instanceof ShortBuiltinType
                 || type instanceof IntBuiltinType
                 || type instanceof LongBuiltinType)) {
-            return new RUnsupportedUnaryExpressionError("~", type, line).raise();
+            return new RUnsupportedUnaryExpressionError("~", type, fileName, line).raise();
         }
 
         String mask;
@@ -53,7 +53,7 @@ public class BitwiseNotNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Bitwise NOT", line).raise();
+        new RValueMustBeUsedError("Bitwise NOT", fileName, line).raise();
     }
 
     @Override
@@ -64,6 +64,6 @@ public class BitwiseNotNode extends ValueNode {
 
     @Override
     public BitwiseNotNode clone() {
-        return new BitwiseNotNode(line, value.clone());
+        return new BitwiseNotNode(fileName, line, value.clone());
     }
 }

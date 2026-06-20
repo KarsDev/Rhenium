@@ -26,8 +26,8 @@ public class StructImplNode extends ASTNode implements GlobalNode {
     private final List<RConstructor> constructors;
     private final List<ASTNode> functions;
 
-    public StructImplNode(final int line, final StructType struct, final List<RConstructor> constructors, final List<ASTNode> functions) {
-        super(line);
+    public StructImplNode(final String fileName, final int line, final StructType struct, final List<RConstructor> constructors, final List<ASTNode> functions) {
+        super(fileName, line);
         this.struct = struct;
         this.constructors = constructors;
         this.functions = functions;
@@ -54,7 +54,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
 
         if (cctxStruct == null) {
-            new RStructUndefinedError(struct.name(), line).raise();
+            new RStructUndefinedError(struct.name(), fileName, line).raise();
             return;
         }
 
@@ -81,7 +81,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
     private void compileConstructor(RConstructor constructor, CompilationContext cctx) {
         RDefaultStruct structCtx = cctx.getStruct(struct.name());
         if (structCtx == null) {
-            new RStructUndefinedError(struct.name(), line).raise();
+            new RStructUndefinedError(struct.name(), fileName, line).raise();
             return;
         }
 
@@ -89,7 +89,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
         List<FunctionParameter> newParams = addSelfParam(structCtx, constructor.parameters());
 
-        FunctionDeclarationNode ctorNode = new FunctionDeclarationNode(constructor.block().getNodes().get(0).getLine(), false, mangledName, newParams, NoneBuiltinType.INSTANCE, constructor.block());
+        FunctionDeclarationNode ctorNode = new FunctionDeclarationNode(fileName, constructor.block().getNodes().get(0).getLine(), false, mangledName, newParams, NoneBuiltinType.INSTANCE, constructor.block());
 
         ctorNode.compile(cctx);
 
@@ -114,7 +114,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
         List<FunctionParameter> newParams = addSelfParam(struct, original.getParameters());
 
-        FunctionDeclarationNode renamed = new FunctionDeclarationNode(original.getLine(), false, mangledName, newParams, original.getReturnType(), original.getBlock());
+        FunctionDeclarationNode renamed = new FunctionDeclarationNode(fileName, original.getLine(), false, mangledName, newParams, original.getReturnType(), original.getBlock());
 
         renamed.compile(cctx);
 
@@ -125,7 +125,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         String mangledName = generateName(struct.type().getName(), original.getName());
         List<FunctionParameter> newParams = addSelfParam(struct, original.getParameters());
 
-        BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(original.getLine(), true, mangledName, newParams, original.getReturnType(), original.getLlvmBody());
+        BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(fileName, original.getLine(), true, mangledName, newParams, original.getReturnType(), original.getLlvmBody());
 
         renamed.compile(cctx);
 
@@ -140,6 +140,6 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         List<ASTNode> functionsCloned = new ArrayList<>();
         IntStream.range(0, functions.size()).forEach(i -> functionsCloned.add(i, functions.get(i).clone()));
 
-        return new StructImplNode(line, struct, constructorsCloned, functionsCloned);
+        return new StructImplNode(fileName, line, struct, constructorsCloned, functionsCloned);
     }
 }

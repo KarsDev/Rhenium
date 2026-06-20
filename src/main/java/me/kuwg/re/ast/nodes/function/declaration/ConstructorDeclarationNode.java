@@ -14,8 +14,8 @@ public class ConstructorDeclarationNode extends ASTNode {
     private final List<FunctionParameter> parameters;
     private final BlockNode block;
 
-    public ConstructorDeclarationNode(final int line, final String fileName, final List<FunctionParameter> parameters, final BlockNode block) {
-        super(line);
+    public ConstructorDeclarationNode(final String fileName, final int line, final List<FunctionParameter> parameters, final BlockNode block) {
+        super(fileName, line);
         this.fileName = fileName;
         this.parameters = parameters;
         this.block = block;
@@ -38,7 +38,7 @@ public class ConstructorDeclarationNode extends ASTNode {
 
     @Override
     public ConstructorDeclarationNode clone() {
-        return new ConstructorDeclarationNode(line, fileName, parameters, block.clone());
+        return new ConstructorDeclarationNode(fileName, line, parameters, block.clone());
     }
 
     public BlockNode getBlock() {

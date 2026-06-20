@@ -21,8 +21,8 @@ public class StructFieldAccessNode extends VariableReference {
     public final VariableReference struct;
     private final String fieldName;
 
-    public StructFieldAccessNode(final int line, final VariableReference struct, final String fieldName) {
-        super(line);
+    public StructFieldAccessNode(final String fileName, final int line, final VariableReference struct, final String fieldName) {
+        super(fileName, line);
         this.struct = struct;
         this.fieldName = fieldName;
     }
@@ -44,12 +44,12 @@ public class StructFieldAccessNode extends VariableReference {
         cctx.emit("; Struct field access");
         TypeRef structType = cctx.resolveConcrete(structVar.type());
         if (!(structType instanceof StructType st)) {
-            return new RVariableTypeError("struct", structType.getName(), line).raise();
+            return new RVariableTypeError("struct", structType.getName(), fileName, line).raise();
         }
 
         RDefaultStruct structDef = cctx.getStruct(st.name());
         if (structDef == null) {
-            return new RStructUndefinedError(st.name(), line).raise();
+            return new RStructUndefinedError(st.name(), fileName, line).raise();
         }
 
         int index = -1;
@@ -65,7 +65,7 @@ public class StructFieldAccessNode extends VariableReference {
         }
 
         if (index == -1) {
-            return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
+            return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", fileName, line).raise();
         }
 
         setType(fieldType);
@@ -87,14 +87,14 @@ public class StructFieldAccessNode extends VariableReference {
 
     private String attemptEnumAccess(final CompilationContext cctx) {
         String enumName = struct.getCompleteName();
-        if (enumName.contains(".")) return new RVariableNotFoundError(struct.getSimpleName(), line).raise();
+        if (enumName.contains(".")) return new RVariableNotFoundError(struct.getSimpleName(), fileName, line).raise();
 
         REnum members = cctx.getEnum(enumName);
-        if (members == null) return new RVariableNotFoundError(enumName, null, line).raise();
+        if (members == null) return new RVariableNotFoundError(enumName, null, fileName, line).raise();
 
         REnumField field = members.getField(fieldName);
 
-        if (field == null) return new REnumFieldNotFoundError(fieldName, line).raise();
+        if (field == null) return new REnumFieldNotFoundError(fieldName, fileName, line).raise();
 
         cctx.emit("; Enum access");
         setType(field.type());
@@ -117,24 +117,24 @@ public class StructFieldAccessNode extends VariableReference {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Struct Field", line).raise();
+        new RValueMustBeUsedError("Struct Field", fileName, line).raise();
     }
 
     @Override
     public RVariable getVariable(final CompilationContext cctx) {
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
-            return new RStructAccessError("Struct access on non-variable: " + struct.getCompleteName(), line).raise();
+            return new RStructAccessError("Struct access on non-variable: " + struct.getCompleteName(), fileName, line).raise();
         }
 
         TypeRef structType = structVar.type();
         if (!(structType instanceof StructType st)) {
-            return new RVariableTypeError("struct", structType.getName(), line).raise();
+            return new RVariableTypeError("struct", structType.getName(), fileName, line).raise();
         }
 
         RDefaultStruct structDef = cctx.getStruct(st.name());
         if (structDef == null) {
-            return new RStructUndefinedError(st.name(), line).raise();
+            return new RStructUndefinedError(st.name(), fileName, line).raise();
         }
 
         int index = -1;
@@ -150,7 +150,7 @@ public class StructFieldAccessNode extends VariableReference {
         }
 
         if (index == -1) {
-            return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", line).raise();
+            return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", fileName, line).raise();
         }
 
         setType(fieldType);
@@ -189,6 +189,6 @@ public class StructFieldAccessNode extends VariableReference {
 
     @Override
     public StructFieldAccessNode clone() {
-        return new StructFieldAccessNode(line, struct.clone(), fieldName);
+        return new StructFieldAccessNode(fileName, line, struct.clone(), fieldName);
     }
 }

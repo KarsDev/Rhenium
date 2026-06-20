@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RVariableAlreadyExistsError extends RError {
-    public RVariableAlreadyExistsError(final String name, final int line) {
-        super("Variable already exists: " + name, line);
+    public RVariableAlreadyExistsError(final String name, final int line, final String fileName) {
+        super("Variable already exists: " + name, fileName, line);
     }
 
     @Override

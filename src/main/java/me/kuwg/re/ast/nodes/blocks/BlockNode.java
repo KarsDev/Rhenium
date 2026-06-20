@@ -21,10 +21,12 @@ import java.util.List;
 import java.util.Map;
 
 public final class BlockNode implements Writeable, Compilable, GlobalNode, Cloneable {
+    private final String fileName;
     private List<ASTNode> nodes;
     private boolean compiled = false;
 
-    public BlockNode(final List<ASTNode> nodes) {
+    public BlockNode(final String fileName, final List<ASTNode> nodes) {
+        this.fileName = fileName;
         this.nodes = nodes;
     }
 
@@ -45,7 +47,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
         for (final ASTNode node : nodes) {
             if (terminated) {
-                new RBlockSyntaxError("Block gets interrupted but continues", node.getLine()).raise();
+                new RBlockSyntaxError("Block gets interrupted but continues", fileName, node.getLine()).raise();
                 break;
             }
 
@@ -62,10 +64,10 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
     public String compileAndGet(TypeRef type, CompilationContext cctx) {
         String name = "\"BlockCompilationFunction" + cctx.nextRegister().substring(1) + "\"";
 
-        var fdn = new FunctionDeclarationNode(0, false, name, new ArrayList<>(), type, this);
+        var fdn = new FunctionDeclarationNode(fileName, 0, false, name, new ArrayList<>(), type, this);
         fdn.compile(cctx);
 
-        var fcn = new FunctionCallNode(0, name, new ArrayList<>());
+        var fcn = new FunctionCallNode(fileName, 0, name, new ArrayList<>());
 
         return fcn.compileAndGet(cctx);
     }
@@ -99,7 +101,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
                 TypeRef type = ret.getValueType();
 
                 if (!type.isCompatibleWith(returnType)) {
-                    new RFunctionReturnTypeMismatchError(returnType, type, node.getLine()).raise();
+                    new RFunctionReturnTypeMismatchError(returnType, type, fileName, node.getLine()).raise();
                 }
             }
 
@@ -112,7 +114,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
             new RFunctionReturnTypeMismatchError(
                     returnType,
                     NoneBuiltinType.INSTANCE,
-                    nodes.isEmpty() ? -1 : nodes.get(nodes.size() - 1).getLine()
+                    fileName, nodes.isEmpty() ? -1 : nodes.get(nodes.size() - 1).getLine()
             ).raise();
         }
     }

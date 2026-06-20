@@ -14,8 +14,8 @@ import java.util.Map;
 public class DirectVariableReferenceNode extends VariableReference {
     private final String name;
 
-    public DirectVariableReferenceNode(final int line, final String name) {
-        super(line);
+    public DirectVariableReferenceNode(final String fileName, final int line, final String name) {
+        super(fileName, line);
         this.name = name;
     }
 
@@ -28,7 +28,7 @@ public class DirectVariableReferenceNode extends VariableReference {
         RVariable var = cctx.getVariable(name);
 
         if (var == null) {
-            return new RVariableNotFoundError(name, line).raise();
+            return new RVariableNotFoundError(name, fileName, line).raise();
         }
 
         setType(var.type());
@@ -46,7 +46,7 @@ public class DirectVariableReferenceNode extends VariableReference {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Variable", line).raise();
+        new RValueMustBeUsedError("Variable", fileName, line).raise();
     }
 
     @Override
@@ -68,7 +68,7 @@ public class DirectVariableReferenceNode extends VariableReference {
     }
 
     private RVariable compileSelfReference(CompilationContext cctx) {
-        var self = new DereferenceNode(line, new DirectVariableReferenceNode(line, "self"));
+        var self = new DereferenceNode(fileName, line, new DirectVariableReferenceNode(fileName, line, "self"));
 
         cctx.pushFunctionBody();
         self.compileAndGet(cctx);
@@ -84,7 +84,7 @@ public class DirectVariableReferenceNode extends VariableReference {
         if (struct == null || struct.fields().stream().noneMatch(f -> f.name().equals(name)))
             return null;
 
-        var node = new StructFieldAccessNode(line, new DereferenceNode(line, new DirectVariableReferenceNode(line, "self")), name);
+        var node = new StructFieldAccessNode(fileName, line, new DereferenceNode(fileName, line, new DirectVariableReferenceNode(fileName, line, "self")), name);
         var res = node.getVariable(cctx);
         setType(node.getType());
 
@@ -108,6 +108,6 @@ public class DirectVariableReferenceNode extends VariableReference {
 
     @Override
     public DirectVariableReferenceNode clone() {
-        return new DirectVariableReferenceNode(line, name);
+        return new DirectVariableReferenceNode(fileName, line, name);
     }
 }

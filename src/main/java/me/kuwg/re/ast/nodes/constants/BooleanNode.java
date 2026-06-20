@@ -7,8 +7,8 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 public class BooleanNode extends ConstantNode {
     private final boolean value;
 
-    public BooleanNode(final int line, final boolean value) {
-        super(line, BuiltinTypes.BOOL.getType());
+    public BooleanNode(final String fileName, final int line, final boolean value) {
+        super(fileName, line, BuiltinTypes.BOOL.getType());
         this.value = value;
     }
 
@@ -19,7 +19,7 @@ public class BooleanNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Boolean", line).raise();
+        new RValueMustBeUsedError("Boolean", fileName, line).raise();
     }
 
     @Override

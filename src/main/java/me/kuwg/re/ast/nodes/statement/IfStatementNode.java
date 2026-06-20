@@ -19,8 +19,8 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
     private final IfStatementNode elseIfNode;
     private final BlockNode elseNode;
 
-    public IfStatementNode(final int line, final ValueNode condition, final BlockNode block, final IfStatementNode elseIfNode, final BlockNode elseNode) {
-        super(line);
+    public IfStatementNode(final String fileName, final int line, final ValueNode condition, final BlockNode block, final IfStatementNode elseIfNode, final BlockNode elseNode) {
+        super(fileName, line);
         this.condition = condition;
         this.block = block;
         this.elseIfNode = elseIfNode;
@@ -52,7 +52,7 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
         String condReg = condition.compileAndGet(cctx);
 
         if (!(condition.getType() instanceof BoolBuiltinType)) {
-            new RInvalidConditionError(condition.getType(), line).raise();
+            new RInvalidConditionError(condition.getType(), fileName, line).raise();
             return;
         }
 
@@ -115,6 +115,6 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
 
     @Override
     public IfStatementNode clone() {
-        return new IfStatementNode(line, condition.clone(), block.clone(), elseIfNode == null ? null : elseIfNode.clone(), elseNode == null ? null : elseNode.clone());
+        return new IfStatementNode(fileName, line, condition.clone(), block.clone(), elseIfNode == null ? null : elseIfNode.clone(), elseNode == null ? null : elseNode.clone());
     }
 }

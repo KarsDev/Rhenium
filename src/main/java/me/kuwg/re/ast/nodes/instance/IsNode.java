@@ -12,8 +12,8 @@ public class IsNode extends ValueNode {
     private final ValueNode value;
     private TypeRef isType;
 
-    public IsNode(final int line, final ValueNode value, final TypeRef isType) {
-        super(line, BuiltinTypes.BOOL.getType());
+    public IsNode(final String fileName, final int line, final ValueNode value, final TypeRef isType) {
+        super(fileName, line, BuiltinTypes.BOOL.getType());
 
         this.value = value;
         this.isType = isType;
@@ -34,7 +34,7 @@ public class IsNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("is instance", line).raise();
+        new RValueMustBeUsedError("is instance", fileName, line).raise();
     }
 
     @Override
@@ -46,6 +46,6 @@ public class IsNode extends ValueNode {
 
     @Override
     public IsNode clone() {
-        return new IsNode(line, value.clone(), isType);
+        return new IsNode(fileName, line, value.clone(), isType);
     }
 }

@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RRangeTypeError extends RError {
-    public RRangeTypeError(final int line) {
-        super("Range type is not supported for variables or functions", line);
+    public RRangeTypeError(final String fileName, final int line) {
+        super("Range type is not supported for variables or functions", fileName, line);
     }
 
     @Override

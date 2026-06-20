@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class RDefaultStruct {
+    protected final String fileName;
     protected final List<RFunction> constructors = new ArrayList<>();
     private final boolean builtin;
     protected final TypeRef type;
@@ -16,7 +17,8 @@ public class RDefaultStruct {
     protected final List<RStructField> fields;
     protected final List<RFunction> functions = new ArrayList<>();
 
-    public RDefaultStruct(final boolean builtin, final List<String> inherited, final TypeRef type, final List<RStructField> fields) {
+    public RDefaultStruct(final String fileName, final boolean builtin, final List<String> inherited, final TypeRef type, final List<RStructField> fields) {
+        this.fileName = fileName;
         this.builtin = builtin;
         this.inherited = inherited;
         this.type = type;

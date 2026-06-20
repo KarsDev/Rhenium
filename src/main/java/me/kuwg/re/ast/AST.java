@@ -10,8 +10,8 @@ import java.util.Map;
 public class AST implements Compilable {
     private final ASTBlockNode block;
 
-    public AST() {
-        this.block = new ASTBlockNode();
+    public AST(final String fileName) {
+        this.block = new ASTBlockNode(fileName);
     }
 
     public void addChild(ASTNode node) {

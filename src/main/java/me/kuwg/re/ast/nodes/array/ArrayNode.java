@@ -18,8 +18,8 @@ import java.util.stream.IntStream;
 public class ArrayNode extends PointerValueNode {
     private final List<ValueNode> values;
 
-    public ArrayNode(final int line, final List<ValueNode> values) {
-        super(line);
+    public ArrayNode(final String fileName, final int line, final List<ValueNode> values) {
+        super(fileName, line);
         this.values = values;
     }
 
@@ -30,19 +30,19 @@ public class ArrayNode extends PointerValueNode {
 
     private TypeRef inferType() {
         if (values.isEmpty()) {
-            return new RArrayTypesMismatchError(line).raise();
+            return new RArrayTypesMismatchError(fileName, line).raise();
         }
         TypeRef type = values.get(0).getType();
 
         for (ValueNode v : values) {
             if (type.isCompatibleWith(v.getType())) continue;
-            return new RArrayTypesMismatchError(v.getType().getName(), type.getName(), line).raise();
+            return new RArrayTypesMismatchError(v.getType().getName(), type.getName(), fileName, line).raise();
         }
 
         var arr = new ArrayType(values.size(), values.get(0).getType());
 
         if (arr.inner() instanceof NoneBuiltinType) {
-            return new RArrayTypeIsNoneError(line).raise();
+            return new RArrayTypeIsNoneError(fileName, line).raise();
         }
 
         return arr;
@@ -89,7 +89,7 @@ public class ArrayNode extends PointerValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Array", line).raise();
+        new RValueMustBeUsedError("Array", fileName, line).raise();
     }
 
     @Override
@@ -102,6 +102,6 @@ public class ArrayNode extends PointerValueNode {
     public ArrayNode clone() {
         List<ValueNode> values = new ArrayList<>();
         IntStream.range(0, this.values.size()).forEach(i -> values.add(i, this.values.get(i).clone()));
-        return new ArrayNode(line, values);
+        return new ArrayNode(fileName, line, values);
     }
 }

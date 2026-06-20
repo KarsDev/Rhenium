@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RFunctionNotFoundError extends RError {
-    public RFunctionNotFoundError(final String name, String params, final int line) {
-        super("Function not found: " + name + params, line);
+    public RFunctionNotFoundError(final String name, String params, final String fileName, final int line) {
+        super("Function not found: " + name + params, fileName, line);
     }
 
     @Override

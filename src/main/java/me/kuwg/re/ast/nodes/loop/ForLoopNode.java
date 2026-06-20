@@ -27,8 +27,8 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
     private final ValueNode collection;
     private final BlockNode block;
 
-    public ForLoopNode(final int line, final String variable, final ValueNode collection, final BlockNode block) {
-        super(line);
+    public ForLoopNode(final String fileName, final int line, final String variable, final ValueNode collection, final BlockNode block) {
+        super(fileName, line);
         this.variable = variable;
         this.llvmVariable = RVariable.makeUnique(variable);
         this.collection = collection;
@@ -49,19 +49,19 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
     @Override
     public void compile(final CompilationContext cctx) {
         cctx.emit("; For loop");
-        
+
         String reg = collection.compileAndGet(cctx);
 
         if (collection.getType() instanceof ArrayType) {
             if (collection instanceof VariableReference varNode) {
                 var v = cctx.getVariable(varNode.getSimpleName());
                 if (v == null) {
-                    new RVariableNotFoundError(varNode.getSimpleName(), line).raise();
+                    new RVariableNotFoundError(varNode.getSimpleName(), fileName, line).raise();
                     return;
                 }
                 reg = v.addrReg();
             } else {
-                new RLoopError("Array expression not supported yet (needs pointer)", line).raise();
+                new RLoopError("Array expression not supported yet (needs pointer)", fileName, line).raise();
                 return;
             }
         }
@@ -69,12 +69,12 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         TypeRef type = collection.getType();
 
         if (!(type instanceof IterableTypeRef)) {
-            new RValueIsNotIterableError(type.getName(), line).raise();
+            new RValueIsNotIterableError(type.getName(), fileName, line).raise();
             return;
         }
 
         if (cctx.getVariable(variable) != null) {
-            new RVariableAlreadyExistsError(variable, line).raise();
+            new RVariableAlreadyExistsError(variable, line, fileName).raise();
             return;
         }
 
@@ -88,7 +88,7 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
             return;
         }
 
-        new RValueIsNotIterableError(variable, line).raise();
+        new RValueIsNotIterableError(variable, fileName, line).raise();
     }
 
     private void compileRange(CompilationContext cctx, RangeType range) {
@@ -255,6 +255,6 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
     @Override
     public ForLoopNode clone() {
-        return new ForLoopNode(line, variable, collection.clone(), block.clone());
+        return new ForLoopNode(fileName, line, variable, collection.clone(), block.clone());
     }
 }

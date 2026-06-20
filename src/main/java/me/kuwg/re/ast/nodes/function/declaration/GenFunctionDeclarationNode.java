@@ -20,8 +20,8 @@ public class GenFunctionDeclarationNode extends ASTNode {
 
     private boolean registered = false;
 
-    public GenFunctionDeclarationNode(final int line, final String name, final List<TypeParameter> typeParameters, final List<FunctionParameter> params, final TypeRef returnType, final BlockNode block) {
-        super(line);
+    public GenFunctionDeclarationNode(final String fileName, final int line, final String name, final List<TypeParameter> typeParameters, final List<FunctionParameter> params, final TypeRef returnType, final BlockNode block) {
+        super(fileName, line);
         this.name = name;
         this.typeParameters = typeParameters;
         this.params = params;
@@ -69,6 +69,6 @@ public class GenFunctionDeclarationNode extends ASTNode {
 
     @Override
     public GenFunctionDeclarationNode clone() {
-        return new GenFunctionDeclarationNode(line, name, typeParameters, params, returnType, block.clone());
+        return new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, block.clone());
     }
 }

@@ -18,8 +18,8 @@ import java.util.stream.IntStream;
 public class GenericFunctionCallNode extends FunCall {
     private final List<TypeRef> genericTypes;
 
-    public GenericFunctionCallNode(int line, String name, List<TypeRef> genericTypes, List<ValueNode> parameters) {
-        super(line, name, parameters);
+    public GenericFunctionCallNode(final String fileName, int line, String name, List<TypeRef> genericTypes, List<ValueNode> parameters) {
+        super(fileName, line, name, parameters);
         this.genericTypes = genericTypes;
     }
 
@@ -46,7 +46,7 @@ public class GenericFunctionCallNode extends FunCall {
         List<ValueNode> paramsCloned = new ArrayList<>();
         IntStream.range(0, parameters.size()).forEach(i -> paramsCloned.add(i, parameters.get(i).clone()));
 
-        return new GenericFunctionCallNode(line, name, genericCloned, paramsCloned);
+        return new GenericFunctionCallNode(fileName, line, name, genericCloned, paramsCloned);
     }
 
     private String compile0(CompilationContext cctx, boolean getting) {
@@ -63,7 +63,7 @@ public class GenericFunctionCallNode extends FunCall {
         RFunction fn = cctx.getFunction(qualifiedName, callTypes);
 
         if (!(fn instanceof RGenFunction genFn)) {
-            return new RFunctionGenericsError("Function is not generic or is not found", line).raise();
+            return new RFunctionGenericsError("Function is not generic or is not found", fileName, line).raise();
         }
 
         return compileWithExplicitGenerics(cctx, genFn, argRegs, getting);
@@ -73,7 +73,7 @@ public class GenericFunctionCallNode extends FunCall {
         if (genericTypes.size() != genFn.typeParameters().size()) {
             return new RFunctionGenericsError(
                     "Expected " + genFn.typeParameters().size() + " generic arguments, got " + genericTypes.size(),
-                    line
+                    fileName, line
             ).raise();
         }
 
@@ -101,7 +101,7 @@ public class GenericFunctionCallNode extends FunCall {
                             .orElse("");
 
             FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(
-                    line,
+                    fileName, line,
                     true,
                     mangledName,
                     concreteParams,

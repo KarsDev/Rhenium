@@ -20,9 +20,9 @@ public final class ModuleLoadingHelper {
         throw new RInternalError();
     }
 
-    public static void loadModule(int line, Map<String, TypeRef> typeMap, String sourceFile, String name, String pkg, CompilationContext cctx) {
+    public static void loadModule(final String fileName, int line, Map<String, TypeRef> typeMap, String sourceFile, String name, String pkg, CompilationContext cctx) {
         if (pkg == null) {
-            loadNativeModule(line, typeMap, name, cctx);
+            loadNativeModule(fileName, line, typeMap, name, cctx);
             return;
         }
 
@@ -38,14 +38,14 @@ public final class ModuleLoadingHelper {
 
 
         if (base == null) {
-            new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
             return;
         }
 
         Path file = base.resolve(name + ".re");
 
         if (!Files.exists(file)) {
-            new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
             return;
         }
 
@@ -53,17 +53,17 @@ public final class ModuleLoadingHelper {
         try {
             src = Files.readString(file);
         } catch (IOException e) {
-            new RModuleCouldNotBeLoadedError(pkg + "->" + name, line).raise();
+            new RModuleCouldNotBeLoadedError(pkg + "->" + name, fileName, line).raise();
             return;
         }
 
         load(typeMap, file.toString(), src, cctx);
     }
 
-    private static void loadNativeModule(int line, Map<String, TypeRef> typeMap, String name, CompilationContext cctx) {
+    private static void loadNativeModule(final String fileName, int line, Map<String, TypeRef> typeMap, String name, CompilationContext cctx) {
         String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
         if (src == null) {
-            new RModuleNotFoundError(name, line).raise();
+            new RModuleNotFoundError(name, fileName, line).raise();
             return;
         }
 
@@ -81,9 +81,9 @@ public final class ModuleLoadingHelper {
         ast.compile(cctx);
     }
 
-    public static Map<String, TypeRef> collectModuleTypes(int line, String sourceFile, String name, String pkg, Map<String, TypeRef> typeMap) {
+    public static Map<String, TypeRef> collectModuleTypes(final String fileName, int line, String sourceFile, String name, String pkg, Map<String, TypeRef> typeMap) {
         if (pkg == null) {
-            return collectNativeModuleTypes(line, name, typeMap);
+            return collectNativeModuleTypes(fileName, line, name, typeMap);
         }
 
         final Path srcPath = Path.of(sourceFile);
@@ -97,13 +97,13 @@ public final class ModuleLoadingHelper {
         }
 
         if (base == null) {
-            new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
             return Map.of();
         }
 
         Path file = base.resolve(name + ".re");
         if (!Files.exists(file)) {
-            new RModuleNotFoundError(pkg + "->" + name, line).raise();
+            new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
             return Map.of();
         }
 
@@ -111,17 +111,17 @@ public final class ModuleLoadingHelper {
         try {
             src = Files.readString(file);
         } catch (IOException e) {
-            new RModuleCouldNotBeLoadedError(pkg + "->" + name, line).raise();
+            new RModuleCouldNotBeLoadedError(pkg + "->" + name, fileName, line).raise();
             return Map.of();
         }
 
         return collectTypes(file.toString(), src, typeMap);
     }
 
-    private static Map<String, TypeRef> collectNativeModuleTypes(int line, String name, Map<String, TypeRef> typeMap) {
+    private static Map<String, TypeRef> collectNativeModuleTypes(final String fileName, int line, String name, Map<String, TypeRef> typeMap) {
         String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
         if (src == null) {
-            new RModuleNotFoundError(name, line).raise();
+            new RModuleNotFoundError(name, fileName, line).raise();
             return Map.of();
         }
 

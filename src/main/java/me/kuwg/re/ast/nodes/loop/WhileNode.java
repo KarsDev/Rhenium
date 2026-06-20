@@ -16,8 +16,8 @@ public class WhileNode extends ASTNode implements IBlockContainer {
     private final ValueNode condition;
     private final BlockNode block;
 
-    public WhileNode(final int line, final ValueNode condition, final BlockNode block) {
-        super(line);
+    public WhileNode(final String fileName, final int line, final ValueNode condition, final BlockNode block) {
+        super(fileName, line);
         this.condition = condition;
         this.block = block;
     }
@@ -50,7 +50,7 @@ public class WhileNode extends ASTNode implements IBlockContainer {
         String condReg = condition.compileAndGet(cctx);
 
         if (!(condition.getType() instanceof BoolBuiltinType)) {
-            new RInvalidConditionError(condition.getType(), line).raise();
+            new RInvalidConditionError(condition.getType(), fileName, line).raise();
             return;
         }
 
@@ -79,6 +79,6 @@ public class WhileNode extends ASTNode implements IBlockContainer {
 
     @Override
     public WhileNode clone() {
-        return new WhileNode(line, condition.clone(), block.clone());
+        return new WhileNode(fileName, line, condition.clone(), block.clone());
     }
 }

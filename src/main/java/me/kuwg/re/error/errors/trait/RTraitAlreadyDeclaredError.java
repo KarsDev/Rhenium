@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RTraitAlreadyDeclaredError extends RError {
-    public RTraitAlreadyDeclaredError(final String name, final int line) {
-        super("Trait is already declared: " + name, line);
+    public RTraitAlreadyDeclaredError(final String name, final int line, final String fileName) {
+        super("Trait is already declared: " + name, fileName, line);
     }
 
     @Override

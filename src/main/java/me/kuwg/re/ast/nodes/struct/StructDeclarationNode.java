@@ -21,8 +21,8 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
     private final StructType type;
     private final List<RStructField> fields;
 
-    public StructDeclarationNode(final int line, final boolean builtin, final String name, final List<String> inherited, final StructType type, final List<RStructField> fields) {
-        super(line);
+    public StructDeclarationNode(final String fileName, final int line, final boolean builtin, final String name, final List<String> inherited, final StructType type, final List<RStructField> fields) {
+        super(fileName, line);
         this.builtin = builtin;
         this.name = name;
         this.inherited = inherited;
@@ -42,7 +42,7 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
     @Override
     public void compile(final CompilationContext cctx) {
         if (cctx.getStruct(name) != null) {
-            new RStructAlreadyExistsError(name, line).raise();
+            new RStructAlreadyExistsError(name, fileName, line).raise();
             return;
         }
 
@@ -82,7 +82,7 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
             return genStruct.instantiate(applied.args(), cctx).type();
         }
 
-        return new RStructGenFieldError("Cannot resolve applied generic struct type '" + applied.getName() + "'; " + "no generic struct template named '" + applied.base().getName() + "' was found.", line).raise();
+        return new RStructGenFieldError("Cannot resolve applied generic struct type '" + applied.getName() + "'; " + "no generic struct template named '" + applied.base().getName() + "' was found.", fileName, line).raise();
     }
 
     @Override

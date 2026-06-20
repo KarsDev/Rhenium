@@ -26,8 +26,8 @@ public final class RGenStruct extends RDefaultStruct {
     private final Map<List<TypeRef>, RStruct> cache = new HashMap<>();
     private final List<ImplTemplate> impls = new ArrayList<>();
 
-    public RGenStruct(final List<String> inherited, TypeRef type, List<RStructField> fields) {
-        super(false, inherited, type, fields);
+    public RGenStruct(final String fileName, final List<String> inherited, TypeRef type, List<RStructField> fields) {
+        super(fileName, false, inherited, type, fields);
     }
 
     @Override
@@ -62,7 +62,7 @@ public final class RGenStruct extends RDefaultStruct {
         String mangledName = mangleName(types);
         TypeRef newType = new StructType(mangledName, newFields.stream().map(RStructField::type).toList());
 
-        RStruct specialized = new RStruct(false, inherited, newType, newFields);
+        RStruct specialized = new RStruct(fileName, false, inherited, newType, newFields);
 
         cache.put(List.copyOf(types), specialized);
         cctx.addStruct(false, mangledName, inherited, newType, newFields);
@@ -143,7 +143,7 @@ public final class RGenStruct extends RDefaultStruct {
                 withSelf.add(new FunctionParameter("self", false, new PointerType(struct.type())));
                 withSelf.addAll(substitutedParams);
 
-                FunctionDeclarationNode fn = new FunctionDeclarationNode(ctor.block().getNodes().get(0).getLine(), false, mangledName, withSelf, NoneBuiltinType.INSTANCE, ctor.block().clone());
+                FunctionDeclarationNode fn = new FunctionDeclarationNode(fileName, ctor.block().getNodes().get(0).getLine(), false, mangledName, withSelf, NoneBuiltinType.INSTANCE, ctor.block().clone());
 
                 fn.replaceGenerics(combined, cctx);
                 fn.compile(cctx);
@@ -170,7 +170,7 @@ public final class RGenStruct extends RDefaultStruct {
 
                     String mangledName = StructImplNode.generateName(struct.type().getName(), dec.getName());
 
-                    FunctionDeclarationNode renamed = new FunctionDeclarationNode(dec.getLine(), false, mangledName, withSelf, returnType, dec.getBlock().clone());
+                    FunctionDeclarationNode renamed = new FunctionDeclarationNode(fileName, dec.getLine(), false, mangledName, withSelf, returnType, dec.getBlock().clone());
 
                     renamed.replaceGenerics(combined, cctx);
                     renamed.compile(cctx);
@@ -190,7 +190,7 @@ public final class RGenStruct extends RDefaultStruct {
 
                     String mangledName = StructImplNode.generateName(struct.type().getName(), blt.getName());
 
-                    BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(blt.getLine(), true, mangledName, withSelf, returnType, blt.getLlvmBody());
+                    BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(fileName, blt.getLine(), true, mangledName, withSelf, returnType, blt.getLlvmBody());
 
                     renamed.replaceGenerics(combined, cctx);
                     renamed.compile(cctx);

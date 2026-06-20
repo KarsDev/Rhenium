@@ -13,8 +13,8 @@ public class SizeofNode extends ConstantNode {
     private TypeRef type;
     private final ValueNode value;
 
-    public SizeofNode(final int line, final ValueNode value) {
-        super(line, BuiltinTypes.INT.getType());
+    public SizeofNode(final String fileName, final int line, final ValueNode value) {
+        super(fileName, line, BuiltinTypes.INT.getType());
         this.type = null;
         this.value = value;
     }
@@ -25,15 +25,15 @@ public class SizeofNode extends ConstantNode {
         value.replaceGenerics(generics, cctx);
     }
 
-    public SizeofNode(final int line, final TypeRef type) {
-        super(line, BuiltinTypes.INT.getType());
+    public SizeofNode(final String fileName, final int line, final TypeRef type) {
+        super(fileName, line, BuiltinTypes.INT.getType());
         this.type = type;
         this.value = null;
     }
 
     @Override
     public String compileToConstant(final CompilationContext cctx) {
-        if (value != null) return new RVariableTypeError("constant", "runtime", line).raise();
+        if (value != null) return new RVariableTypeError("constant", "runtime", fileName, line).raise();
         cctx.emit("; Sizeof");
         return Long.toString(type.getSize());
     }
@@ -49,7 +49,7 @@ public class SizeofNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("sizeof", line).raise();
+        new RValueMustBeUsedError("sizeof", fileName, line).raise();
     }
 
     @Override
@@ -61,6 +61,6 @@ public class SizeofNode extends ConstantNode {
     @Override
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     public SizeofNode clone() {
-        return new SizeofNode(line, value.clone());
+        return new SizeofNode(fileName, line, value.clone());
     }
 }

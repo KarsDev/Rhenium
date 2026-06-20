@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RValueIsNotIterableError extends RError {
-    public RValueIsNotIterableError(final String name, final int line) {
-        super("Value is not iterable: "+ name, line);
+    public RValueIsNotIterableError(final String name, final String fileName, final int line) {
+        super("Value is not iterable: "+ name, fileName, line);
     }
 
     @Override

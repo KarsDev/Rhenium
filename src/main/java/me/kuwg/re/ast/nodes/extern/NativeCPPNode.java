@@ -18,8 +18,8 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
     private final String name;
     private final List<RFunction> functions;
 
-    public NativeCPPNode(final int line, final boolean isNative, final String name, final List<RFunction> functions) {
-        super(line);
+    public NativeCPPNode(final String fileName, final int line, final boolean isNative, final String name, final List<RFunction> functions) {
+        super(fileName, line);
         this.isNative = isNative;
         this.name = name;
         this.functions = functions;
@@ -62,12 +62,12 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
         else {
             File f = new File(name);
             if (!f.exists()) {
-                new RNativeCPPError("Native C++ module not found: " + name, line).raise();
+                new RNativeCPPError("Native C++ module not found: " + name, fileName, line).raise();
             }
             path = f.toPath();
         }
         if (path == null) {
-            new RNativeCPPError("Native C++ module not found: " + name, line).raise();
+            new RNativeCPPError("Native C++ module not found: " + name, fileName, line).raise();
         }
         cctx.addNativeCPPModule(path);
     }

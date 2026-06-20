@@ -13,12 +13,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class StructCompiler {
-    public static String compile(int line, CompilationContext cctx, RDefaultStruct struct, List<RParamValue> values, ValueNode node) {
+    public static String compile(final String fileName, int line, CompilationContext cctx, RDefaultStruct struct, List<RParamValue> values, ValueNode node) {
         List<String> valueRegs = new ArrayList<>();
 
         for (RParamValue param : values) {
             if (param.name() != null) {
-                return new RStructInitParamsError("Named parameters are not supported in struct initialization", line).raise();
+                return new RStructInitParamsError("Named parameters are not supported in struct initialization", fileName, line).raise();
             }
 
             valueRegs.add(param.value().compileAndGet(cctx));
@@ -27,14 +27,14 @@ public final class StructCompiler {
         for (RFunction ctor : struct.constructors()) {
             int expected = ctor.parameters().size() - 1;
             if (expected == valueRegs.size()) {
-                return compileConstructor(line, ctor, struct, valueRegs, values, cctx, node);
+                return compileConstructor(fileName, line, ctor, struct, valueRegs, values, cctx, node);
             }
         }
 
-        return compileNoConstructor(line, struct, valueRegs, values, cctx, node);
+        return compileNoConstructor(fileName, line, struct, valueRegs, values, cctx, node);
     }
 
-    private static String compileConstructor(int line, RFunction constructor, RDefaultStruct struct, List<String> valueRegs, List<RParamValue> values, CompilationContext cctx, ValueNode node) {
+    private static String compileConstructor(final String fileName, int line, RFunction constructor, RDefaultStruct struct, List<String> valueRegs, List<RParamValue> values, CompilationContext cctx, ValueNode node) {
         String structPtr = cctx.nextRegister();
         cctx.emit(structPtr + " = alloca " + struct.type().getLLVMName());
 
@@ -48,7 +48,7 @@ public final class StructCompiler {
             String valueReg = valueRegs.get(i - 1);
 
             if (!expected.equals(valueNode.getType())) {
-                valueReg = new CastNode(line, expected, valueNode).compileAndGet(cctx);
+                valueReg = new CastNode(fileName, line, expected, valueNode).compileAndGet(cctx);
             }
 
             args.add(expected.getLLVMName() + " " + valueReg);
@@ -63,11 +63,11 @@ public final class StructCompiler {
         return loaded;
     }
 
-    private static String compileNoConstructor(int line, RDefaultStruct struct, List<String> valueRegs, List<RParamValue> values, CompilationContext cctx, ValueNode node) {
+    private static String compileNoConstructor(final String fileName, int line, RDefaultStruct struct, List<String> valueRegs, List<RParamValue> values, CompilationContext cctx, ValueNode node) {
         List<RStructField> fields = struct.fields();
 
         if (fields.size() != valueRegs.size()) {
-            return new RStructInitParamsError("Expected " + fields.size() + " fields but got " + valueRegs.size(), line).raise();
+            return new RStructInitParamsError("Expected " + fields.size() + " fields but got " + valueRegs.size(), fileName, line).raise();
         }
 
         String structPtr = cctx.nextRegister();
@@ -79,7 +79,7 @@ public final class StructCompiler {
             String valueReg = valueRegs.get(i);
 
             if (!field.type().equals(valueNode.getType())) {
-                valueReg = new CastNode(line, field.type(), valueNode).compileAndGet(cctx);
+                valueReg = new CastNode(fileName, line, field.type(), valueNode).compileAndGet(cctx);
             }
 
             String fieldPtr = cctx.nextRegister();

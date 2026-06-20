@@ -4,8 +4,8 @@ import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.manager.RError;
 
 public class RModuleCouldNotBeLoadedError extends RError {
-    public RModuleCouldNotBeLoadedError(final String name, final int line) {
-        super("Module could not be loaded found: " + name, line);
+    public RModuleCouldNotBeLoadedError(final String name, final String fileName, final int line) {
+        super("Module could not be loaded found: " + name, fileName, line);
     }
 
     @Override

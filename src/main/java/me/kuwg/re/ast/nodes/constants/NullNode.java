@@ -5,8 +5,8 @@ import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.ptr.NullType;
 
 public class NullNode extends ConstantNode {
-    public NullNode(final int line) {
-        super(line, NullType.INSTANCE);
+    public NullNode(final String fileName, final int line) {
+        super(fileName, line, NullType.INSTANCE);
     }
 
     @Override
@@ -23,7 +23,7 @@ public class NullNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Null", line).raise();
+        new RValueMustBeUsedError("Null", fileName, line).raise();
     }
 
     @Override

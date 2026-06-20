@@ -12,15 +12,15 @@ public class NamespaceDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
     private final BlockNode block;
 
-    public NamespaceDeclarationNode(final int line, final String name, final BlockNode block) {
-        super(line);
+    public NamespaceDeclarationNode(final String fileName, final int line, final String name, final BlockNode block) {
+        super(fileName, line);
         this.name = name;
         this.block = block;
     }
 
     @Override
     public ASTNode clone() {
-        return new NamespaceDeclarationNode(line, name, block.clone());
+        return new NamespaceDeclarationNode(fileName, line, name, block.clone());
     }
 
     @Override

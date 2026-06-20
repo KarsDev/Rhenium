@@ -22,8 +22,8 @@ public abstract class FunCall extends ValueNode {
     final String name;
     final List<ValueNode> parameters;
 
-    protected FunCall(final int line, final String name, final List<ValueNode> parameters) {
-        super(line);
+    protected FunCall(final String fileName, final int line, final String name, final List<ValueNode> parameters) {
+        super(fileName, line);
         this.name = name;
         this.parameters = parameters;
     }
@@ -32,12 +32,12 @@ public abstract class FunCall extends ValueNode {
         Set<TypeParameter> allowed = new HashSet<>(fn.typeParameters());
         for (var p : fn.parameters()) {
             if (p.type() instanceof GenericType g && allowed.stream().noneMatch(a -> a.name().equals(g.name()))) {
-                new RFunctionGenericsError("Unknown type parameter: " + g.name(), line).raise();
+                new RFunctionGenericsError("Unknown type parameter: " + g.name(), fileName, line).raise();
             }
 
         }
         if (fn.returnType() instanceof GenericType g && allowed.stream().noneMatch(a -> a.name().equals(g.name()))) {
-            new RFunctionGenericsError("Unknown type parameter: " + g.name(), line).raise();
+            new RFunctionGenericsError("Unknown type parameter: " + g.name(), fileName, line).raise();
         }
     }
 
@@ -45,7 +45,7 @@ public abstract class FunCall extends ValueNode {
         if (type instanceof GenericType gen) {
             TypeRef resolved = map.get(gen.name());
             if (resolved == null) {
-                return new RFunctionGenericsError("Unresolved generic type: " + gen.name(), line).raise();
+                return new RFunctionGenericsError("Unresolved generic type: " + gen.name(), fileName, line).raise();
             }
             return resolved;
         } else if (type instanceof PointerType ptr) {
@@ -82,11 +82,11 @@ public abstract class FunCall extends ValueNode {
             TypeRef actual = callTypes.get(i);
 
             if (containsGeneric(expected)) {
-                return new RFunctionGenericsError("Generic type leaked into concrete call", line).raise();
+                return new RFunctionGenericsError("Generic type leaked into concrete call", fileName, line).raise();
             }
 
             if (!actual.equals(expected)) {
-                CastNode cast = new CastNode(line, expected, parameters.get(i));
+                CastNode cast = new CastNode(fileName, line, expected, parameters.get(i));
                 argRegs.set(i, cast.compileAndGet(cctx));
                 callTypes.set(i, expected);
             }
@@ -103,7 +103,7 @@ public abstract class FunCall extends ValueNode {
         sb.append("call ").append(fn.returnType().getLLVMName()).append(" @").append(fn.llvmName).append("(");
 
         for (int i = 0; i < argRegs.size(); i++) {
-            sb.append(evalType(callTypes.get(i), cctx, line).getLLVMName()).append(" ").append(argRegs.get(i));
+            sb.append(evalType(callTypes.get(i), cctx, fileName, line).getLLVMName()).append(" ").append(argRegs.get(i));
             if (i < argRegs.size() - 1) sb.append(", ");
         }
 
@@ -121,7 +121,7 @@ public abstract class FunCall extends ValueNode {
             if (i < types.size() - 1) sb.append(", ");
         }
         sb.append(")");
-        return new RFunctionNotFoundError(name, sb.toString(), line).raise();
+        return new RFunctionNotFoundError(name, sb.toString(), fileName, line).raise();
     }
 
     void throwVoid(RFunction fn, List<TypeRef> types) {
@@ -131,7 +131,7 @@ public abstract class FunCall extends ValueNode {
             if (i < types.size() - 1) sb.append(", ");
         }
         sb.append(")");
-        new RFunctionIsVoidError(fn.name(), sb.toString(), line).raise();
+        new RFunctionIsVoidError(fn.name(), sb.toString(), fileName, line).raise();
     }
 
     void validateGenericConstraints(CompilationContext cctx, RGenFunction fn, Map<String, TypeRef> bindings) {
@@ -147,7 +147,7 @@ public abstract class FunCall extends ValueNode {
             }
 
             if (!satisfiesConstraint(cctx, actual.getName(), tp.inherited())) {
-                new RFunctionGenericsError("Type '" + actual.getName() + "' does not satisfy constraint '" + tp.inherited() + "' for generic '" + tp.name() + "'", line).raise();
+                new RFunctionGenericsError("Type '" + actual.getName() + "' does not satisfy constraint '" + tp.inherited() + "' for generic '" + tp.name() + "'", fileName, line).raise();
             }
         }
     }

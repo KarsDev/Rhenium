@@ -9,8 +9,8 @@ import me.kuwg.re.type.TypeRef;
 import java.util.Map;
 
 public class BreakNode extends ASTNode implements InterruptNode {
-    public BreakNode(final int line) {
-        super(line);
+    public BreakNode(final String fileName, final int line) {
+        super(fileName, line);
     }
 
     @Override
@@ -20,7 +20,7 @@ public class BreakNode extends ASTNode implements InterruptNode {
     @Override
     public void compile(final CompilationContext cctx) {
         if (cctx.getLoopStack().isEmpty()) {
-            new RLoopError("Break statement not inside a loop", line).raise();
+            new RLoopError("Break statement not inside a loop", fileName, line).raise();
             return;
         }
 

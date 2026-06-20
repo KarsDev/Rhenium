@@ -21,7 +21,7 @@ public final class AndBO extends BinaryOperator {
         TypeRef rightType = c.rightType();
 
         if (!(leftType instanceof BoolBuiltinType) || !(rightType instanceof BoolBuiltinType)) {
-            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.line()).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
         String leftReg = c.leftReg();

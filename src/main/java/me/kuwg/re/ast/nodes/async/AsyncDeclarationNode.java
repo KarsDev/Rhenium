@@ -19,8 +19,8 @@ public class AsyncDeclarationNode extends ValueNode {
     private TypeRef returnType;
     private final BlockNode block;
 
-    public AsyncDeclarationNode(final int line, final TypeRef returnType, final BlockNode block) {
-        super(line, THREAD_TYPE);
+    public AsyncDeclarationNode(final String fileName, final int line, final TypeRef returnType, final BlockNode block) {
+        super(fileName, line, THREAD_TYPE);
         this.returnType = returnType;
         this.block = block;
     }
@@ -37,7 +37,7 @@ public class AsyncDeclarationNode extends ValueNode {
         final String innerName = wrapperName + "_inner";
 
         final FunctionDeclarationNode innerFn = new FunctionDeclarationNode(
-                line,
+                fileName, line,
                 false,
                 innerName,
                 new ArrayList<>(),
@@ -83,7 +83,7 @@ public class AsyncDeclarationNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Async Declaration", line).raise();
+        new RValueMustBeUsedError("Async Declaration", fileName, line).raise();
     }
 
     @Override
@@ -94,6 +94,6 @@ public class AsyncDeclarationNode extends ValueNode {
 
     @Override
     public AsyncDeclarationNode clone() {
-        return new AsyncDeclarationNode(line, returnType, block.clone());
+        return new AsyncDeclarationNode(fileName, line, returnType, block.clone());
     }
 }

@@ -18,8 +18,8 @@ public class ArraySetNode extends ValueNode {
     private final ValueNode index;
     private final ValueNode value;
 
-    public ArraySetNode(final int line, final ValueNode array, final ValueNode index, final ValueNode value) {
-        super(line);
+    public ArraySetNode(final String fileName, final int line, final ValueNode array, final ValueNode index, final ValueNode value) {
+        super(fileName, line);
         this.array = array;
         this.index = index;
         this.value = value;
@@ -39,7 +39,7 @@ public class ArraySetNode extends ValueNode {
         if (array instanceof VariableReference vr) {
             var arrVar = vr.getVariable(cctx);
             if (arrVar == null || arrVar.addrReg() == null) {
-                return new RVariableTypeError("addressable array", "temporary value", line).raise();
+                return new RVariableTypeError("addressable array", "temporary value", fileName, line).raise();
             }
 
 
@@ -52,7 +52,7 @@ public class ArraySetNode extends ValueNode {
             String val = array.compileAndGet(cctx);
 
             if (!(array.getType() instanceof PointerType)) {
-                return new RVariableTypeError("ptr", array.getType().getName(), line).raise();
+                return new RVariableTypeError("ptr", array.getType().getName(), fileName, line).raise();
             }
 
             arrayReg = val;
@@ -77,7 +77,7 @@ public class ArraySetNode extends ValueNode {
         String indexReg = index.compileAndGet(cctx);
 
         if (!BuiltinTypes.INT.getType().isCompatibleWith(index.getType())) {
-            return new RVariableTypeError("int", index.getType().getName(), line).raise();
+            return new RVariableTypeError("int", index.getType().getName(), fileName, line).raise();
         }
 
         TypeRef arrayType = array.getType();
@@ -92,17 +92,17 @@ public class ArraySetNode extends ValueNode {
         } else if (arrayType instanceof PointerType ptrType) {
             elementType = ptrType.inner();
         } else {
-            return new RVariableTypeError("array or pointer", arrayType.getName(), line).raise();
+            return new RVariableTypeError("array or pointer", arrayType.getName(), fileName, line).raise();
         }
 
         if (!elementType.isCompatibleWith(value.getType())) {
-            return new RVariableTypeError(elementType.getName(), value.getType().getName(), line).raise();
+            return new RVariableTypeError(elementType.getName(), value.getType().getName(), fileName, line).raise();
         }
 
         String index64Reg = indexReg;
 
         if (!index.getType().equals(BuiltinTypes.LONG.getType())) {
-            index64Reg = CastManager.executeCast(line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
+            index64Reg = CastManager.executeCast(fileName, line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
         }
 
         String llvmElemType = elementType.getLLVMName();
@@ -139,6 +139,6 @@ public class ArraySetNode extends ValueNode {
 
     @Override
     public ArraySetNode clone() {
-        return new ArraySetNode(line, array.clone(), index.clone(), value.clone());
+        return new ArraySetNode(fileName, line, array.clone(), index.clone(), value.clone());
     }
 }

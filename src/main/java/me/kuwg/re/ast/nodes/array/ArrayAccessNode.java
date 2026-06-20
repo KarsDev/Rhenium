@@ -19,8 +19,8 @@ public class ArrayAccessNode extends VariableReference {
     private final ValueNode array;
     private final ValueNode index;
 
-    public ArrayAccessNode(final int line, final ValueNode array, final ValueNode index) {
-        super(line);
+    public ArrayAccessNode(final String fileName, final int line, final ValueNode array, final ValueNode index) {
+        super(fileName, line);
         this.array = array;
         this.index = index;
     }
@@ -57,7 +57,7 @@ public class ArrayAccessNode extends VariableReference {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Array Access", line).raise();
+        new RValueMustBeUsedError("Array Access", fileName, line).raise();
     }
 
     @Override
@@ -92,10 +92,10 @@ public class ArrayAccessNode extends VariableReference {
         if (array instanceof VariableReference vr) {
             RVariable arrVar = vr.getVariable(cctx);
             if (arrVar == null) {
-                return new RVariableNotFoundError(vr.getCompleteName(), line).raise();
+                return new RVariableNotFoundError(vr.getCompleteName(), fileName, line).raise();
             }
             if (arrVar.addrReg() == null) {
-                return new RVariableTypeError("addressable array", "temporary value", line).raise();
+                return new RVariableTypeError("addressable array", "temporary value", fileName, line).raise();
             }
 
             TypeRef arrType = arrVar.type();
@@ -116,7 +116,7 @@ public class ArrayAccessNode extends VariableReference {
         String indexReg = index.compileAndGet(cctx);
 
         if (!BuiltinTypes.INT.getType().isCompatibleWith(index.getType())) {
-            return new RVariableTypeError("int", index.getType().getName(), line).raise();
+            return new RVariableTypeError("int", index.getType().getName(), fileName, line).raise();
         }
 
         TypeRef arrayType = array.getType();
@@ -133,12 +133,12 @@ public class ArrayAccessNode extends VariableReference {
         }  else if (arrayType.equals(BuiltinTypes.STR.getType())) {
             elementType = BuiltinTypes.CHAR.getType();
         } else {
-            return new RVariableTypeError("array or pointer", arrayType.getName(), line).raise();
+            return new RVariableTypeError("array or pointer", arrayType.getName(), fileName, line).raise();
         }
 
         String index64Reg = indexReg;
         if (!index.getType().equals(BuiltinTypes.LONG.getType())) {
-            index64Reg = CastManager.executeCast(line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
+            index64Reg = CastManager.executeCast(fileName, line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
         }
 
         String llvmElemType = elementType.getLLVMName();
@@ -184,6 +184,6 @@ public class ArrayAccessNode extends VariableReference {
 
     @Override
     public ArrayAccessNode clone() {
-        return new ArrayAccessNode(line, array.clone(), index.clone());
+        return new ArrayAccessNode(fileName, line, array.clone(), index.clone());
     }
 }

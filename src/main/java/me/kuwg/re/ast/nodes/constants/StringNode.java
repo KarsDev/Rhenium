@@ -13,8 +13,8 @@ public class StringNode extends ConstantNode {
     private final String value;
     private final String globalName;
 
-    public StringNode(final int line, final String value) {
-        super(line, BuiltinTypes.STR.getType());
+    public StringNode(final String fileName, final int line, final String value) {
+        super(fileName, line, BuiltinTypes.STR.getType());
         this.value = value;
 
         String existing = valueToGlobalName.get(value);
@@ -79,7 +79,7 @@ public class StringNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("String", line).raise();
+        new RValueMustBeUsedError("String", fileName, line).raise();
     }
 
     @Override

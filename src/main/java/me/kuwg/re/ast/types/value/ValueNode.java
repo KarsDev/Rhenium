@@ -9,13 +9,13 @@ import me.kuwg.re.type.TypeRef;
 public abstract class ValueNode extends ASTNode {
     protected TypeRef type;
 
-    protected ValueNode(final int line, final TypeRef type) {
-        super(line);
+    protected ValueNode(final String fileName, final int line, final TypeRef type) {
+        super(fileName, line);
         this.type = type;
     }
 
-    protected ValueNode(final int line) {
-        this(line, null);
+    protected ValueNode(final String fileName, final int line) {
+        this(fileName, line, null);
     }
 
     public void setType(final TypeRef type) {
@@ -26,7 +26,7 @@ public abstract class ValueNode extends ASTNode {
     public abstract String compileAndGet(CompilationContext cctx);
 
     public String compileToConstant(CompilationContext cctx) {
-        return new RNotConstantError("Value was not constant when expected to be", line).raise();
+        return new RNotConstantError("Value was not constant when expected to be", fileName, line).raise();
     }
 
     public boolean isConstant(CompilationContext cctx) {

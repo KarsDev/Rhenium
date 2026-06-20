@@ -12,8 +12,8 @@ import java.util.Map;
 public class CastNode extends ValueNode {
     private final ValueNode value;
 
-    public CastNode(final int line, final TypeRef type, final ValueNode value) {
-        super(line, type);
+    public CastNode(final String fileName, final int line, final TypeRef type, final ValueNode value) {
+        super(fileName, line, type);
         this.value = value;
     }
 
@@ -26,15 +26,15 @@ public class CastNode extends ValueNode {
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         if (!type.isPrimitive()) {
-            new RNotPrimitiveCastError(type, line);
+            new RNotPrimitiveCastError(type, fileName, line);
         }
 
-        return CastManager.executeCast(line, value, evalType(type, cctx, line), cctx);
+        return CastManager.executeCast(fileName, line, value, evalType(type, cctx, fileName, line), cctx);
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Cast", line).raise();
+        new RValueMustBeUsedError("Cast", fileName, line).raise();
     }
 
     @Override
@@ -47,6 +47,6 @@ public class CastNode extends ValueNode {
 
     @Override
     public CastNode clone() {
-        return new CastNode(line, type, value.clone());
+        return new CastNode(fileName, line, type, value.clone());
     }
 }

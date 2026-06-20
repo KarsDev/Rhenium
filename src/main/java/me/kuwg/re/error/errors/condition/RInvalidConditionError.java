@@ -5,8 +5,8 @@ import me.kuwg.re.error.manager.RError;
 import me.kuwg.re.type.TypeRef;
 
 public class RInvalidConditionError extends RError {
-    public RInvalidConditionError(final TypeRef type, final int line) {
-        super("Invalid condition, expected bool but got " + type.getName(), line);
+    public RInvalidConditionError(final TypeRef type, final String fileName, final int line) {
+        super("Invalid condition, expected bool but got " + type.getName(), fileName, line);
     }
 
     @Override

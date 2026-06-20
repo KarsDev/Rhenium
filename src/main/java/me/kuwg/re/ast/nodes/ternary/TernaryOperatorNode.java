@@ -14,8 +14,8 @@ public class TernaryOperatorNode extends ValueNode {
     private final ValueNode thenExpr;
     private final ValueNode elseExpr;
 
-    public TernaryOperatorNode(int line, ValueNode condition, ValueNode thenExpr, ValueNode elseExpr) {
-        super(line);
+    public TernaryOperatorNode(final String fileName, int line, ValueNode condition, ValueNode thenExpr, ValueNode elseExpr) {
+        super(fileName, line);
         this.condition = condition;
         this.thenExpr = thenExpr;
         this.elseExpr = elseExpr;
@@ -30,7 +30,7 @@ public class TernaryOperatorNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Ternary operator", line);
+        new RValueMustBeUsedError("Ternary operator", fileName, line);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class TernaryOperatorNode extends ValueNode {
         var condType = condition.getType();
 
         if (!condType.equals(BuiltinTypes.BOOL.getType())) {
-            return new RInvalidConditionError(condType, line).raise();
+            return new RInvalidConditionError(condType, fileName, line).raise();
         }
 
         String thenLabel = cctx.nextLabel("ternary_then");
@@ -100,6 +100,6 @@ public class TernaryOperatorNode extends ValueNode {
 
     @Override
     public TernaryOperatorNode clone() {
-        return new TernaryOperatorNode(line, condition.clone(), thenExpr.clone(), elseExpr.clone());
+        return new TernaryOperatorNode(fileName, line, condition.clone(), thenExpr.clone(), elseExpr.clone());
     }
 }

@@ -7,8 +7,8 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 public class CharacterNode extends ConstantNode {
     private final char value;
 
-    public CharacterNode(final int line, final char value) {
-        super(line, BuiltinTypes.CHAR.getType());
+    public CharacterNode(final String fileName, final int line, final char value) {
+        super(fileName, line, BuiltinTypes.CHAR.getType());
         this.value = value;
     }
 
@@ -28,7 +28,7 @@ public class CharacterNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Char", line).raise();
+        new RValueMustBeUsedError("Char", fileName, line).raise();
     }
 
     @Override

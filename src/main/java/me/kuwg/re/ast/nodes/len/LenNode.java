@@ -14,8 +14,8 @@ import java.util.Map;
 public class LenNode extends ValueNode {
     private final ValueNode value;
 
-    public LenNode(final int line, final ValueNode value) {
-        super(line, BuiltinTypes.INT.getType());
+    public LenNode(final String fileName, final int line, final ValueNode value) {
+        super(fileName, line, BuiltinTypes.INT.getType());
         this.value = value;
     }
 
@@ -39,12 +39,12 @@ public class LenNode extends ValueNode {
             long size = arrType.size();
 
             if (size == ArrayType.UNKNOWN_SIZE) {
-                new RInvalidLenError("unknown size", line).raise();
+                new RInvalidLenError("unknown size", fileName, line).raise();
             } else {
                 cctx.emit(longReg + " = add i64 0, " + size + " ; array length");
             }
         } else {
-            return new RInvalidLenError(valueType.getName(), line).raise();
+            return new RInvalidLenError(valueType.getName(), fileName, line).raise();
         }
 
         String resultReg = cctx.nextRegister();
@@ -56,7 +56,7 @@ public class LenNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("len", line).raise();
+        new RValueMustBeUsedError("len", fileName, line).raise();
     }
 
     @Override
@@ -67,6 +67,6 @@ public class LenNode extends ValueNode {
 
     @Override
     public LenNode clone() {
-        return new LenNode(line, value.clone());
+        return new LenNode(fileName, line, value.clone());
     }
 }

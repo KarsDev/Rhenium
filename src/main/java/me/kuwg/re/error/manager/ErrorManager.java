@@ -8,6 +8,7 @@ final class ErrorManager {
     static void raise(RError error) {
         System.err.println("An exception occurred: ");
         System.err.println("  Message: " + error.getMessage());
+        System.err.println("  File: " + error.getFileName());
         System.err.println("  At line " + error.getLine());
         System.err.println("  Internal error name: \"" + getIEN(error.getCode()) + "\"");
 

@@ -34,6 +34,7 @@ import static me.kuwg.re.writer.Writeable.TAB;
 public final class CompilationContext {
     private static final String ERROR_LINE = "\" ERROR LINE\"";
 
+    private final String fileName;
     private final Map<String, TypeRef> typeMap;
     private final List<String> irCode = new ArrayList<>();
     private final StringBuilder declarations = new StringBuilder();
@@ -57,7 +58,8 @@ public final class CompilationContext {
     private int indentLevel = 1;
     private int labelCounter = 0;
 
-    public CompilationContext(Map<String, TypeRef> typeMap) {
+    public CompilationContext(final String fileName, Map<String, TypeRef> typeMap) {
+        this.fileName = fileName;
         this.typeMap = typeMap;
 
         irCode.add("; Generated LLVM IR\n\n");
@@ -160,9 +162,9 @@ public final class CompilationContext {
 
     public void addStruct(boolean builtin, String name, final List<String> inherited, TypeRef type, List<RStructField> fields) {
         if (type instanceof GenStructType) {
-            structs.put(name, new RGenStruct(inherited, type, fields));
+            structs.put(name, new RGenStruct(fileName, inherited, type, fields));
         } else {
-            structs.put(name, new RStruct(builtin, inherited, type, fields));
+            structs.put(name, new RStruct(fileName, builtin, inherited, type, fields));
         }
     }
 
@@ -210,7 +212,7 @@ public final class CompilationContext {
         String str = name + (pkg == null ? "" : " in " + pkg);
         declare(" ; USING MODULE " + str);
         includedModules.add(name);
-        ModuleLoadingHelper.loadModule(line, typeMap, sourceFile, name, pkg, this);
+        ModuleLoadingHelper.loadModule(fileName, line, typeMap, sourceFile, name, pkg, this);
     }
 
     public Stack<LoopContext> getLoopStack() {
@@ -312,7 +314,7 @@ public final class CompilationContext {
         }
 
         if (!globalCode.isEmpty() && containsInvalidGlobalCode(globalCode.toString())) {
-            new RMainFunctionError("You cannot declare code if you declared the main function", -1).raise();
+            new RMainFunctionError("You cannot declare code if you declared the main function", fileName, -1).raise();
             return;
         }
 

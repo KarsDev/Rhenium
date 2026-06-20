@@ -14,8 +14,8 @@ import java.util.Map;
 public class PointerCreationNode extends ValueNode {
     private final NumberNode value;
 
-    public PointerCreationNode(final int line, final NumberNode value) {
-        super(line, BuiltinTypes.ANYPTR.getType());
+    public PointerCreationNode(final String fileName, final int line, final NumberNode value) {
+        super(fileName, line, BuiltinTypes.ANYPTR.getType());
         this.value = value;
     }
 
@@ -31,7 +31,7 @@ public class PointerCreationNode extends ValueNode {
         String constant;
 
         if (type instanceof LongBuiltinType) constant = value.compileToConstant(cctx);
-        else constant = new CastNode(line, BuiltinTypes.LONG.getType(), value).compileAndGet(cctx);
+        else constant = new CastNode(fileName, line, BuiltinTypes.LONG.getType(), value).compileAndGet(cctx);
 
         String result = cctx.nextRegister();
         cctx.emit("; Pointer creation");
@@ -43,7 +43,7 @@ public class PointerCreationNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Pointer Creation", line).raise();
+        new RValueMustBeUsedError("Pointer Creation", fileName, line).raise();
     }
 
     @Override
@@ -54,6 +54,6 @@ public class PointerCreationNode extends ValueNode {
 
     @Override
     public PointerCreationNode clone() {
-        return new PointerCreationNode(line, (NumberNode) value.clone());
+        return new PointerCreationNode(fileName, line, (NumberNode) value.clone());
     }
 }

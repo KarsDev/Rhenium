@@ -6,11 +6,11 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public class NumberNode extends ConstantNode {
-    public static final NumberNode ZERO = new NumberNode(0, "0");
+    public static final NumberNode ZERO = new NumberNode("_", 0, "0");
     private final Number value;
 
-    public NumberNode(final int line, String literal) {
-        super(line, inferType(literal.replace("_", "")));
+    public NumberNode(final String fileName, final int line, String literal) {
+        super(fileName, line, inferType(literal.replace("_", "")));
         this.value = parseNumber(literal.replace("_", ""));
     }
 
@@ -113,6 +113,6 @@ public class NumberNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Number", line).raise();
+        new RValueMustBeUsedError("Number", fileName, line).raise();
     }
 }

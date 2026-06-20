@@ -7,8 +7,8 @@ import me.kuwg.re.type.TypeRef;
 import java.util.Map;
 
 abstract class ConstantNode extends ValueNode {
-    protected ConstantNode(final int line, final TypeRef type) {
-        super(line, type);
+    protected ConstantNode(final String fileName, final int line, final TypeRef type) {
+        super(fileName, line, type);
     }
 
     @Override
