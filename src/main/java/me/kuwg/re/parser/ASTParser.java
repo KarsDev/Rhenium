@@ -111,10 +111,11 @@ public final class ASTParser {
         this.tokens = tokens;
         this.initial = true;
         this.typeMap = typeMap;
+        if (typeMap.isEmpty() && !file.contains("default")) throw new RuntimeException("name=" + file);
     }
 
     private void includeInitialModules(AST ast) {
-        ModuleLoadingHelper.collectModuleTypes(0, file, Constants.Parser.DEFAULT_MODULE_NAME, null).forEach(typeMap::putIfAbsent);
+        ModuleLoadingHelper.collectModuleTypes(0, file, Constants.Parser.DEFAULT_MODULE_NAME, null, typeMap).forEach(typeMap::putIfAbsent);
         ast.addChild(new UsingNode(0, null, Constants.Parser.DEFAULT_MODULE_NAME, null));
     }
 
@@ -518,7 +519,7 @@ public final class ASTParser {
             pkg = null;
         }
 
-        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg).forEach(typeMap::putIfAbsent);
+        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
 
         return new UsingNode(line, file, name.toString(), pkg);
     }
@@ -1640,6 +1641,7 @@ public final class ASTParser {
         Boolean withValues = null;
 
         int idx = 0;
+        boolean addedType = false;
 
         while (!match(EOF) && !match(DEDENT)) {
             removeNewlines();
@@ -1672,6 +1674,11 @@ public final class ASTParser {
             if (value == null) {
                 value = new NumberNode(line, String.valueOf(idx));
                 idx++;
+            }
+
+            if (!addedType) {
+                addedType = true;
+                addType(fieldName, value.getType());
             }
 
             fields.put(fieldName, value);
@@ -1890,7 +1897,7 @@ public final class ASTParser {
             if (currentGenericTypes.contains(typeName) || generics) {
                 return new GenericType(typeName);
             }
-
+            typeMap.forEach((n, t) -> System.out.println(n + " = " + t));
             return new RParserError("Unknown type: " + typeName, file, line).raise();
         }
 
@@ -2104,6 +2111,7 @@ public final class ASTParser {
     }
 
     private int line() {
+        if (outOfBounds(0)) return tokens[tokenIndex-1].line();
         return current().line();
     }
 
@@ -2174,6 +2182,12 @@ public final class ASTParser {
                 continue;
             }
 
+            if (match(KEYWORD, "enum")) {
+                consume();
+                collectEnumTypes();
+                continue;
+            }
+
             if (outOfBounds(0)) return;
             consume();
         }
@@ -2241,8 +2255,7 @@ public final class ASTParser {
     }
 
     private void addType(String name, TypeRef type) {
-        if (typeMap.putIfAbsent(name, type) == null) return;
-        new RParserError("Type already defined: " + type.getName() + " as " + name, file, line());
+        typeMap.putIfAbsent(name, type);
     }
 
     private void collectUsingTypes() {
@@ -2265,6 +2278,63 @@ public final class ASTParser {
             pkg = null;
         }
 
-        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg).forEach(typeMap::putIfAbsent);
+        ModuleLoadingHelper.collectModuleTypes(line, file, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
+    }
+
+    private void collectEnumTypes() {
+        String enumName = identifier();
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return;
+        }
+
+        removeNewlines();
+
+        if (!match(INDENT)) {
+            return;
+        }
+        consume();
+
+        TypeRef valueType = null;
+
+        while (!match(DEDENT) && !match(EOF)) {
+            removeNewlines();
+
+            if (match(DEDENT) || match(EOF)) {
+                break;
+            }
+
+            identifier();
+
+            if (matchAndConsume(OPERATOR, "=")) {
+                ValueNode value = parseValue();
+
+                if (value instanceof ConstantNode constant) {
+                    if (valueType == null) {
+                        valueType = constant.getType();
+                    }
+                }
+            } else {
+                if (valueType == null) {
+                    valueType = BuiltinTypes.INT.getType();
+                }
+            }
+
+            while (!match(NEWLINE) &&
+                    !match(DEDENT) &&
+                    !match(EOF)) {
+                consume();
+            }
+        }
+
+        if (match(DEDENT)) {
+            consume();
+        }
+
+        if (valueType == null) {
+            valueType = BuiltinTypes.INT.getType();
+        }
+
+        addType(enumName, valueType);
     }
 }

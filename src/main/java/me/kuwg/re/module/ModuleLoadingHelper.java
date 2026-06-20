@@ -13,7 +13,6 @@ import me.kuwg.re.type.TypeRef;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class ModuleLoadingHelper {
@@ -58,7 +57,7 @@ public final class ModuleLoadingHelper {
             return;
         }
 
-        load(typeMap, file.getFileName().toString(), src, cctx);
+        load(typeMap, file.toString(), src, cctx);
     }
 
     private static void loadNativeModule(int line, Map<String, TypeRef> typeMap, String name, CompilationContext cctx) {
@@ -82,14 +81,9 @@ public final class ModuleLoadingHelper {
         ast.compile(cctx);
     }
 
-    public static Map<String, TypeRef> collectModuleTypes(
-            int line,
-            String sourceFile,
-            String name,
-            String pkg
-    ) {
+    public static Map<String, TypeRef> collectModuleTypes(int line, String sourceFile, String name, String pkg, Map<String, TypeRef> typeMap) {
         if (pkg == null) {
-            return collectNativeModuleTypes(line, name);
+            return collectNativeModuleTypes(line, name, typeMap);
         }
 
         final Path srcPath = Path.of(sourceFile);
@@ -108,7 +102,6 @@ public final class ModuleLoadingHelper {
         }
 
         Path file = base.resolve(name + ".re");
-
         if (!Files.exists(file)) {
             new RModuleNotFoundError(pkg + "->" + name, line).raise();
             return Map.of();
@@ -122,22 +115,22 @@ public final class ModuleLoadingHelper {
             return Map.of();
         }
 
-        return collectTypes(name, src);
+        return collectTypes(file.toString(), src, typeMap);
     }
 
-    private static Map<String, TypeRef> collectNativeModuleTypes(int line, String name) {
+    private static Map<String, TypeRef> collectNativeModuleTypes(int line, String name, Map<String, TypeRef> typeMap) {
         String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
         if (src == null) {
             new RModuleNotFoundError(name, line).raise();
             return Map.of();
         }
 
-        return collectTypes(name, src);
+        return collectTypes(name, src, typeMap);
     }
 
-    private static Map<String, TypeRef> collectTypes(String module, String src) {
+    private static Map<String, TypeRef> collectTypes(String module, String src, Map<String, TypeRef> typeMap) {
         var tokens = Tokenizer.tokenize(src);
-        ASTParser parser = new ASTParser(module, tokens, new HashMap<>());
+        ASTParser parser = new ASTParser(module, tokens, typeMap);
 
         parser.collectTypesOnly();
         return parser.typeMap;

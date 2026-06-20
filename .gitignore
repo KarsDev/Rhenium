@@ -41,3 +41,6 @@ build/
 files
 out
 /output.exe
+/.idea/
+/.qodo/
+/output.ll
