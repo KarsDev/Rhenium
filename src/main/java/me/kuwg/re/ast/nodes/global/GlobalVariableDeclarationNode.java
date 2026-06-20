@@ -1,10 +1,11 @@
 package me.kuwg.re.ast.nodes.global;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.error.errors.constant.RNotConstantError;
 import me.kuwg.re.error.errors.variable.RGlobalVariableScopeError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
@@ -15,9 +16,9 @@ import java.util.Map;
 public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
     private TypeRef type;
-    private final ConstantNode value;
+    private final ValueNode value;
 
-    public GlobalVariableDeclarationNode(final int line, final String name, final TypeRef type, final ConstantNode value) {
+    public GlobalVariableDeclarationNode(final int line, final String name, final TypeRef type, final ValueNode value) {
         super(line);
         this.name = name;
         this.type = type;
@@ -36,6 +37,10 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
             new RGlobalVariableScopeError(name, line);
         }
 
+        if (!value.isConstant(cctx)) {
+            new RNotConstantError("Expected constant value for global variable declaration", line).raise();
+            return;
+        }
         String initialValue = value.compileToConstant(cctx);
         TypeRef varType = type != null ? type : value.getType();
 

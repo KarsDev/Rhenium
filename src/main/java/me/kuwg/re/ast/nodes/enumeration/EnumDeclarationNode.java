@@ -1,11 +1,12 @@
 package me.kuwg.re.ast.nodes.enumeration;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.enums.REnum;
 import me.kuwg.re.compiler.enums.REnumField;
+import me.kuwg.re.error.errors.constant.RNotConstantError;
 import me.kuwg.re.error.errors.enums.*;
 import me.kuwg.re.type.TypeRef;
 
@@ -15,9 +16,9 @@ import java.util.Map;
 
 public class EnumDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
-    private final Map<String, ConstantNode> fields;
+    private final Map<String, ValueNode> fields;
 
-    public EnumDeclarationNode(final int line, final String name, final Map<String, ConstantNode> fields) {
+    public EnumDeclarationNode(final int line, final String name, final Map<String, ValueNode> fields) {
         super(line);
         this.name = name;
         this.fields = fields;
@@ -41,6 +42,10 @@ public class EnumDeclarationNode extends ASTNode implements GlobalNode {
         List<REnumField> enumFields = new ArrayList<>();
 
         fields.forEach((name, value) -> {
+            if (!value.isConstant(cctx)) {
+                new RNotConstantError("Expected constant value for enum declaration", line).raise();
+                return;
+            }
             String vr = value.compileToConstant(cctx);
             enumFields.add(new REnumField(name, value.getType(), vr));
         });

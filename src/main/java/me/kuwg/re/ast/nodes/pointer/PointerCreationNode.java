@@ -1,7 +1,7 @@
 package me.kuwg.re.ast.nodes.pointer;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
-import me.kuwg.re.ast.nodes.constants.ConstantNode;
+import me.kuwg.re.ast.nodes.constants.NumberNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
@@ -12,9 +12,9 @@ import me.kuwg.re.type.builtin.LongBuiltinType;
 import java.util.Map;
 
 public class PointerCreationNode extends ValueNode {
-    private final ConstantNode value;
+    private final NumberNode value;
 
-    public PointerCreationNode(final int line, final ConstantNode value) {
+    public PointerCreationNode(final int line, final NumberNode value) {
         super(line, BuiltinTypes.ANYPTR.getType());
         this.value = value;
     }
@@ -54,6 +54,6 @@ public class PointerCreationNode extends ValueNode {
 
     @Override
     public PointerCreationNode clone() {
-        return new PointerCreationNode(line, value.clone());
+        return new PointerCreationNode(line, (NumberNode) value.clone());
     }
 }

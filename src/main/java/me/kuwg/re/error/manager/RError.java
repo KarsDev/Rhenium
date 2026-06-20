@@ -4,6 +4,7 @@ public abstract class RError {
     private final String message;
     private final int line;
 
+
     protected RError(final String message, final int line) {
         this.message = message;
         this.line = line;

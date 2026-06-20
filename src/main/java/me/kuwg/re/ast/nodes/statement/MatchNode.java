@@ -2,9 +2,9 @@ package me.kuwg.re.ast.nodes.statement;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
-import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.constant.RNotConstantError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.writer.Writeable;
@@ -65,7 +65,14 @@ public class MatchNode extends ASTNode {
 
         for (int i = 0; i < nonDefaultCases.size(); i++) {
             final MatchCase mc = nonDefaultCases.get(i);
-            ConstantNode v = mc.value;
+            ValueNode v = mc.value;
+
+            if (!v.isConstant(cctx)) {
+                new RNotConstantError("Expected constant value for match case", line).raise();
+                return;
+            }
+            final String constVal = v.compileToConstant(cctx);
+
             TypeRef t = evalType(expr.getType(), cctx, line);
 
             if (!v.getType().equals(t)) {
@@ -73,7 +80,7 @@ public class MatchNode extends ASTNode {
                 return;
             }
 
-            final String constVal = v.compileToConstant(cctx);
+
 
             cctx.emit(llvmType + " " + constVal + ", label %" + caseLabels.get(i));
         }
@@ -133,10 +140,10 @@ public class MatchNode extends ASTNode {
     }
 
     public static final class MatchCase implements Writeable {
-        public final ConstantNode value;
+        public final ValueNode value;
         public final BlockNode block;
 
-        public MatchCase(final ConstantNode value, final BlockNode block) {
+        public MatchCase(final ValueNode value, final BlockNode block) {
             this.value = value;
             this.block = block;
         }

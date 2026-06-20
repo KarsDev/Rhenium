@@ -3,6 +3,7 @@ package me.kuwg.re.ast.types.value;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.RInternalError;
+import me.kuwg.re.error.errors.constant.RNotConstantError;
 import me.kuwg.re.type.TypeRef;
 
 public abstract class ValueNode extends ASTNode {
@@ -23,6 +24,14 @@ public abstract class ValueNode extends ASTNode {
     }
 
     public abstract String compileAndGet(CompilationContext cctx);
+
+    public String compileToConstant(CompilationContext cctx) {
+        return new RNotConstantError("Value was not constant when expected to be", line).raise();
+    }
+
+    public boolean isConstant(CompilationContext cctx) {
+        return false;
+    }
 
     public TypeRef getType() {
         if (type == null) {

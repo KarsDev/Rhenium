@@ -1,6 +1,5 @@
-package me.kuwg.re.ast.nodes.sizeof;
+package me.kuwg.re.ast.nodes.constants;
 
-import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.value.RValueMustBeUsedError;

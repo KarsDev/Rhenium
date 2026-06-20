@@ -1,6 +1,5 @@
 package me.kuwg.re.ast.nodes.array;
 
-import me.kuwg.re.ast.nodes.constants.ConstantNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.cast.CastManager;
 import me.kuwg.re.compiler.CompilationContext;
@@ -29,14 +28,14 @@ public class ArrayCreationNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        if (!(size instanceof ConstantNode cnst)) {
+        if (!(size.isConstant(cctx))) {
             return compileDynamic(cctx);
         }
 
-        String sizeConst = cnst.compileToConstant(cctx);
+        String sizeConst = size.compileToConstant(cctx);
         long sizeLong;
 
-        switch (cnst.getType().getName()) {
+        switch (size.getType().getName()) {
             case "int" -> sizeLong = Integer.parseInt(sizeConst);
             case "long" -> sizeLong = Long.parseLong(sizeConst);
             default -> {

@@ -37,7 +37,7 @@ import me.kuwg.re.ast.nodes.pointer.PointerCreationNode;
 import me.kuwg.re.ast.nodes.pointer.ReferenceNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.ast.nodes.range.RangeNode;
-import me.kuwg.re.ast.nodes.sizeof.SizeofNode;
+import me.kuwg.re.ast.nodes.constants.SizeofNode;
 import me.kuwg.re.ast.nodes.statement.IfStatementNode;
 import me.kuwg.re.ast.nodes.statement.MatchNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
@@ -535,7 +535,7 @@ public final class ASTParser {
         if (!matchAndConsume(DIVIDER, ")"))
             return new RParserError("Expected ')' for pointer type declaration", file, line).raise();
 
-        if (value instanceof ConstantNode cnst) return new PointerCreationNode(line, cnst);
+        if (value instanceof NumberNode n) return new PointerCreationNode(line, n);
 
         if (!(value instanceof VariableReference vr))
             return new RParserError("Expected any type of variable reference for pointer type declaration", file, line).raise();
@@ -979,11 +979,7 @@ public final class ASTParser {
 
         var value = parseValue();
 
-        if (!(value instanceof ConstantNode node)) {
-            return new RParserError("Global variables can only have a constant value", file, line).raise();
-        }
-
-        return new GlobalVariableDeclarationNode(line, name, type, node);
+        return new GlobalVariableDeclarationNode(line, name, type, value);
     }
 
     private @SubFunc ASTNode parseRaise() {
@@ -1196,7 +1192,21 @@ public final class ASTParser {
             return new IsNode(line, node, type);
         }
 
-        if (match(OPERATOR, "=") || match(OPERATOR, ":")) {
+        if (match(OPERATOR, ":")) {
+            int preIndex = tokenIndex;
+            consume();
+
+            boolean mut = matchAndConsume(KEYWORD, "mut");
+            Optional<TypeRef> t = parseOptionalType();
+
+            tokenIndex = preIndex;
+            if (t.isPresent() || mut) {
+                if (!(node instanceof VariableReference vr)) {
+                    return new RParserError("Expected reference for assignment", file, line).raise();
+                }
+                return parseVariableAssignment(line, vr);
+            }
+        } else if (match(OPERATOR, "=")) {
             if (!(node instanceof VariableReference vr)) {
                 return new RParserError("Expected reference for assignment", file, line).raise();
             }
@@ -1570,17 +1580,13 @@ public final class ASTParser {
         if (matchAndConsume(OPERATOR, "_")) v = null;
         else v = parseValue();
 
-        if (v != null && !(v instanceof ConstantNode)) {
-            return new RParserError("Match cases must have constant values", file, line).raise();
-        }
-
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for match case declaration", file, line).raise();
         }
 
         BlockNode b = parseBlock();
 
-        return new MatchNode.MatchCase((ConstantNode) v, b);
+        return new MatchNode.MatchCase(v, b);
     }
 
     private @SubFunc LambdaDeclarationNode parseLambdaKeyword() {
@@ -1637,7 +1643,7 @@ public final class ASTParser {
         }
         consume();
 
-        Map<String, ConstantNode> fields = new LinkedHashMap<>();
+        Map<String, ValueNode> fields = new LinkedHashMap<>();
         Boolean withValues = null;
 
         int idx = 0;
@@ -1653,16 +1659,10 @@ public final class ASTParser {
             int fieldLine = line();
             String fieldName = identifier();
 
-            ConstantNode value = null;
+            ValueNode value = null;
 
             if (matchAndConsume(OPERATOR, "=")) {
-                ValueNode parsed = parseValue();
-
-                if (!(parsed instanceof ConstantNode cnst)) {
-                    return new RParserError("Enum values must be constants", file, fieldLine).raise();
-                }
-
-                value = cnst;
+                value = parseValue();
             }
 
             if (withValues == null) {
@@ -1849,9 +1849,6 @@ public final class ASTParser {
         }
 
         if (type != null) {
-            if (!matchAndConsume(DIVIDER, ")"))
-                return new RParserError("Expected ')' for sizeof expression", file, line()).raise();
-
             return Optional.of(type);
         }
 
@@ -2309,9 +2306,9 @@ public final class ASTParser {
             if (matchAndConsume(OPERATOR, "=")) {
                 ValueNode value = parseValue();
 
-                if (value instanceof ConstantNode constant) {
+                if (value.getClass().getPackage().getName().contains("constants")) {
                     if (valueType == null) {
-                        valueType = constant.getType();
+                        valueType = value.getType();
                     }
                 }
             } else {

@@ -34,13 +34,14 @@ public class StructFieldAccessNode extends VariableReference {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        cctx.emit("; Struct field access");
+
 
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
             return attemptEnumAccess(cctx);
         }
 
+        cctx.emit("; Struct field access");
         TypeRef structType = cctx.resolveConcrete(structVar.type());
         if (!(structType instanceof StructType st)) {
             return new RVariableTypeError("struct", structType.getName(), line).raise();
@@ -95,8 +96,23 @@ public class StructFieldAccessNode extends VariableReference {
 
         if (field == null) return new REnumFieldNotFoundError(fieldName, line).raise();
 
+        cctx.emit("; Enum access");
         setType(field.type());
         return field.valueReg();
+    }
+
+    @Override
+    public boolean isConstant(final CompilationContext cctx) {
+        if (struct.getVariable(cctx) != null) return false;
+        String enumName = struct.getCompleteName();
+        if (enumName.contains(".")) return false;
+        return cctx.getEnum(enumName) != null;
+    }
+
+    @Override
+    public String compileToConstant(final CompilationContext cctx) {
+        if (!isConstant(cctx)) return super.compileToConstant(cctx);
+        return attemptEnumAccess(cctx);
     }
 
     @Override
