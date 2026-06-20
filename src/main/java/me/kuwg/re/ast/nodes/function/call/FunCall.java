@@ -1,12 +1,14 @@
 package me.kuwg.re.ast.nodes.function.call;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
+import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.function.RGenFunction;
 import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
+import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionGenericsError;
 import me.kuwg.re.error.errors.function.RFunctionIsVoidError;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
@@ -18,7 +20,7 @@ import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.*;
 
-public abstract class FunCall extends ValueNode {
+public abstract class FunCall extends VariableReference {
     final String name;
     final List<ValueNode> parameters;
 
@@ -26,6 +28,20 @@ public abstract class FunCall extends ValueNode {
         super(fileName, line);
         this.name = name;
         this.parameters = parameters;
+    }
+
+    @Override
+    public RVariable getVariable(CompilationContext cctx) {
+        String value = compileAndGet(cctx);
+
+        return new RVariable(
+                "\"" + getCompleteName() + "\"",
+                false,
+                false,
+                getType(),
+                null,
+                value
+        );
     }
 
     void validateGenericUsage(RGenFunction fn) {
@@ -95,12 +111,14 @@ public abstract class FunCall extends ValueNode {
         StringBuilder sb = new StringBuilder();
         String result = null;
 
-        if (!(fn.returnType() instanceof NoneBuiltinType)) {
+        var rt = evalType(fn.returnType(), cctx, fileName, line);
+
+        if (!(rt instanceof NoneBuiltinType)) {
             result = cctx.nextRegister();
             sb.append(result).append(" = ");
         }
 
-        sb.append("call ").append(fn.returnType().getLLVMName()).append(" @").append(fn.llvmName).append("(");
+        sb.append("call ").append(rt.getLLVMName()).append(" @").append(fn.llvmName).append("(");
 
         for (int i = 0; i < argRegs.size(); i++) {
             sb.append(evalType(callTypes.get(i), cctx, fileName, line).getLLVMName()).append(" ").append(argRegs.get(i));
@@ -110,8 +128,8 @@ public abstract class FunCall extends ValueNode {
         sb.append(")");
         cctx.emit(sb.toString());
 
-        setType(fn.returnType());
-        return fn.returnType() instanceof NoneBuiltinType ? "%void_" + cctx.nextRegister() : result;
+        setType(rt);
+        return rt instanceof NoneBuiltinType ? "%void_" + cctx.nextRegister() : result;
     }
 
     <T> T throwNotFound(List<TypeRef> types) {

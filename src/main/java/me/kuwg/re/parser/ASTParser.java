@@ -37,7 +37,6 @@ import me.kuwg.re.ast.nodes.pointer.PointerCreationNode;
 import me.kuwg.re.ast.nodes.pointer.ReferenceNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.ast.nodes.range.RangeNode;
-import me.kuwg.re.ast.nodes.constants.SizeofNode;
 import me.kuwg.re.ast.nodes.statement.IfStatementNode;
 import me.kuwg.re.ast.nodes.statement.MatchNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
@@ -628,7 +627,8 @@ public final class ASTParser {
     private @SubFunc ASTNode parseForKeyword() {
         int line = line();
 
-        if (!matchAndConsume(DIVIDER, "(")) return new RParserError("Expected '(' for for loop", fileName, line).raise();
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for for loop", fileName, line).raise();
 
         String name = identifier();
 
@@ -638,7 +638,8 @@ public final class ASTParser {
 
         var collection = parseValue();
 
-        if (!matchAndConsume(DIVIDER, ")")) return new RParserError("Expected ')' for for loop", fileName, line).raise();
+        if (!matchAndConsume(DIVIDER, ")"))
+            return new RParserError("Expected ')' for for loop", fileName, line).raise();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' after for loop collection", fileName, line()).raise();
@@ -1553,13 +1554,18 @@ public final class ASTParser {
         consume();
 
         List<MatchNode.MatchCase> cases = new ArrayList<>();
+        boolean def = false;
 
         while (!match(EOF) && !match(DEDENT)) {
             removeNewlines();
 
             if (match(EOF) || match(DEDENT)) break;
+            if (def)
+                return new RParserError("Match cases cannot be declared after default case", fileName, line()).raise();
 
-            cases.add(parseMatchCase());
+            var mc = parseMatchCase();
+            if (mc.isDefault()) def = true;
+            cases.add(mc);
         }
 
         if (!match(EOF)) {
@@ -1576,9 +1582,15 @@ public final class ASTParser {
     private @SubFunc MatchNode.MatchCase parseMatchCase() {
         int line = line();
 
-        ValueNode v;
-        if (matchAndConsume(OPERATOR, "_")) v = null;
-        else v = parseValue();
+        List<ValueNode> values;
+        if (matchAndConsume(OPERATOR, "_")) {
+            values = null;
+        } else {
+            values = new ArrayList<>();
+            do {
+                values.add(parseValue());
+            } while (matchAndConsume(DIVIDER, ","));
+        }
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for match case declaration", fileName, line).raise();
@@ -1586,7 +1598,7 @@ public final class ASTParser {
 
         BlockNode b = parseBlock();
 
-        return new MatchNode.MatchCase(v, b);
+        return new MatchNode.MatchCase(values, b);
     }
 
     private @SubFunc LambdaDeclarationNode parseLambdaKeyword() {
@@ -1778,8 +1790,7 @@ public final class ASTParser {
             return new RParserError("Expected dedent to close enum declaration", fileName, line).raise();
         }
 
-        if (!typeMap.containsKey(name))
-            typeMap.put(name, new TraitType(name, functions));
+        if (!typeMap.containsKey(name)) typeMap.put(name, new TraitType(name, functions));
 
         return new TraitDeclarationNode(fileName, line, name, functions);
     }
@@ -1894,7 +1905,6 @@ public final class ASTParser {
             if (currentGenericTypes.contains(typeName) || generics) {
                 return new GenericType(typeName);
             }
-            typeMap.forEach((n, t) -> System.out.println(n + " = " + t));
             return new RParserError("Unknown type: " + typeName, fileName, line).raise();
         }
 
@@ -2108,7 +2118,7 @@ public final class ASTParser {
     }
 
     private int line() {
-        if (outOfBounds(0)) return tokens[tokenIndex-1].line();
+        if (outOfBounds(0)) return tokens[tokenIndex - 1].line();
         return current().line();
     }
 
@@ -2317,9 +2327,7 @@ public final class ASTParser {
                 }
             }
 
-            while (!match(NEWLINE) &&
-                    !match(DEDENT) &&
-                    !match(EOF)) {
+            while (!match(NEWLINE) && !match(DEDENT) && !match(EOF)) {
                 consume();
             }
         }

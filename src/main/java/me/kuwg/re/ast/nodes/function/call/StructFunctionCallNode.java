@@ -5,6 +5,7 @@ import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-public class StructFunctionCallNode extends ValueNode {
+public class StructFunctionCallNode extends VariableReference {
     private final ValueNode struct;
     private final String name;
     private final List<ValueNode> params;
@@ -102,11 +103,12 @@ public class StructFunctionCallNode extends ValueNode {
         fn = cctx.getFunction(mangled, argTypes);
 
         if (fn != null) {
-            setType(fn.returnType());
+            var rt = evalType(fn.returnType(), cctx, fileName, line);
+            setType(rt);
 
             StringBuilder call = new StringBuilder();
             call.append("call ")
-                    .append(fn.returnType().getLLVMName())
+                    .append(rt.getLLVMName())
                     .append(" @")
                     .append(fn.llvmName())
                     .append("(");
@@ -120,7 +122,7 @@ public class StructFunctionCallNode extends ValueNode {
 
             call.append(")");
 
-            if (fn.returnType() instanceof NoneBuiltinType) {
+            if (rt instanceof NoneBuiltinType) {
                 cctx.emit(call.toString());
                 return "";
             }
@@ -152,6 +154,30 @@ public class StructFunctionCallNode extends ValueNode {
                 .append(".")
                 .append(name)
                 .append("(...)\n");
+    }
+
+    @Override
+    public RVariable getVariable(CompilationContext cctx) {
+        String value = compileAndGet(cctx);
+
+        return new RVariable(
+                "\"" + getCompleteName() + "\"",
+                false,
+                false,
+                getType(),
+                null,
+                value
+        );
+    }
+
+    @Override
+    public String getCompleteName() {
+        return "SFC#" + name + "(...)";
+    }
+
+    @Override
+    public String getSimpleName() {
+        return name;
     }
 
     @Override

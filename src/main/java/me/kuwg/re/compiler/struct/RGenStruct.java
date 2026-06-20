@@ -68,7 +68,9 @@ public final class RGenStruct extends RDefaultStruct {
         cctx.addStruct(false, mangledName, inherited, newType, newFields);
 
         declareStructIfNeeded(cctx, specialized);
+        String ns = cctx.popNamespace();
         applyImpls(specialized, mapping, cctx);
+        if (ns != null) cctx.pushNamespace(ns);
 
         return specialized;
     }

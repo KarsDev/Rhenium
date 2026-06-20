@@ -199,6 +199,16 @@ public class FunctionCallNode extends FunCall {
     }
 
     @Override
+    public String getCompleteName() {
+        return "FC#" + name + "(...)";
+    }
+
+    @Override
+    public String getSimpleName() {
+        return name;
+    }
+
+    @Override
     public FunctionCallNode clone() {
         List<ValueNode> paramsCloned = new ArrayList<>();
         IntStream.range(0, parameters.size()).forEach(i -> paramsCloned.add(i, parameters.get(i).clone()));

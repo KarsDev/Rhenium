@@ -1,13 +1,9 @@
 package me.kuwg.re.ast.nodes.blocks;
 
 import me.kuwg.re.ast.ASTNode;
-import me.kuwg.re.ast.nodes.enumeration.EnumDeclarationNode;
-import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
-import me.kuwg.re.ast.nodes.function.declaration.GenFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.module.UsingNode;
 import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
-import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
-import me.kuwg.re.ast.nodes.trait.TraitDeclarationNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
@@ -36,28 +32,25 @@ public class ASTBlockNode extends ASTNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        Iterator<ASTNode> iterator = nodes.iterator();
-        while (iterator.hasNext()) {
-            ASTNode node = iterator.next();
-            if (node instanceof FunctionDeclarationNode fdn) {
-                fdn.register(cctx);
-            } else if (node instanceof GenFunctionDeclarationNode gfdn) {
-                gfdn.register(cctx);
-            } else if (node instanceof StructDeclarationNode sdn) {
-                sdn.compile(cctx);
-                iterator.remove();
-            } else if (node instanceof GenStructDeclarationNode gsdn) {
-                gsdn.compile(cctx);
-                iterator.remove();
-            } else if (node instanceof UsingNode un) {
-                un.compile(cctx);
-                iterator.remove();
-            } else if (node instanceof EnumDeclarationNode edn) {
-                edn.compile(cctx);
-                iterator.remove();
-            } else if (node instanceof TraitDeclarationNode tdn) {
-                tdn.compile(cctx);
-                iterator.remove();
+        nodes.stream().filter(node -> node instanceof TopLevelNode)
+                .map(node -> (TopLevelNode) node).forEach(top -> top.load(cctx));
+
+        Iterator<ASTNode> alpha = nodes.iterator();
+
+        while (alpha.hasNext()) {
+            ASTNode node = alpha.next();
+            if (node instanceof StructDeclarationNode) {
+                node.compile(cctx);
+                alpha.remove();
+            }
+        }
+
+        Iterator<ASTNode> beta = nodes.iterator();
+        while (beta.hasNext()) {
+            ASTNode node = beta.next();
+            if (node instanceof UsingNode using) {
+                using.compile(cctx);
+                beta.remove();
             }
         }
 

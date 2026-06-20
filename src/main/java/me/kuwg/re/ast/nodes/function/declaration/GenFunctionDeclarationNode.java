@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.function.declaration;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.function.RGenFunction;
@@ -11,7 +12,7 @@ import me.kuwg.re.type.TypeRef;
 import java.util.List;
 import java.util.Map;
 
-public class GenFunctionDeclarationNode extends ASTNode {
+public class GenFunctionDeclarationNode extends ASTNode implements TopLevelNode {
     private final String name;
     private final List<TypeParameter> typeParameters;
     private final List<FunctionParameter> params;
@@ -39,24 +40,7 @@ public class GenFunctionDeclarationNode extends ASTNode {
     public void compile(final CompilationContext cctx) {
         if (registered) return;
 
-        RFunction fn = new RGenFunction(
-                RFunction.makeUnique(cctx.qualify(name)),
-                cctx.qualify(name),
-                typeParameters,
-                returnType,
-                params,
-                block
-        );
-
-        cctx.emit("; Generic function declaration");
-
-        cctx.addFunction(fn);
-        registered = true;
-    }
-
-    public void register(final CompilationContext cctx) {
-        if (registered) return;
-        compile(cctx);
+        load(cctx);
     }
 
     @Override
@@ -69,6 +53,25 @@ public class GenFunctionDeclarationNode extends ASTNode {
 
     @Override
     public GenFunctionDeclarationNode clone() {
-        return new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, block.clone());
+        var v = new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, block.clone());
+        v.registered = registered;
+        return v;
+    }
+
+    @Override
+    public void load(final CompilationContext cctx) {
+        if (registered) return;
+
+        RFunction fn = new RGenFunction(
+                RFunction.makeUnique(cctx.qualify(name)),
+                cctx.qualify(name),
+                typeParameters,
+                returnType,
+                params,
+                block
+        );
+
+        cctx.addFunction(fn);
+        registered = true;
     }
 }

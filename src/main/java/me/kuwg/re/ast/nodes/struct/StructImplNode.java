@@ -5,6 +5,7 @@ import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RConstructor;
@@ -21,10 +22,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-public class StructImplNode extends ASTNode implements GlobalNode {
+public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode {
     private final StructType struct;
     private final List<RConstructor> constructors;
     private final List<ASTNode> functions;
+
+    private final List<PreparedFunction> loadedConstructors = new ArrayList<>();
+    private final List<PreparedFunction> loadedFunctions = new ArrayList<>();
+    private final List<PreparedBuiltinFunction> loadedBuiltinFunctions = new ArrayList<>();
+    private final List<RFunction> eagerFunctions = new ArrayList<>();
+    private boolean loaded = false;
 
     public StructImplNode(final String fileName, final int line, final StructType struct, final List<RConstructor> constructors, final List<ASTNode> functions) {
         super(fileName, line);
@@ -35,9 +42,7 @@ public class StructImplNode extends ASTNode implements GlobalNode {
 
     public static String generateName(String struct, String name) {
         String raw = struct + "." + name;
-
         String escaped = raw.replace("\\", "\\\\").replace("\"", "\\\"");
-
         return "\"" + escaped + "\"";
     }
 
@@ -48,53 +53,148 @@ public class StructImplNode extends ASTNode implements GlobalNode {
     }
 
     @Override
-    public void compile(final CompilationContext cctx) {
-        cctx.emit("; Struct impl");
+    public void load(final CompilationContext cctx) {
+        if (loaded) return;
 
         RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
-
         if (cctxStruct == null) {
             new RStructUndefinedError(struct.name(), fileName, line).raise();
             return;
         }
 
-        constructors.forEach(constructor -> compileConstructor(constructor, cctx));
+        for (RConstructor constructor : constructors) {
+            String lookupName = methodName(cctxStruct, constructor.llvmName());
+            List<FunctionParameter> params = addSelfParam(cctxStruct, constructor.parameters());
+
+            FunctionDeclarationNode ctor = new FunctionDeclarationNode(
+                    fileName,
+                    constructor.block().getNodes().get(0).getLine(),
+                    false,
+                    lookupName,
+                    params,
+                    NoneBuiltinType.INSTANCE,
+                    constructor.block()
+            );
+
+            ctor.register(cctx);
+            loadedConstructors.add(new PreparedFunction(ctor, lookupName));
+        }
 
         for (ASTNode fn : functions) {
-            RFunction compiled;
+            if (fn instanceof FunctionDeclarationNode dec) {
+                String lookupName = methodName(cctxStruct, dec.getName());
+                List<FunctionParameter> params = addSelfParam(cctxStruct, dec.getParameters());
 
-            if (fn instanceof FunctionDeclarationNode dec) compiled = compileFunction(cctx, cctxStruct, dec);
-            else if (fn instanceof BuiltinFunctionDeclarationNode blt) compiled = compileBuiltin(cctx, cctxStruct, blt);
-            //else if (fn instanceof GenFunctionDeclarationNode gnc) compiled = compileGeneric(cctx, cctxStruct, gnc);
-            else throw new RInternalError("Not function declaration: " + fn);
+                FunctionDeclarationNode renamed = new FunctionDeclarationNode(
+                        fileName,
+                        dec.getLine(),
+                        false,
+                        lookupName,
+                        params,
+                        dec.getReturnType(),
+                        dec.getBlock()
+                );
 
-            cctxStruct.functions().add(compiled);
+                renamed.load(cctx);
+                loadedFunctions.add(new PreparedFunction(renamed, lookupName));
+                continue;
+            }
+
+            if (fn instanceof BuiltinFunctionDeclarationNode blt) {
+                String lookupName = methodName(cctxStruct, blt.getName());
+                List<FunctionParameter> params = addSelfParam(cctxStruct, blt.getParameters());
+
+                BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(
+                        fileName,
+                        blt.getLine(),
+                        true,
+                        lookupName,
+                        params,
+                        blt.getReturnType(),
+                        blt.getLlvmBody()
+                );
+
+                renamed.load(cctx);
+                loadedBuiltinFunctions.add(new PreparedBuiltinFunction(renamed, lookupName));
+                List<TypeRef> types = extractTypes(params);
+                RFunction compiled = cctx.getFunction(lookupName, types);
+                if (compiled != null) {
+                    eagerFunctions.add(compiled);
+                }
+                continue;
+            }
+
+            throw new RInternalError("Not function declaration: " + fn);
+        }
+
+        loaded = true;
+    }
+
+    @Override
+    public void compile(final CompilationContext cctx) {
+        if (!loaded) {
+            load(cctx);
+        }
+
+        cctx.emit("; Struct impl");
+
+        RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
+        if (cctxStruct == null) {
+            new RStructUndefinedError(struct.name(), fileName, line).raise();
+            return;
+        }
+
+        for (PreparedFunction constructor : loadedConstructors) {
+            constructor.node.compile(cctx);
+
+            RFunction compiledCtor = cctx.getFunction(
+                    constructor.lookupName,
+                    extractTypes(constructor.node.getParameters())
+            );
+
+            if (compiledCtor != null) {
+                cctxStruct.constructors().add(compiledCtor);
+            }
+        }
+
+        for (PreparedFunction function : loadedFunctions) {
+            function.node.compile(cctx);
+
+            RFunction compiled = cctx.getFunction(
+                    function.lookupName,
+                    extractTypes(function.node.getParameters())
+            );
+
+            if (compiled != null) {
+                cctxStruct.functions().add(compiled);
+            }
+        }
+
+        for (PreparedBuiltinFunction function : loadedBuiltinFunctions) {
+            function.node.compile(cctx);
+
+            RFunction compiled = cctx.getFunction(
+                    function.lookupName,
+                    extractTypes(function.node.getParameters())
+            );
+
+            if (compiled != null) {
+                cctxStruct.functions().add(compiled);
+            }
+        }
+
+        for (RFunction fn : eagerFunctions) {
+            cctxStruct.functions().add(fn);
         }
     }
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Struct Impl: ").append(NEWLINE).append(TAB).append("Name: ").append(struct.name()).append(NEWLINE).append(TAB).append("Functions:").append(NEWLINE);
+        sb.append(indent).append("Struct Impl: ")
+                .append(NEWLINE)
+                .append(TAB).append("Name: ").append(struct.name()).append(NEWLINE)
+                .append(TAB).append("Functions:").append(NEWLINE);
         functions.forEach(f -> f.write(sb, indent + TAB + TAB));
-    }
-
-    private void compileConstructor(RConstructor constructor, CompilationContext cctx) {
-        RDefaultStruct structCtx = cctx.getStruct(struct.name());
-        if (structCtx == null) {
-            new RStructUndefinedError(struct.name(), fileName, line).raise();
-            return;
-        }
-
-        String mangledName = generateName(struct.getMangledName(), constructor.llvmName());
-
-        List<FunctionParameter> newParams = addSelfParam(structCtx, constructor.parameters());
-
-        FunctionDeclarationNode ctorNode = new FunctionDeclarationNode(fileName, constructor.block().getNodes().get(0).getLine(), false, mangledName, newParams, NoneBuiltinType.INSTANCE, constructor.block());
-
-        ctorNode.compile(cctx);
-
-        RFunction compiledCtor = cctx.getFunction(mangledName, extractTypes(newParams));
-        structCtx.constructors().add(compiledCtor);
     }
 
     private List<FunctionParameter> addSelfParam(RDefaultStruct struct, List<FunctionParameter> original) {
@@ -108,28 +208,8 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         return params.stream().map(FunctionParameter::type).toList();
     }
 
-    private RFunction compileFunction(CompilationContext cctx, RDefaultStruct struct, FunctionDeclarationNode original) {
-
-        String mangledName = generateName(struct.type().getName(), original.getName());
-
-        List<FunctionParameter> newParams = addSelfParam(struct, original.getParameters());
-
-        FunctionDeclarationNode renamed = new FunctionDeclarationNode(fileName, original.getLine(), false, mangledName, newParams, original.getReturnType(), original.getBlock());
-
-        renamed.compile(cctx);
-
-        return cctx.getFunction(mangledName, extractTypes(newParams));
-    }
-
-    private RFunction compileBuiltin(CompilationContext cctx, RDefaultStruct struct, BuiltinFunctionDeclarationNode original) {
-        String mangledName = generateName(struct.type().getName(), original.getName());
-        List<FunctionParameter> newParams = addSelfParam(struct, original.getParameters());
-
-        BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(fileName, original.getLine(), true, mangledName, newParams, original.getReturnType(), original.getLlvmBody());
-
-        renamed.compile(cctx);
-
-        return cctx.getFunction(mangledName, extractTypes(newParams));
+    private String methodName(RDefaultStruct struct, String name) {
+        return generateName(struct.type().getName(), name);
     }
 
     @Override
@@ -141,5 +221,25 @@ public class StructImplNode extends ASTNode implements GlobalNode {
         IntStream.range(0, functions.size()).forEach(i -> functionsCloned.add(i, functions.get(i).clone()));
 
         return new StructImplNode(fileName, line, struct, constructorsCloned, functionsCloned);
+    }
+
+    private static final class PreparedFunction {
+        private final FunctionDeclarationNode node;
+        private final String lookupName;
+
+        private PreparedFunction(FunctionDeclarationNode node, String lookupName) {
+            this.node = node;
+            this.lookupName = lookupName;
+        }
+    }
+
+    private static final class PreparedBuiltinFunction {
+        private final BuiltinFunctionDeclarationNode node;
+        private final String lookupName;
+
+        private PreparedBuiltinFunction(BuiltinFunctionDeclarationNode node, String lookupName) {
+            this.node = node;
+            this.lookupName = lookupName;
+        }
     }
 }

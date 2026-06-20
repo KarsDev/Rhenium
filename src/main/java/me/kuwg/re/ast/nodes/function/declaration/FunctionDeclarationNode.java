@@ -4,6 +4,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
@@ -24,13 +25,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlockContainer {
+public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlockContainer, TopLevelNode {
     private final boolean isGeneric;
-    private String llvmName;
     private final String name;
     private final List<FunctionParameter> parameters;
     private final boolean inline;
     private final BlockNode block;
+    private String llvmName;
     private TypeRef returnType;
     private boolean registered = false;
 
@@ -77,24 +78,23 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     @Override
     public void compile(final CompilationContext cctx) {
+        if (!registered) register(cctx);
+
         boolean main = isMain();
 
-        String qualifiedName = getQualifiedName(cctx);
         llvmName = registered ? this.llvmName : getEmissionLLVMName(cctx);
-
-        List<TypeRef> types = new ArrayList<>(parameters.size());
-        for (int i = 0; i < parameters.size(); i++) {
-            var p = parameters.get(i);
-            types.add(i, p.type());
-        }
 
         StringBuilder func = new StringBuilder("; Function declaration\n");
 
-        func.append("define ").append(returnType.getLLVMName()).append(" @").append(llvmName).append("(");
+
+        func.append("define ").append(evalType(returnType, cctx, fileName, line).getLLVMName()).append(" @").append(llvmName).append("(");
+
+        List<TypeRef> types = new ArrayList<>(parameters.size());
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
             var pt = evalType(param.type(), cctx, fileName, line);
+            types.add(i, pt);
 
             func.append(pt.getLLVMName()).append(" %").append(param.name());
             if (i < parameters.size() - 1) func.append(", ");
@@ -112,7 +112,8 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         cctx.pushScope();
         cctx.pushFunctionBody();
 
-        for (FunctionParameter param : parameters) {
+        for (int i = 0, parametersSize = parameters.size(); i < parametersSize; i++) {
+            final FunctionParameter param = parameters.get(i);
             if (param.type() instanceof PointerType) {
                 RVariable paramVar = new RVariable(param.name(), false, false, param.type(), null, "%" + param.name());
                 cctx.addVariable(paramVar);
@@ -120,7 +121,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             }
 
             String paramPtr = "%" + param.name() + ".addr";
-            TypeRef pt = evalType(param.type(), cctx, fileName, line);
+            TypeRef pt = types.get(i);
             cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
             cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 
@@ -162,18 +163,6 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         if (main && !returnType.equals(BuiltinTypes.INT.getType())) {
             new RMainFunctionError("main() function should return int", fileName, line).raise();
         }
-
-        if (registered) return;
-
-        var oldFunc = cctx.getExact(qualifiedName, types);
-
-        if (oldFunc != null && !(isGeneric && oldFunc.parameters.stream().anyMatch(p -> p.type() instanceof GenericType))) {
-            new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: " + name + types.toString().replace("[", "(").replace("]", ")"), fileName, line).raise();
-        }
-
-        RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
-        cctx.addFunction(fnObj);
-        registered = true;
     }
 
     @Override
@@ -188,7 +177,9 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     @Override
     public FunctionDeclarationNode clone() {
-        return new FunctionDeclarationNode(fileName, line, isGeneric, name, parameters, returnType, block.clone());
+        var v =  new FunctionDeclarationNode(fileName, line, isGeneric, name, parameters, returnType, block.clone());
+        v.registered = registered;
+        return v;
     }
 
     public void register(final CompilationContext cctx) {
@@ -196,6 +187,17 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         String qualifiedName = getQualifiedName(cctx);
         llvmName = getEmissionLLVMName(cctx);
+
+        List<TypeRef> types = new ArrayList<>(parameters.size());
+        for (FunctionParameter parameter : parameters) {
+            types.add(parameter.type());
+        }
+
+        var oldFunc = cctx.getExact(qualifiedName, types);
+
+        if (oldFunc != null && !(isGeneric && oldFunc.parameters.stream().anyMatch(p -> p.type() instanceof GenericType))) {
+            new RFunctionAlreadyExistError("While compiling a function, a function with the same name and parameters was found existing: " + name + types.toString().replace("[", "(").replace("]", ")"), fileName, line).raise();
+        }
 
         RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
         cctx.addFunction(fnObj);
@@ -242,5 +244,10 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     public String getLLVMName() {
         return llvmName;
+    }
+
+    @Override
+    public void load(final CompilationContext cctx) {
+        register(cctx);
     }
 }

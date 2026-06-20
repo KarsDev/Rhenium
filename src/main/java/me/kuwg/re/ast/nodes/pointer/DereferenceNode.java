@@ -52,10 +52,6 @@ public class DereferenceNode extends VariableReference {
             ptrValueReg = var.valueReg();
         }
 
-        if (ptr.inner() instanceof StructType) {
-            return ptrValueReg;
-        }
-
         String destReg = cctx.nextRegister();
         cctx.emit(destReg + " = load "
                 + ptr.inner().getLLVMName() + ", "

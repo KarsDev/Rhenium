@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.struct.gen;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.error.errors.struct.RStructAlreadyExistsError;
@@ -10,7 +11,9 @@ import me.kuwg.re.type.struct.GenStructType;
 import java.util.List;
 import java.util.Map;
 
-public class GenStructDeclarationNode extends ASTNode {
+public class GenStructDeclarationNode extends ASTNode implements TopLevelNode {
+    private boolean loaded;
+
     private final String name;
     private final List<String> inherited;
     private final GenStructType type;
@@ -30,14 +33,11 @@ public class GenStructDeclarationNode extends ASTNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        cctx.declare("; Generic Struct declaration");
-
-        if (cctx.getStruct(name) != null) {
-            new RStructAlreadyExistsError(name, fileName, line).raise();
-            return;
+        if (!loaded) {
+            load(cctx);
         }
 
-        cctx.addStruct(false, name, inherited, type, fields);
+        cctx.declare("; Generic Struct declaration");
     }
 
     @Override
@@ -56,5 +56,25 @@ public class GenStructDeclarationNode extends ASTNode {
     @Override
     public GenStructDeclarationNode clone() {
         return this;
+    }
+
+    @Override
+    public void load(final CompilationContext cctx) {
+        if (loaded) return;
+
+        if (cctx.getStruct(name) != null) {
+            new RStructAlreadyExistsError(name, fileName, line).raise();
+            return;
+        }
+
+        cctx.addStruct(
+                false,
+                name,
+                inherited,
+                type,
+                fields
+        );
+
+        loaded = true;
     }
 }

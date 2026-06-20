@@ -34,8 +34,6 @@ public class StructFieldAccessNode extends VariableReference {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-
-
         RVariable structVar = struct.getVariable(cctx);
         if (structVar == null) {
             return attemptEnumAccess(cctx);
@@ -75,12 +73,11 @@ public class StructFieldAccessNode extends VariableReference {
         String fieldPtr = cctx.nextRegister();
         cctx.emit(fieldPtr + " = getelementptr " + st.getLLVMName() + ", " + toPtr(st.getLLVMName()) + structPtr + ", i32 0, i32 " + index);
 
-        if (fieldType instanceof StructType) {
-            return fieldPtr;
-        }
-
         String loadReg = cctx.nextRegister();
-        cctx.emit(loadReg + " = load " + fieldType.getLLVMName() + ", " + toPtr(fieldType.getLLVMName()) + fieldPtr);
+        cctx.emit(loadReg + " = load " +
+                fieldType.getLLVMName() + ", " +
+                toPtr(fieldType.getLLVMName()) +
+                fieldPtr);
 
         return loadReg;
     }

@@ -154,6 +154,10 @@ final class RFunctions {
         return true;
     }
 
+    public void writeAll() {
+        functions.forEach(System.out::println);
+    }
+
     private static class MatchResult {
         private final boolean matches;
         private final boolean exact;

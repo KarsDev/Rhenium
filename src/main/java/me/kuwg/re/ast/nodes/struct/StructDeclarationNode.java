@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.variable.RStructField;
@@ -14,7 +15,7 @@ import me.kuwg.re.type.struct.StructType;
 import java.util.List;
 import java.util.Map;
 
-public class StructDeclarationNode extends ASTNode implements GlobalNode {
+public class StructDeclarationNode extends ASTNode implements GlobalNode, TopLevelNode {
     private final boolean builtin;
     private final String name;
     private final List<String> inherited;
@@ -41,14 +42,8 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        if (cctx.getStruct(name) != null) {
-            new RStructAlreadyExistsError(name, fileName, line).raise();
-            return;
-        }
+        String mangledName = type.getMangledName();
 
-        cctx.addStruct(builtin, name, inherited, type, fields);
-
-        String mangledName = cctx.getStruct(name).type().getMangledName();
         StringBuilder sb = new StringBuilder("; Struct declaration\n");
         sb.append("%struct.").append(mangledName).append(" = type { ");
 
@@ -60,10 +55,14 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
             }
 
             sb.append(fieldType.getLLVMName());
-            if (i + 1 < fields.size()) sb.append(", ");
+
+            if (i + 1 < fields.size()) {
+                sb.append(", ");
+            }
         }
 
         sb.append(" }");
+
         cctx.declare(sb.toString());
     }
 
@@ -98,5 +97,15 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode {
     @Override
     public StructDeclarationNode clone() {
         return this;
+    }
+
+    @Override
+    public void load(final CompilationContext cctx) {
+        if (cctx.getStruct(name) != null) {
+            new RStructAlreadyExistsError(name, fileName, line).raise();
+            return;
+        }
+
+        cctx.addStruct(builtin, name, inherited, type, fields);
     }
 }

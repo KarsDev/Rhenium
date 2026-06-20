@@ -8,6 +8,7 @@ import me.kuwg.re.ast.nodes.statement.MatchNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.Compilable;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.block.RBlockSyntaxError;
@@ -82,14 +83,21 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
         if (!compiled) compile(cctx);
 
         boolean hasReturn = false;
+        boolean evaluated = false;
 
         for (final ASTNode node : nodes) {
+            if (!evaluated) {
+                returnType = node.evalType(returnType, cctx, "", node.getLine());
+                evaluated = true;
+            }
+
             if (node instanceof TryCatchNode tc) {
                 tc.getTryBlock().checkTypes(cctx, returnType, false);
                 tc.getCatchBlock().checkTypes(cctx, returnType, false);
                 continue;
             } else if (node instanceof MatchNode mc) {
-                mc.getCases().forEach(c -> c.block.checkTypes(cctx, returnType, false));
+                final TypeRef frt = returnType;
+                mc.getCases().forEach(c -> c.block.checkTypes(cctx, frt, false));
             }
 
             if (node instanceof IBlockContainer bc) {
@@ -98,7 +106,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
             if (node instanceof ReturnNode ret) {
                 hasReturn = true;
-                TypeRef type = ret.getValueType();
+                TypeRef type = node.evalType(ret.getValueType(), cctx, "", node.getLine());
 
                 if (!type.isCompatibleWith(returnType)) {
                     new RFunctionReturnTypeMismatchError(returnType, type, fileName, node.getLine()).raise();
@@ -138,5 +146,9 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
         cloned.nodes = clonedNodes;
 
         return cloned;
+    }
+
+    public void load(final CompilationContext cctx) {
+        nodes.stream().filter(node -> node instanceof TopLevelNode).map(node -> (TopLevelNode) node).forEach(top -> top.load(cctx));
     }
 }

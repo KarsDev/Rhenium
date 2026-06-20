@@ -32,7 +32,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "\" ERROR LINE\"";
+    private static final String ERROR_LINE = "%1311 = call %struct.Li s";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -154,6 +154,10 @@ public final class CompilationContext {
 
     public RFunction getFunction(String name, List<TypeRef> parameters) {
         return functions.get(name, parameters);
+    }
+
+    public @SuppressWarnings("unused") void writeAllFunctions() {
+        functions.writeAll();
     }
 
     public RFunction getExact(String name, List<TypeRef> parameters) {

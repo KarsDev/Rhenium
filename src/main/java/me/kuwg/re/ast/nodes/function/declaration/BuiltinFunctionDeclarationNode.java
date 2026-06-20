@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.function.declaration;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
@@ -15,12 +16,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNode {
+public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNode, TopLevelNode {
     private final boolean keepName;
     private final String name;
     private final List<FunctionParameter> parameters;
-    private TypeRef returnType;
     private final String llvmBody;
+    private boolean registered = false;
+    private String llvmName;
+    private TypeRef returnType;
 
     public BuiltinFunctionDeclarationNode(final String fileName, final int line, final boolean keepName, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
         super(fileName, line);
@@ -42,34 +45,37 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Builtin Function Declaration: ").append(NEWLINE)
-                .append(indent).append(TAB).append("Name: ").append(name)
-                .append(NEWLINE).append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
+        sb.append(indent).append("Builtin Function Declaration: ").append(NEWLINE).append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE).append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
         parameters.forEach(p -> p.write(sb, indent + TAB));
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        String qualifiedName = cctx.qualify(name);
-        String llvmName;
+        if (!registered) load(cctx);
 
-        if (keepName) {
-            llvmName = name;
-            if (!cctx.currentNamespace().isEmpty()) {
-                new RGlobalFunctionInNamespace(fileName, line).raise();
-            }
-        } else llvmName = getLLVMName(cctx);
+        String llvmName = registered
+                ? this.llvmName
+                : (keepName ? name : getLLVMName(cctx));
 
-        RFunction fnObj = new RDefFunction(llvmName, qualifiedName, returnType, parameters);
+        StringBuilder func =
+                new StringBuilder("; Builtin function declaration\n");
 
-
-        StringBuilder func = new StringBuilder("; Builtin function declaration\n");
-        func.append("define ").append(returnType.getLLVMName()).append(" @").append(fnObj.llvmName()).append("(");
+        func.append("define ")
+                .append(returnType.getLLVMName())
+                .append(" @")
+                .append(llvmName)
+                .append("(");
 
         for (int i = 0; i < parameters.size(); i++) {
             var param = parameters.get(i);
-            func.append(param.type().getLLVMName()).append(" %").append(param.name());
-            if (i < parameters.size() - 1) func.append(", ");
+
+            func.append(param.type().getLLVMName())
+                    .append(" %")
+                    .append(param.name());
+
+            if (i < parameters.size() - 1) {
+                func.append(", ");
+            }
         }
 
         func.append(") {\n");
@@ -81,21 +87,6 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         func.append("}\n\n");
 
         cctx.declare(func.toString());
-
-        List<TypeRef> types = new ArrayList<>(parameters.size());
-        for (int i = 0; i < parameters.size(); i++) {
-            var p = parameters.get(i);
-            types.add(i, p.type());
-        }
-
-        if (cctx.getExact(qualifiedName, types) != null) {
-            System.out.println(fnObj);
-            String paramsToString = types.toString().replace("[", "(").replace("]", ")");
-            String error = "While compiling a builtin function, a function with the same name and parameters was found existing: " + name + paramsToString;
-            new RFunctionAlreadyExistError(error, fileName, line).raise();
-        }
-
-        cctx.addFunction(fnObj);
     }
 
     @Override
@@ -129,5 +120,37 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
 
     public TypeRef getReturnType() {
         return returnType;
+    }
+
+    @Override
+    public void load(final CompilationContext cctx) {
+        if (registered) return;
+
+        String qualifiedName = cctx.qualify(name);
+
+        if (keepName) {
+            llvmName = name;
+
+            if (!cctx.currentNamespace().isEmpty()) {
+                new RGlobalFunctionInNamespace(fileName, line).raise();
+            }
+        } else {
+            llvmName = getLLVMName(cctx);
+        }
+
+        List<TypeRef> types = new ArrayList<>(parameters.size());
+        for (FunctionParameter parameter : parameters) {
+            types.add(parameter.type());
+        }
+
+        if (cctx.getExact(qualifiedName, types) != null) {
+            String paramsToString = types.toString().replace("[", "(").replace("]", ")");
+
+            new RFunctionAlreadyExistError("Builtin function already exists: " + name + paramsToString, fileName, line).raise();
+        }
+
+        cctx.addFunction(new RDefFunction(llvmName, qualifiedName, returnType, parameters));
+
+        registered = true;
     }
 }

@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.trait;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.types.global.GlobalNode;
+import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.trait.TraitFunction;
@@ -10,7 +11,9 @@ import me.kuwg.re.type.TypeRef;
 
 import java.util.Map;
 
-public class TraitDeclarationNode extends ASTNode implements GlobalNode {
+public class TraitDeclarationNode extends ASTNode implements GlobalNode, TopLevelNode {
+    private boolean loaded;
+
     private final String name;
     private final Map<String, TraitFunction> functions;
 
@@ -36,13 +39,7 @@ public class TraitDeclarationNode extends ASTNode implements GlobalNode {
     @Override
     public void compile(final CompilationContext cctx) {
         cctx.declare("; Trait declaration: " + name);
-        if (cctx.isTraitDeclared(name)) {
-            new RTraitAlreadyDeclaredError(name, line, fileName).raise();
-            return;
-        }
-
-        Trait t = new Trait(name, functions);
-        cctx.addTrait(name, t);
+        if (!loaded) load(cctx);
     }
 
     @Override
@@ -51,5 +48,22 @@ public class TraitDeclarationNode extends ASTNode implements GlobalNode {
                 .append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE)
                 .append(indent).append(TAB).append("Functions:").append(NEWLINE);
         functions.values().forEach(f -> f.write(sb, indent + TAB + TAB));
+    }
+
+    @Override
+    public void load(final CompilationContext cctx) {
+        if (loaded) return;
+
+        if (cctx.isTraitDeclared(name)) {
+            new RTraitAlreadyDeclaredError(name, line, fileName).raise();
+            return;
+        }
+
+        cctx.addTrait(
+                name,
+                new Trait(name, functions)
+        );
+
+        loaded = true;
     }
 }
