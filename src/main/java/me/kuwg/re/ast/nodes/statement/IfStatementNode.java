@@ -61,11 +61,13 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
         cctx.emit(ifLabel + ":");
 
         cctx.pushIndent();
+        cctx.pushScope();
         block.compile(cctx);
         if (block.getNodes().isEmpty() || !(block.getNodes().get(block.getNodes().size() - 1) instanceof InterruptNode)) {
             cctx.emit("br label %" + endLabel);
         }
         cctx.popIndent();
+        cctx.popScope();
 
         if (elseIfNode != null) {
             cctx.emit(elseLabel + ":");
@@ -80,8 +82,10 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
         } else if (elseNode != null) {
             cctx.emit(elseLabel + ":");
             cctx.pushIndent();
+            cctx.pushScope();
             elseNode.compile(cctx);
             cctx.popIndent();
+            cctx.popScope();
             if (!elseNode.getNodes().isEmpty()
                     && !(elseNode.getNodes().get(elseNode.getNodes().size() - 1) instanceof InterruptNode)) {
                 cctx.emit("br label %" + endLabel);

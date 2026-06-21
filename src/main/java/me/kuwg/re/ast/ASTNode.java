@@ -70,4 +70,8 @@ public abstract class ASTNode implements Compilable, Writeable, GenericTypeEvalu
 
     @Override
     public abstract ASTNode clone();
+
+    public String getFileName() {
+        return fileName;
+    }
 }

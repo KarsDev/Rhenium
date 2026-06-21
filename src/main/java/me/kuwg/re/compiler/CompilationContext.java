@@ -32,7 +32,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "%25 = de w lta";
+    private static final String ERROR_LINE = "@KNIGHT_OFFSETS = global i32** [8 de";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;

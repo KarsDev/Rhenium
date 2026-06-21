@@ -51,9 +51,9 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
         String llvmDecl;
 
         if (varType instanceof StructType) {
-            llvmDecl = "@" + name + " = global " + varType.getLLVMName() + " zeroinitializer";
+            llvmDecl = "@" + name + " = global " + varType.getLLVMConstantName() + " zeroinitializer";
         } else {
-            llvmDecl = "@" + name + " = global " + varType.getLLVMName() + " " + initialValue;
+            llvmDecl = "@" + name + " = global " + varType.getLLVMConstantName() + " " + initialValue;
         }
 
         cctx.declare(llvmDecl + " ; Global variable " + name);

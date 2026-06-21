@@ -1,5 +1,7 @@
 package me.kuwg.re.operator.ops.add;
 
+import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.cast.RStringConversionError;
 import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
@@ -42,6 +44,55 @@ public final class AddBO extends BinaryOperator {
         return res(resultReg, resultType);
     }
 
+    @Override
+    public String compileToConstant(final ValueNode left, final ValueNode right, final CompilationContext cctx) {
+        final TypeRef leftType = left.getType();
+        final TypeRef rightType = right.getType();
+
+        if (leftType instanceof StrBuiltinType || rightType instanceof StrBuiltinType) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        final TypeRef resultType = promoteNumeric(leftType, rightType);
+
+        if (resultType == null) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        final String lhs = left.compileToConstant(cctx);
+        final String rhs = right.compileToConstant(cctx);
+
+        try {
+            if (resultType instanceof DoubleBuiltinType) {
+                return Double.toString(Double.parseDouble(lhs) + Double.parseDouble(rhs));
+            }
+
+            if (resultType instanceof FloatBuiltinType) {
+                return Float.toString(Float.parseFloat(lhs) + Float.parseFloat(rhs));
+            }
+
+            if (resultType instanceof LongBuiltinType) {
+                return Long.toString(Long.parseLong(lhs) + Long.parseLong(rhs));
+            }
+
+            if (resultType instanceof IntBuiltinType) {
+                return Integer.toString(Integer.parseInt(lhs) + Integer.parseInt(rhs));
+            }
+
+            if (resultType instanceof ShortBuiltinType) {
+                return Short.toString((short) (Short.parseShort(lhs) + Short.parseShort(rhs)));
+            }
+
+            if (resultType instanceof ByteBuiltinType) {
+                return Byte.toString((byte) (Byte.parseByte(lhs) + Byte.parseByte(rhs)));
+            }
+        } catch (NumberFormatException ex) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        return unsupported(leftType, rightType, left).raise();
+    }
+
     private String compileStringOperation(BinaryOperatorContext c) {
         c.cctx().include(-1, null, "string", null);
 
@@ -62,15 +113,15 @@ public final class AddBO extends BinaryOperator {
     }
 
     private String convertToString(String fileName, int line, String reg, TypeRef type) {
-        if (type instanceof ByteBuiltinType)  return "call i8* @byteToStr(i8 " + reg + ")";
+        if (type instanceof ByteBuiltinType) return "call i8* @byteToStr(i8 " + reg + ")";
         if (type instanceof ShortBuiltinType) return "call i8* @shortToStr(i16 " + reg + ")";
-        if (type instanceof IntBuiltinType)   return "call i8* @intToStr(i32 " + reg + ")";
-        if (type instanceof LongBuiltinType)  return "call i8* @longToStr(i64 " + reg + ")";
+        if (type instanceof IntBuiltinType) return "call i8* @intToStr(i32 " + reg + ")";
+        if (type instanceof LongBuiltinType) return "call i8* @longToStr(i64 " + reg + ")";
         if (type instanceof FloatBuiltinType) return "call i8* @floatToStr(float " + reg + ")";
         if (type instanceof DoubleBuiltinType) return "call i8* @doubleToStr(double " + reg + ")";
-        if (type instanceof BoolBuiltinType)  return "call i8* @boolToStr(i1 " + reg + ")";
-        if (type instanceof CharBuiltinType)  return "call i8* @charToStrAscii(i8 " + reg + ")";
-        if (type instanceof AnyPointerType)  return "call i8* @ptrToStr(i8* " + reg + ")";
+        if (type instanceof BoolBuiltinType) return "call i8* @boolToStr(i1 " + reg + ")";
+        if (type instanceof CharBuiltinType) return "call i8* @charToStrAscii(i8 " + reg + ")";
+        if (type instanceof AnyPointerType) return "call i8* @ptrToStr(i8* " + reg + ")";
 
         return new RStringConversionError(type.getName(), fileName, line).raise();
     }

@@ -66,4 +66,42 @@ public class BitwiseNotNode extends ValueNode {
     public BitwiseNotNode clone() {
         return new BitwiseNotNode(fileName, line, value.clone());
     }
+
+    @Override
+    public boolean isConstant(final CompilationContext cctx) {
+        return value.isConstant(cctx);
+    }
+
+    @Override
+    public String compileToConstant(final CompilationContext cctx) {
+        final TypeRef type = value.getType();
+
+        if (!(type instanceof ByteBuiltinType
+                || type instanceof ShortBuiltinType
+                || type instanceof IntBuiltinType
+                || type instanceof LongBuiltinType)) {
+            return new RUnsupportedUnaryExpressionError("~", type, fileName, line).raise();
+        }
+
+        final String constant = value.compileToConstant(cctx);
+
+        try {
+            if (type instanceof ByteBuiltinType) {
+                return Byte.toString((byte) ~Byte.parseByte(constant));
+            }
+
+            if (type instanceof ShortBuiltinType) {
+                return Short.toString((short) ~Short.parseShort(constant));
+            }
+
+            if (type instanceof IntBuiltinType) {
+                return Integer.toString(~Integer.parseInt(constant));
+            }
+
+            return Long.toString(~Long.parseLong(constant));
+        } catch (NumberFormatException ignored) {
+        }
+
+        return new RUnsupportedUnaryExpressionError("~", type, fileName, line).raise();
+    }
 }

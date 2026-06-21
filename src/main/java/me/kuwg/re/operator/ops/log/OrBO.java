@@ -1,5 +1,7 @@
 package me.kuwg.re.operator.ops.log;
 
+import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
@@ -31,5 +33,25 @@ public final class OrBO extends BinaryOperator {
         c.cctx().emit(resultReg + " = or i1 " + leftReg + ", " + rightReg);
 
         return res(resultReg, BuiltinTypes.BOOL.getType());
+    }
+
+    @Override
+    public String compileToConstant(final ValueNode left, final ValueNode right, final CompilationContext cctx) {
+        final TypeRef leftType = left.getType();
+        final TypeRef rightType = right.getType();
+
+        if (!(leftType instanceof BoolBuiltinType) || !(rightType instanceof BoolBuiltinType)) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        try {
+            return Boolean.toString(
+                    Boolean.parseBoolean(left.compileToConstant(cctx)) ||
+                            Boolean.parseBoolean(right.compileToConstant(cctx))
+            );
+        } catch (Exception ignored) {
+        }
+
+        return unsupported(leftType, rightType, left).raise();
     }
 }

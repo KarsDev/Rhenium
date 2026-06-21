@@ -63,4 +63,16 @@ public class BinaryExpressionNode extends ValueNode {
     public BinaryExpressionNode clone() {
         return new BinaryExpressionNode(line, fileName, left.clone(), op, right.clone());
     }
+
+    @Override
+    public boolean isConstant(final CompilationContext cctx) {
+        return left.isConstant(cctx) && right.isConstant(cctx);
+    }
+
+    @Override
+    public String compileToConstant(final CompilationContext cctx) {
+        String result = op.compileToConstant(left, right, cctx);
+        setType(BinaryOperator.promoteNumeric(left.getType(), right.getType()));
+        return result;
+    }
 }

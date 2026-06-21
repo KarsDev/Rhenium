@@ -1,5 +1,6 @@
 package me.kuwg.re.type.iterable.arr;
 
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.IterableTypeRef;
@@ -24,6 +25,9 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
 
     @Override
     public long getSize() {
+        if (size == UNKNOWN_SIZE) {
+            return 8;
+        }
         return size * inner.getSize();
     }
 
@@ -34,8 +38,19 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
 
     @Override
     public String getLLVMName() {
-        if (size == UNKNOWN_SIZE) return inner.getLLVMName() + "*";
-        return "[" + size + " x " + inner.getLLVMName() + "]";
+        return inner.getLLVMName() + "*";
+    }
+
+    @Override
+    public String getLLVMConstantName() {
+        if (size == UNKNOWN_SIZE) throw new RInternalError();
+        
+        String innerName =
+                inner instanceof ArrayType arr
+                        ? arr.getLLVMConstantName()
+                        : inner.getLLVMName();
+
+        return "[" + size + " x " + innerName + "]";
     }
 
     @Override

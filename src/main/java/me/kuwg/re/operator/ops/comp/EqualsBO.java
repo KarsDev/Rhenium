@@ -1,5 +1,7 @@
 package me.kuwg.re.operator.ops.comp;
 
+import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
@@ -131,5 +133,94 @@ public final class EqualsBO extends BinaryOperator {
         }
 
         return res(resReg, BuiltinTypes.BOOL.getType());
+    }
+
+    @Override
+    public String compileToConstant(final ValueNode left, final ValueNode right, final CompilationContext cctx) {
+        final TypeRef leftType = left.getType();
+        final TypeRef rightType = right.getType();
+
+        if (leftType instanceof NullType && rightType instanceof NullType) {
+            return "true";
+        }
+
+        if ((leftType instanceof NullType && !(rightType instanceof AnyPointerType)) ||
+                (rightType instanceof NullType && !(leftType instanceof AnyPointerType))) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
+            return Boolean.toString(
+                    left.compileToConstant(cctx)
+                            .equals(right.compileToConstant(cctx))
+            );
+        }
+
+        if (leftType instanceof BoolBuiltinType && rightType instanceof BoolBuiltinType) {
+            return Boolean.toString(
+                    Boolean.parseBoolean(left.compileToConstant(cctx)) ==
+                            Boolean.parseBoolean(right.compileToConstant(cctx))
+            );
+        }
+
+        if (leftType instanceof CharBuiltinType && rightType instanceof CharBuiltinType) {
+            return Boolean.toString(
+                    Integer.parseInt(left.compileToConstant(cctx)) ==
+                            Integer.parseInt(right.compileToConstant(cctx))
+            );
+        }
+
+        final TypeRef resultType = promoteNumeric(leftType, rightType);
+
+        if (resultType == null) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        try {
+            if (resultType instanceof DoubleBuiltinType) {
+                return Boolean.toString(
+                        Double.parseDouble(left.compileToConstant(cctx)) ==
+                                Double.parseDouble(right.compileToConstant(cctx))
+                );
+            }
+
+            if (resultType instanceof FloatBuiltinType) {
+                return Boolean.toString(
+                        Float.parseFloat(left.compileToConstant(cctx)) ==
+                                Float.parseFloat(right.compileToConstant(cctx))
+                );
+            }
+
+            if (resultType instanceof LongBuiltinType) {
+                return Boolean.toString(
+                        Long.parseLong(left.compileToConstant(cctx)) ==
+                                Long.parseLong(right.compileToConstant(cctx))
+                );
+            }
+
+            if (resultType instanceof IntBuiltinType) {
+                return Boolean.toString(
+                        Integer.parseInt(left.compileToConstant(cctx)) ==
+                                Integer.parseInt(right.compileToConstant(cctx))
+                );
+            }
+
+            if (resultType instanceof ShortBuiltinType) {
+                return Boolean.toString(
+                        Short.parseShort(left.compileToConstant(cctx)) ==
+                                Short.parseShort(right.compileToConstant(cctx))
+                );
+            }
+
+            if (resultType instanceof ByteBuiltinType) {
+                return Boolean.toString(
+                        Byte.parseByte(left.compileToConstant(cctx)) ==
+                                Byte.parseByte(right.compileToConstant(cctx))
+                );
+            }
+        } catch (NumberFormatException ignored) {
+        }
+
+        return unsupported(leftType, rightType, left).raise();
     }
 }

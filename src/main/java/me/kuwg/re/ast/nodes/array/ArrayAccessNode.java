@@ -42,16 +42,13 @@ public class ArrayAccessNode extends VariableReference {
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         String elemPtr = computeElementPointer(cctx);
-
         TypeRef elementType = getElementType();
-        String llvmElemType = elementType.getLLVMName();
 
         String loadReg = cctx.nextRegister();
         cctx.emit("; Array access");
-        cctx.emit(loadReg + " = load " + llvmElemType + ", " + llvmElemType + "* " + elemPtr);
+        cctx.emit(loadReg + " = load " + elementType.getLLVMName() + ", " + toPtr(elementType.getLLVMName()) + " " + elemPtr);
 
         setType(elementType);
-
         return loadReg;
     }
 
@@ -62,55 +59,28 @@ public class ArrayAccessNode extends VariableReference {
 
     @Override
     public RVariable getVariable(final CompilationContext cctx) {
-
         String elemPtr = computeElementPointer(cctx);
-
         TypeRef elementType = getElementType();
-
         setType(elementType);
 
-        String valueReg;
+        String valueReg = cctx.nextRegister();
+        cctx.emit(valueReg + " = load " + elementType.getLLVMName() + ", " + toPtr(elementType.getLLVMName()) + " " + elemPtr);
 
-        valueReg = cctx.nextRegister();
-        cctx.emit(valueReg + " = load "
-                + elementType.getLLVMName() + ", "
-                + toPtr(elementType.getLLVMName())
-                + elemPtr);
-
-        return new RVariable(
-                getSimpleName(),
-                true,
-                true,
-                elementType,
-                elemPtr,
-                valueReg
-        );
+        return new RVariable(getSimpleName(), true, true, elementType, elemPtr, valueReg);
     }
 
     private String computeElementPointer(final CompilationContext cctx) {
-        String arrayAddr;
+        String arrayPtr;
+
         if (array instanceof VariableReference vr) {
             RVariable arrVar = vr.getVariable(cctx);
             if (arrVar == null) {
                 return new RVariableNotFoundError(vr.getCompleteName(), fileName, line).raise();
             }
-            if (arrVar.addrReg() == null) {
-                return new RVariableTypeError("addressable array", "temporary value", fileName, line).raise();
-            }
 
-            TypeRef arrType = arrVar.type();
-
-            if (arrType instanceof ArrayType arr) {
-                if (arr.size() == ArrayType.UNKNOWN_SIZE) {
-                    arrayAddr = arrVar.valueReg();
-                } else {
-                    arrayAddr = arrVar.addrReg();
-                }
-            } else {
-                arrayAddr = arrVar.valueReg();
-            }
+            arrayPtr = arrVar.valueReg();
         } else {
-            arrayAddr = array.compileAndGet(cctx);
+            arrayPtr = array.compileAndGet(cctx);
         }
 
         String indexReg = index.compileAndGet(cctx);
@@ -121,16 +91,12 @@ public class ArrayAccessNode extends VariableReference {
 
         TypeRef arrayType = array.getType();
         TypeRef elementType;
-        boolean fixedArray = false;
-        long fixedSize = 0;
 
         if (arrayType instanceof ArrayType arrType) {
             elementType = arrType.inner();
-            fixedArray = arrType.size() != ArrayType.UNKNOWN_SIZE;
-            fixedSize = arrType.size();
         } else if (arrayType instanceof PointerType ptrType) {
             elementType = ptrType.inner();
-        }  else if (arrayType.equals(BuiltinTypes.STR.getType())) {
+        } else if (arrayType.equals(BuiltinTypes.STR.getType())) {
             elementType = BuiltinTypes.CHAR.getType();
         } else {
             return new RVariableTypeError("array or pointer", arrayType.getName(), fileName, line).raise();
@@ -141,16 +107,10 @@ public class ArrayAccessNode extends VariableReference {
             index64Reg = CastManager.executeCast(fileName, line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
         }
 
-        String llvmElemType = elementType.getLLVMName();
         String elemPtrReg = cctx.nextRegister();
+        String llvmElemType = elementType.getLLVMName();
 
-        if (fixedArray) {
-            String llvmArrType = "[" + fixedSize + " x " + llvmElemType + "]";
-            cctx.emit(elemPtrReg + " = getelementptr inbounds " + llvmArrType + ", " + llvmArrType + "* " + arrayAddr + ", i32 0, i64 " + index64Reg);
-        } else {
-            cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayAddr + ", i64 " + index64Reg);
-        }
-
+        cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayPtr + ", i64 " + index64Reg);
         return elemPtrReg;
     }
 

@@ -1,5 +1,8 @@
 package me.kuwg.re.operator;
 
+import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.*;
@@ -15,25 +18,12 @@ public abstract class BinaryOperator {
         this.symbol = symbol;
     }
 
-    public abstract BOResult compile(BinaryOperatorContext c);
-
-    public final int getPrecedence() {
-        return precedence;
-    }
-
-    public final String getSymbol() {
-        return symbol;
-    }
-
     public static BOResult res(String reg, TypeRef type) {
         return new BOResult(reg, type);
     }
 
     protected static boolean isInteger(TypeRef t) {
-        return t instanceof ByteBuiltinType
-                || t instanceof ShortBuiltinType
-                || t instanceof IntBuiltinType
-                || t instanceof LongBuiltinType;
+        return t instanceof ByteBuiltinType || t instanceof ShortBuiltinType || t instanceof IntBuiltinType || t instanceof LongBuiltinType;
     }
 
     public static boolean isFloat(TypeRef t) {
@@ -82,5 +72,25 @@ public abstract class BinaryOperator {
         }
 
         return newReg;
+    }
+
+    public abstract BOResult compile(BinaryOperatorContext c);
+
+    public abstract String compileToConstant(ValueNode left, ValueNode right, CompilationContext cctx);
+
+    public final int getPrecedence() {
+        return precedence;
+    }
+
+    public final String getSymbol() {
+        return symbol;
+    }
+
+    protected RUnsupportedBinaryExpressionError unsupported(TypeRef left, TypeRef right, ValueNode node) {
+        return unsupported(left, right, node.getFileName(), node.getLine());
+    }
+
+    protected RUnsupportedBinaryExpressionError unsupported(TypeRef left, TypeRef right, String fileName, int line) {
+        return new RUnsupportedBinaryExpressionError(left.getName(), getSymbol(), right.getName(), fileName, line);
     }
 }

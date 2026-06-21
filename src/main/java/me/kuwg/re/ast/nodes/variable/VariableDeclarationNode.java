@@ -119,8 +119,7 @@ public class VariableDeclarationNode extends ValueNode {
             if (arrType.size() == ArrayType.UNKNOWN_SIZE) {
                 cctx.emit("store " + toPtr(arrType.inner().getLLVMName()) + valueReg + ", " + arrType.inner().getLLVMName() + "** " + addrReg + " ; dynamic array pointer");
             } else {
-                String sizeConst = Long.toString(arrType.size() * arrType.inner().getSize());
-                cctx.emit("call void @memcpy(ptr " + addrReg + ", ptr " + valueReg + ", i64 " + sizeConst + ", i1 false)");
+                cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", ptr " + addrReg);
             }
 
             String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());

@@ -34,7 +34,7 @@ public class ArraySetNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String arrayReg;
+        String arrayPtr;
 
         if (array instanceof VariableReference vr) {
             var arrVar = vr.getVariable(cctx);
@@ -42,16 +42,9 @@ public class ArraySetNode extends ValueNode {
                 return new RVariableTypeError("addressable array", "temporary value", fileName, line).raise();
             }
 
-
-            arrayReg = arrVar.valueReg();
+            arrayPtr = arrVar.valueReg();
         } else {
-            String val = array.compileAndGet(cctx);
-
-            if (!(array.getType() instanceof PointerType)) {
-                return new RVariableTypeError("ptr", array.getType().getName(), fileName, line).raise();
-            }
-
-            arrayReg = val;
+            arrayPtr = array.compileAndGet(cctx);
         }
 
         String valueReg = value.compileAndGet(cctx);
@@ -62,10 +55,7 @@ public class ArraySetNode extends ValueNode {
             var var = vr.getVariable(cctx);
             if (var != null && valueReg.equals(var.addrReg())) {
                 String loaded = cctx.nextRegister();
-                cctx.emit(loaded + " = load "
-                        + value.getType().getLLVMName() + ", "
-                        + value.getType().getLLVMName() + "* "
-                        + valueReg);
+                cctx.emit(loaded + " = load " + value.getType().getLLVMName() + ", " + toPtr(value.getType().getLLVMName()) + " " + valueReg);
                 valueReg = loaded;
             }
         }
@@ -78,13 +68,9 @@ public class ArraySetNode extends ValueNode {
 
         TypeRef arrayType = array.getType();
         TypeRef elementType;
-        boolean fixedArray = false;
-        long fixedSize = 0;
 
         if (arrayType instanceof ArrayType arrType) {
             elementType = arrType.inner();
-            fixedArray = arrType.size() != ArrayType.UNKNOWN_SIZE;
-            fixedSize = arrType.size();
         } else if (arrayType instanceof PointerType ptrType) {
             elementType = ptrType.inner();
         } else {
@@ -96,21 +82,14 @@ public class ArraySetNode extends ValueNode {
         }
 
         String index64Reg = indexReg;
-
         if (!index.getType().equals(BuiltinTypes.LONG.getType())) {
             index64Reg = CastManager.executeCast(fileName, line, indexReg, index.getType(), BuiltinTypes.LONG.getType(), cctx);
         }
 
-        String llvmElemType = elementType.getLLVMName();
         String elemPtrReg = cctx.nextRegister();
+        String llvmElemType = elementType.getLLVMName();
 
-        if (fixedArray) {
-            String llvmArrType = "[" + fixedSize + " x " + llvmElemType + "]";
-            cctx.emit(elemPtrReg + " = getelementptr inbounds " + llvmArrType + ", " + toPtr(llvmArrType) + arrayReg + ", i32 0, i64 " + index64Reg);
-        } else {
-            cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + toPtr(llvmElemType) + arrayReg + ", i64 " + index64Reg);
-        }
-
+        cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayPtr + ", i64 " + index64Reg);
         cctx.emit("store " + llvmElemType + " " + valueReg + ", " + llvmElemType + "* " + elemPtrReg);
 
         setType(value.getType());

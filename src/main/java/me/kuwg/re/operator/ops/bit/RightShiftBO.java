@@ -1,10 +1,16 @@
 package me.kuwg.re.operator.ops.bit;
 
+import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.ByteBuiltinType;
+import me.kuwg.re.type.builtin.IntBuiltinType;
+import me.kuwg.re.type.builtin.LongBuiltinType;
+import me.kuwg.re.type.builtin.ShortBuiltinType;
 
 public final class RightShiftBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new RightShiftBO();
@@ -40,5 +46,41 @@ public final class RightShiftBO extends BinaryOperator {
         c.cctx().emit(resReg + " = ashr " + llvmType + " " + leftReg + ", " + shiftReg);
 
         return res(resReg, resultType);
+    }
+
+    @Override
+    public String compileToConstant(final ValueNode left, final ValueNode right, final CompilationContext cctx) {
+        final TypeRef leftType = left.getType();
+        final TypeRef rightType = right.getType();
+
+        if (!isInteger(leftType) || !isInteger(rightType)) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        final TypeRef resultType = promoteNumeric(leftType, rightType);
+
+        try {
+            final long lhs = Long.parseLong(left.compileToConstant(cctx));
+            final int rhs = Integer.parseInt(right.compileToConstant(cctx));
+
+            if (resultType instanceof ByteBuiltinType) {
+                return Byte.toString((byte) (lhs >> rhs));
+            }
+
+            if (resultType instanceof ShortBuiltinType) {
+                return Short.toString((short) (lhs >> rhs));
+            }
+
+            if (resultType instanceof IntBuiltinType) {
+                return Integer.toString((int) lhs >> rhs);
+            }
+
+            if (resultType instanceof LongBuiltinType) {
+                return Long.toString(lhs >> rhs);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+
+        return unsupported(leftType, rightType, left).raise();
     }
 }

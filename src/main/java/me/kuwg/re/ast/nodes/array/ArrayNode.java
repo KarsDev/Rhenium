@@ -104,4 +104,35 @@ public class ArrayNode extends PointerValueNode {
         IntStream.range(0, this.values.size()).forEach(i -> values.add(i, this.values.get(i).clone()));
         return new ArrayNode(fileName, line, values);
     }
+
+    @Override
+    public boolean isConstant(final CompilationContext cctx) {
+        return values.stream().allMatch(v -> v.isConstant(cctx));
+    }
+
+    @Override
+    public String compileToConstant(final CompilationContext cctx) {
+        List<String> constantValues = values.stream().map(v -> v.compileToConstant(cctx)).toList();
+        setType(inferType());
+
+        ArrayType arrType = (ArrayType) getType();
+        TypeRef inner = arrType.inner();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("[");
+
+        for (int i = 0; i < values.size(); i++) {
+            if (i != 0) sb.append(", ");
+
+            sb.append(inner.getLLVMConstantName())
+                    .append(" ")
+                    .append(constantValues.get(i));
+        }
+
+        sb.append("]");
+
+
+        return sb.toString();
+    }
 }

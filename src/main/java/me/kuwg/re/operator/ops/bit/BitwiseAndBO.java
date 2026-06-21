@@ -1,5 +1,7 @@
 package me.kuwg.re.operator.ops.bit;
 
+import me.kuwg.re.ast.types.value.ValueNode;
+import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
@@ -33,9 +35,7 @@ public final class BitwiseAndBO extends BinaryOperator {
         } else if (leftType instanceof LongBuiltinType && rightType instanceof LongBuiltinType) {
             llvmType = "i64";
         } else {
-            return new RUnsupportedBinaryExpressionError(
-                    leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
-            ).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
         String leftReg = c.leftReg();
@@ -56,5 +56,40 @@ public final class BitwiseAndBO extends BinaryOperator {
         c.cctx().emit(resReg + " = and " + llvmType + " " + leftReg + ", " + rightReg);
 
         return res(resReg, leftType);
+    }
+
+    @Override
+    public String compileToConstant(final ValueNode left, final ValueNode right, final CompilationContext cctx) {
+        final TypeRef leftType = left.getType();
+        final TypeRef rightType = right.getType();
+
+        if (!leftType.equals(rightType)) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        final String lhs = left.compileToConstant(cctx);
+        final String rhs = right.compileToConstant(cctx);
+
+        try {
+            if (leftType instanceof ByteBuiltinType) {
+                return Byte.toString((byte) (Byte.parseByte(lhs) & Byte.parseByte(rhs)));
+            }
+
+            if (leftType instanceof ShortBuiltinType) {
+                return Short.toString((short) (Short.parseShort(lhs) & Short.parseShort(rhs)));
+            }
+
+            if (leftType instanceof IntBuiltinType) {
+                return Integer.toString(Integer.parseInt(lhs) & Integer.parseInt(rhs));
+            }
+
+            if (leftType instanceof LongBuiltinType) {
+                return Long.toString(Long.parseLong(lhs) & Long.parseLong(rhs));
+            }
+        } catch (NumberFormatException ex) {
+            return unsupported(leftType, rightType, left).raise();
+        }
+
+        return unsupported(leftType, rightType, left).raise();
     }
 }
