@@ -39,16 +39,6 @@ public class GenericFunctionCallNode extends FunCall {
     }
 
     @Override
-    public String getCompleteName() {
-        return "GFC#" + name + "(...)";
-    }
-
-    @Override
-    public String getSimpleName() {
-        return name;
-    }
-
-    @Override
     public GenericFunctionCallNode clone() {
         List<TypeRef> genericCloned = new ArrayList<>(genericTypes.size());
         genericCloned.addAll(genericTypes);

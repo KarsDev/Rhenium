@@ -32,7 +32,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "%1311 = call %struct.Li s";
+    private static final String ERROR_LINE = "%25 = de w lta";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -244,7 +244,7 @@ public final class CompilationContext {
 
         if (node instanceof VariableReference vr) {
             var var = vr.getVariable(this);
-            if (var != null && var.addrReg() != null && reg.equals(var.addrReg())) {
+            if (var != null && reg.equals(var.addrReg())) {
                 String loaded = nextRegister();
                 emit(loaded + " = load " + node.getType().getLLVMName() + ", " + node.getType().getLLVMName() + "* " + reg);
                 return loaded;

@@ -19,7 +19,6 @@ import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
-import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,11 +113,6 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         for (int i = 0, parametersSize = parameters.size(); i < parametersSize; i++) {
             final FunctionParameter param = parameters.get(i);
-            if (param.type() instanceof PointerType) {
-                RVariable paramVar = new RVariable(param.name(), false, false, param.type(), null, "%" + param.name());
-                cctx.addVariable(paramVar);
-                continue;
-            }
 
             String paramPtr = "%" + param.name() + ".addr";
             TypeRef pt = types.get(i);
@@ -177,7 +171,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     @Override
     public FunctionDeclarationNode clone() {
-        var v =  new FunctionDeclarationNode(fileName, line, isGeneric, name, parameters, returnType, block.clone());
+        var v = new FunctionDeclarationNode(fileName, line, isGeneric, name, parameters, returnType, block.clone());
         v.registered = registered;
         return v;
     }

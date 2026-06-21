@@ -1,14 +1,12 @@
 package me.kuwg.re.ast.nodes.function.call;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
-import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.function.RGenFunction;
 import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
-import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionGenericsError;
 import me.kuwg.re.error.errors.function.RFunctionIsVoidError;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
@@ -20,7 +18,7 @@ import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.*;
 
-public abstract class FunCall extends VariableReference {
+public abstract class FunCall extends ValueNode {
     final String name;
     final List<ValueNode> parameters;
 
@@ -28,20 +26,6 @@ public abstract class FunCall extends VariableReference {
         super(fileName, line);
         this.name = name;
         this.parameters = parameters;
-    }
-
-    @Override
-    public RVariable getVariable(CompilationContext cctx) {
-        String value = compileAndGet(cctx);
-
-        return new RVariable(
-                "\"" + getCompleteName() + "\"",
-                false,
-                false,
-                getType(),
-                null,
-                value
-        );
     }
 
     void validateGenericUsage(RGenFunction fn) {

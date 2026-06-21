@@ -94,7 +94,7 @@ public class VariableDeclarationNode extends ValueNode {
 
         valueReg = cctx.ensureValue(value, valueReg);
 
-        String targetAddr = oldVar.addrReg() != null ? oldVar.addrReg() : oldVar.valueReg();
+        String targetAddr = oldVar.addrReg();
 
         String storeVal = valueReg.equals("0") && varType.isPointer() ? "null" : valueReg;
         cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + toPtr(varType.getLLVMName()) + targetAddr + " ; Reassign variable " + variable.getCompleteName());

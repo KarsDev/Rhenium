@@ -24,8 +24,7 @@ public class StructFunctionCallNode extends VariableReference {
     private final String name;
     private final List<ValueNode> params;
 
-    public StructFunctionCallNode(final String fileName, final int line, final ValueNode struct,
-                                  final String name, final List<ValueNode> params) {
+    public StructFunctionCallNode(final String fileName, final int line, final ValueNode struct, final String name, final List<ValueNode> params) {
         super(fileName, line);
         this.struct = struct;
         this.name = name;
@@ -61,7 +60,6 @@ public class StructFunctionCallNode extends VariableReference {
             }
 
             selfValue = var.addrReg();
-
         } else {
             String tmpVal = struct.compileAndGet(cctx);
             selfType = struct.getType();
@@ -72,8 +70,7 @@ public class StructFunctionCallNode extends VariableReference {
 
             String addr = cctx.nextRegister();
             cctx.emit(addr + " = alloca " + structType.getLLVMName());
-            cctx.emit("store " + structType.getLLVMName() + " " + tmpVal +
-                    ", " + toPtr(structType.getLLVMName()) + addr);
+            cctx.emit("store " + structType.getLLVMName() + " " + tmpVal + ", " + toPtr(structType.getLLVMName()) + addr);
 
             selfValue = addr;
         }
@@ -83,8 +80,7 @@ public class StructFunctionCallNode extends VariableReference {
         if (!(struct instanceof VariableReference)) {
             String addr = cctx.nextRegister();
             cctx.emit(addr + " = alloca " + structType.getLLVMName());
-            cctx.emit("store " + structType.getLLVMName() + " " + selfValue +
-                    ", " + toPtr(structType.getLLVMName()) + addr);
+            cctx.emit("store " + structType.getLLVMName() + " " + selfValue + ", " + toPtr(structType.getLLVMName()) + addr);
             selfValue = addr;
         }
 
@@ -107,16 +103,10 @@ public class StructFunctionCallNode extends VariableReference {
             setType(rt);
 
             StringBuilder call = new StringBuilder();
-            call.append("call ")
-                    .append(rt.getLLVMName())
-                    .append(" @")
-                    .append(fn.llvmName())
-                    .append("(");
+            call.append("call ").append(rt.getLLVMName()).append(" @").append(fn.llvmName()).append("(");
 
             for (int i = 0; i < llvmArgs.size(); i++) {
-                call.append(argTypes.get(i).getLLVMName())
-                        .append(" ")
-                        .append(llvmArgs.get(i));
+                call.append(argTypes.get(i).getLLVMName()).append(" ").append(llvmArgs.get(i));
                 if (i < llvmArgs.size() - 1) call.append(", ");
             }
 
@@ -148,26 +138,20 @@ public class StructFunctionCallNode extends VariableReference {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent)
-                .append("StructFunctionCall: ")
-                .append(struct)
-                .append(".")
-                .append(name)
-                .append("(...)\n");
+        sb.append(indent).append("StructFunctionCall: ").append(struct).append(".").append(name).append("(...)\n");
     }
 
     @Override
     public RVariable getVariable(CompilationContext cctx) {
         String value = compileAndGet(cctx);
+        TypeRef type = getType();
 
-        return new RVariable(
-                "\"" + getCompleteName() + "\"",
-                false,
-                false,
-                getType(),
-                null,
-                value
-        );
+        String addr = cctx.nextRegister();
+
+        cctx.emit(addr + " = alloca " + type.getLLVMName());
+        cctx.emit("store " + type.getLLVMName() + " " + value + ", " + toPtr(type.getLLVMName()) + addr);
+
+        return new RVariable("\"" + getCompleteName() + "\"", false, false, type, addr, value);
     }
 
     @Override

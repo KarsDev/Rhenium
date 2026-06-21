@@ -38,16 +38,12 @@ public class ArraySetNode extends ValueNode {
 
         if (array instanceof VariableReference vr) {
             var arrVar = vr.getVariable(cctx);
-            if (arrVar == null || arrVar.addrReg() == null) {
+            if (arrVar == null) {
                 return new RVariableTypeError("addressable array", "temporary value", fileName, line).raise();
             }
 
 
-            if (array.getType() instanceof ArrayType) {
-                arrayReg = arrVar.addrReg();
-            } else {
-                arrayReg = arrVar.valueReg();
-            }
+            arrayReg = arrVar.valueReg();
         } else {
             String val = array.compileAndGet(cctx);
 
@@ -64,7 +60,7 @@ public class ArraySetNode extends ValueNode {
 
         if (value.getType() instanceof StructType && value instanceof VariableReference vr) {
             var var = vr.getVariable(cctx);
-            if (var != null && var.addrReg() != null && valueReg.equals(var.addrReg())) {
+            if (var != null && valueReg.equals(var.addrReg())) {
                 String loaded = cctx.nextRegister();
                 cctx.emit(loaded + " = load "
                         + value.getType().getLLVMName() + ", "

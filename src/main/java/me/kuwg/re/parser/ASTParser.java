@@ -40,10 +40,7 @@ import me.kuwg.re.ast.nodes.range.RangeNode;
 import me.kuwg.re.ast.nodes.statement.IfStatementNode;
 import me.kuwg.re.ast.nodes.statement.MatchNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
-import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
-import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
-import me.kuwg.re.ast.nodes.struct.StructImplNode;
-import me.kuwg.re.ast.nodes.struct.StructInitNode;
+import me.kuwg.re.ast.nodes.struct.*;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructImplNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructInitNode;
@@ -419,6 +416,11 @@ public final class ASTParser {
                 consume();
 
                 ValueNode value = parseValue();
+
+                //if (variable instanceof StructFieldAccessNode access) {
+                //    yield new StructFieldReassignmentNode(fileName, line, access, value);
+                //}
+
                 yield new VariableDeclarationNode(fileName, line, variable, false, null, value);
             }
             case ":" -> {
