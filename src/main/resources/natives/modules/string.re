@@ -357,6 +357,9 @@ done:
     ret i8* %sub
 """
 
+func strStrip(s: str) -> str:
+    return strStrip(s, 0)
+
 _Builtin func strIndexOf(s: str, val: str, startIndex: int) -> int = """
 entry:
     %len_s = call i32 @strlen(i8* %s)
@@ -514,3 +517,22 @@ end:
 
 func equalsIgnoreCase(s: str, s1: str) -> bool:
     return strToLower(s) == strToLower(s1)
+
+func strReplace(s: str, search: str, replace: str) -> str:
+    if (len(search) == 0):
+        return s
+
+    result: mut = ""
+    start: mut = 0
+
+    pos: mut = strIndexOf(s, search, start)
+
+    while (pos != -1):
+        result = strConcat(result, strSubRange(s, start, pos))
+        result = strConcat(result, replace)
+
+        start = pos + len(search)
+        pos = strIndexOf(s, search, start)
+
+    result = strConcat(result, strSub(s, start))
+    return result

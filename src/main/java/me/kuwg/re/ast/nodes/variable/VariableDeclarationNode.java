@@ -86,7 +86,7 @@ public class VariableDeclarationNode extends ValueNode {
             new RVariableIsNotMutableError(variable.getCompleteName(), fileName, line).raise();
         }
 
-        TypeRef varType = oldVar.type();
+        TypeRef varType = evalType(oldVar.type(), cctx, fileName, line);
 
         if (!varType.equals(valueType)) {
             ValueNode castNode = new CastNode(fileName, line, varType, value);

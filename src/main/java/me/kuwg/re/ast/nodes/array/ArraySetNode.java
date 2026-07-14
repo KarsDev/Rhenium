@@ -82,6 +82,8 @@ public class ArraySetNode extends ValueNode {
             return new RVariableTypeError("array or pointer", arrayType.getName(), fileName, line).raise();
         }
 
+        elementType = evalType(elementType, cctx, fileName, line);
+
         if (!elementType.isCompatibleWith(value.getType())) {
             return new RVariableTypeError(elementType.getName(), value.getType().getName(), fileName, line).raise();
         }

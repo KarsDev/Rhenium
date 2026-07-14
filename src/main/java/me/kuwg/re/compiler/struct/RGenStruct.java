@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static me.kuwg.re.ast.ASTNode.replaceGenericType;
 
@@ -35,12 +36,14 @@ public final class RGenStruct extends RDefaultStruct {
         return (GenStructType) super.type();
     }
 
-    public RStruct instantiate(List<TypeRef> types, CompilationContext cctx) {
-        if (types.size() != type().genericTypes().size()) {
+    public RStruct instantiate(List<TypeRef> rawTypes, CompilationContext cctx) {
+        if (rawTypes.size() != type().genericTypes().size()) {
             throw new RuntimeException(
-                    "Expected " + type().genericTypes().size() + " generic arguments, got " + types.size()
+                    "Expected " + type().genericTypes().size() + " generic arguments, got " + rawTypes.size()
             );
         }
+
+        List<TypeRef> types = rawTypes.stream().map(t -> ASTNode.evalType(t, cctx, fileName, -1)).collect(Collectors.toList());
 
         if (cache.containsKey(types)) {
             return cache.get(types);
@@ -60,6 +63,7 @@ public final class RGenStruct extends RDefaultStruct {
         }
 
         String mangledName = mangleName(types);
+
         TypeRef newType = new StructType(mangledName, newFields.stream().map(RStructField::type).toList());
 
         RStruct specialized = new RStruct(fileName, false, inherited, newType, newFields);
@@ -85,7 +89,7 @@ public final class RGenStruct extends RDefaultStruct {
         StringBuilder sb = new StringBuilder();
         sb.append(name).append(" = type { ");
 
-        List<String> fieldTypes = struct.fields().stream().map(f -> f.type().getLLVMName()).toList();
+        List<String> fieldTypes = struct.fields().stream().map(f -> ASTNode.evalType(f.type(), cctx, fileName, -1).getLLVMName()).toList();
 
         sb.append(String.join(", ", fieldTypes));
         sb.append(" }");

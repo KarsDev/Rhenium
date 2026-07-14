@@ -42,7 +42,7 @@ public class ArrayAccessNode extends VariableReference {
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         String elemPtr = computeElementPointer(cctx);
-        TypeRef elementType = getElementType();
+        TypeRef elementType = evalType(getElementType(), cctx, fileName, line);
 
         String loadReg = cctx.nextRegister();
         cctx.emit("; Array access");
@@ -60,7 +60,7 @@ public class ArrayAccessNode extends VariableReference {
     @Override
     public RVariable getVariable(final CompilationContext cctx) {
         String elemPtr = computeElementPointer(cctx);
-        TypeRef elementType = getElementType();
+        TypeRef elementType = evalType(getElementType(), cctx, fileName, line);
         setType(elementType);
 
         String valueReg = cctx.nextRegister();
@@ -105,6 +105,8 @@ public class ArrayAccessNode extends VariableReference {
         } else {
             return new RVariableTypeError("array or pointer", arrayType.getName(), fileName, line).raise();
         }
+
+        elementType = evalType(elementType, cctx, fileName, line);
 
         String index64Reg = indexReg;
         if (!index.getType().equals(BuiltinTypes.LONG.getType())) {

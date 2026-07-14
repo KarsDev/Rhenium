@@ -87,7 +87,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
         for (final ASTNode node : nodes) {
             if (!evaluated) {
-                returnType = node.evalType(returnType, cctx, "", node.getLine());
+                returnType = ASTNode.evalType(returnType, cctx, "", node.getLine());
                 evaluated = true;
             }
 
@@ -106,7 +106,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
             if (node instanceof ReturnNode ret) {
                 hasReturn = true;
-                TypeRef type = node.evalType(ret.getValueType(), cctx, "", node.getLine());
+                TypeRef type = ASTNode.evalType(ret.getValueType(), cctx, "", node.getLine());
 
                 if (!type.isCompatibleWith(returnType)) {
                     new RFunctionReturnTypeMismatchError(returnType, type, fileName, node.getLine()).raise();

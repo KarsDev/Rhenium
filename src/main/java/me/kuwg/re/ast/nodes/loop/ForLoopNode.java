@@ -14,6 +14,7 @@ import me.kuwg.re.error.errors.variable.RVariableAlreadyExistsError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.iterable.IterableTypeRef;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
@@ -85,6 +86,11 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
         if (type instanceof ArrayType arr) {
             compileArray(cctx, arr, reg);
+            return;
+        }
+
+        if (type instanceof StrBuiltinType) {
+            compileStr(cctx, reg);
             return;
         }
 
@@ -236,6 +242,78 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         String nextIndex = cctx.nextRegister();
         cctx.emit(nextIndex + " = add i32 " + idxForInc + ", 1");
         cctx.emit("store i32 " + nextIndex + ", i32* " + indexReg);
+        cctx.emit("br label %" + startLabel);
+
+        cctx.emit(endLabel + ":");
+
+        cctx.getLoopStack().pop();
+        cctx.popScope();
+    }
+
+    private void compileStr(CompilationContext cctx, String strPtr) {
+        cctx.pushScope();
+
+        String indexReg = cctx.nextRegister();
+        cctx.emit(indexReg + " = alloca i32");
+        cctx.emit("store i32 0, i32* " + indexReg);
+
+        cctx.emit("%" + llvmVariable + " = alloca i8");
+
+        String loopVarValue = cctx.nextRegister();
+        cctx.emit(loopVarValue + " = load i8, i8* %" + llvmVariable);
+
+        cctx.addVariable(new RVariable(
+                variable,
+                true,
+                true,
+                BuiltinTypes.CHAR.getType(),
+                "%" + llvmVariable,
+                loopVarValue
+        ));
+
+        String startLabel = cctx.nextLabel("for_start");
+        String bodyLabel  = cctx.nextLabel("for_body");
+        String incLabel   = cctx.nextLabel("for_inc");
+        String endLabel   = cctx.nextLabel("for_end");
+
+        cctx.getLoopStack().push(new LoopContext(incLabel, bodyLabel, endLabel));
+
+        cctx.emit("br label %" + startLabel);
+
+        cctx.emit(startLabel + ":");
+
+        String idx = cctx.nextRegister();
+        cctx.emit(idx + " = load i32, i32* " + indexReg);
+
+        String charPtr = cctx.nextRegister();
+        cctx.emit(charPtr + " = getelementptr i8, i8* " + strPtr + ", i32 " + idx);
+
+        String ch = cctx.nextRegister();
+        cctx.emit(ch + " = load i8, i8* " + charPtr);
+
+        String cond = cctx.nextRegister();
+        cctx.emit(cond + " = icmp ne i8 " + ch + ", 0");
+        cctx.emit("br i1 " + cond + ", label %" + bodyLabel + ", label %" + endLabel);
+
+        cctx.emit(bodyLabel + ":");
+        cctx.pushIndent();
+
+        cctx.emit("store i8 " + ch + ", i8* %" + llvmVariable);
+
+        block.compile(cctx);
+
+        cctx.emit("br label %" + incLabel);
+        cctx.popIndent();
+
+        cctx.emit(incLabel + ":");
+
+        String idx2 = cctx.nextRegister();
+        cctx.emit(idx2 + " = load i32, i32* " + indexReg);
+
+        String next = cctx.nextRegister();
+        cctx.emit(next + " = add i32 " + idx2 + ", 1");
+
+        cctx.emit("store i32 " + next + ", i32* " + indexReg);
         cctx.emit("br label %" + startLabel);
 
         cctx.emit(endLabel + ":");

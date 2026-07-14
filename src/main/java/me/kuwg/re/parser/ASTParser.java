@@ -1119,6 +1119,7 @@ public final class ASTParser {
                 var args = parseParamsCall();
 
                 node = new StructFunctionCallNode(fileName, line, node, fieldName, args);
+                continue;
             }
 
             if (matchAndConsume(OPERATOR, "::")) {
@@ -1169,7 +1170,7 @@ public final class ASTParser {
                         }
                     } else {
                         tokenIndex--;
-                        break;
+                        continue;
                     }
                 }
 
@@ -1180,7 +1181,7 @@ public final class ASTParser {
                 var params = parseParamsCall();
 
                 node = new GenericFunctionCallNode(fileName, line, name, genTypes, params);
-                break;
+                continue;
             }
 
             break;
