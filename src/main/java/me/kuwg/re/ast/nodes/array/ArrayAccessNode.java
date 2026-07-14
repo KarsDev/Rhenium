@@ -78,7 +78,11 @@ public class ArrayAccessNode extends VariableReference {
                 return new RVariableNotFoundError(vr.getCompleteName(), fileName, line).raise();
             }
 
-            arrayPtr = arrVar.valueReg();
+            if (arrVar.type() instanceof ArrayType) {
+                arrayPtr = arrVar.addrReg();
+            } else {
+                arrayPtr = arrVar.valueReg();
+            }
         } else {
             arrayPtr = array.compileAndGet(cctx);
         }
@@ -108,9 +112,16 @@ public class ArrayAccessNode extends VariableReference {
         }
 
         String elemPtrReg = cctx.nextRegister();
-        String llvmElemType = elementType.getLLVMName();
 
-        cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayPtr + ", i64 " + index64Reg);
+        if (arrayType instanceof ArrayType arrType && arrType.isStatic()) {
+            String llvmArrayType = arrType.getLLVMName();
+
+            cctx.emit(elemPtrReg + " = getelementptr " + llvmArrayType + ", " + llvmArrayType + "* " + arrayPtr + ", i64 0, i64 " + index64Reg);
+        } else {
+            String llvmElemType = elementType.getLLVMName();
+
+            cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayPtr + ", i64 " + index64Reg);
+        }
         return elemPtrReg;
     }
 

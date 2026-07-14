@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.variable;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
+import me.kuwg.re.ast.types.value.PointerValueNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
@@ -114,12 +115,36 @@ public class VariableDeclarationNode extends ValueNode {
 
         String addrReg = "%" + variable.getSimpleName() + RVariable.makeUnique(variable.getSimpleName());
 
+
+        if (varType instanceof ArrayType && value instanceof VariableReference) {
+            RVariable src = ((VariableReference) value).getVariable(cctx);
+            if (src == null) {
+                return new RVariableNotFoundError(((VariableReference) value).getCompleteName(), fileName, line).raise();
+            }
+            RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, src.addrReg(), src.valueReg());
+            cctx.addVariable(v);
+            return valueReg;
+        }
+
         if (varType instanceof ArrayType arrType) {
             cctx.emit(addrReg + " = alloca " + varType.getLLVMName());
-            if (arrType.size() == ArrayType.UNKNOWN_SIZE) {
-                cctx.emit("store " + toPtr(arrType.inner().getLLVMName()) + valueReg + ", " + arrType.inner().getLLVMName() + "** " + addrReg + " ; dynamic array pointer");
+
+            if (arrType.isDynamic()) {
+                cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
             } else {
-                cctx.emit("store " + varType.getLLVMName() + " " + valueReg + ", ptr " + addrReg);
+                String arrayValue;
+                if (value instanceof PointerValueNode) {
+                    String srcLLVMType = value.getType().getLLVMName();
+                    String castPtr = cctx.nextRegister();
+                    cctx.emit(castPtr + " = bitcast " + toPtr(srcLLVMType) + valueReg + " to " + varType.getLLVMName() + "*");
+
+                    String loadedArr = cctx.nextRegister();
+                    cctx.emit(loadedArr + " = load " + varType.getLLVMName() + ", " + varType.getLLVMName() + "* " + castPtr);
+                    arrayValue = loadedArr;
+                } else {
+                    arrayValue = valueReg;
+                }
+                cctx.emit("store " + varType.getLLVMName() + " " + arrayValue + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
             }
 
             String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
@@ -148,7 +173,7 @@ public class VariableDeclarationNode extends ValueNode {
         String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
         cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
 
-        RVariable v = new RVariable(variable.getSimpleName(), mutable, false, varType, addrReg, loaded);
+        RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded);
         cctx.addVariable(v);
 
         return valueReg;

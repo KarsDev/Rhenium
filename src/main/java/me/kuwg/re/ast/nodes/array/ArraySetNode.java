@@ -42,7 +42,11 @@ public class ArraySetNode extends ValueNode {
                 return new RVariableTypeError("addressable array", "temporary value", fileName, line).raise();
             }
 
-            arrayPtr = arrVar.valueReg();
+            if (arrVar.type() instanceof ArrayType) {
+                arrayPtr = arrVar.addrReg();
+            } else {
+                arrayPtr = arrVar.valueReg();
+            }
         } else {
             arrayPtr = array.compileAndGet(cctx);
         }
@@ -68,6 +72,7 @@ public class ArraySetNode extends ValueNode {
 
         TypeRef arrayType = array.getType();
         TypeRef elementType;
+        boolean isArrayValuedPtr = arrayType instanceof ArrayType;
 
         if (arrayType instanceof ArrayType arrType) {
             elementType = arrType.inner();
@@ -89,7 +94,12 @@ public class ArraySetNode extends ValueNode {
         String elemPtrReg = cctx.nextRegister();
         String llvmElemType = elementType.getLLVMName();
 
-        cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayPtr + ", i64 " + index64Reg);
+        if (isArrayValuedPtr) {
+            String llvmArrType = arrayType.getLLVMName();
+            cctx.emit(elemPtrReg + " = getelementptr " + llvmArrType + ", " + llvmArrType + "* " + arrayPtr + ", i64 0, i64 " + index64Reg);
+        } else {
+            cctx.emit(elemPtrReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrayPtr + ", i64 " + index64Reg);
+        }
         cctx.emit("store " + llvmElemType + " " + valueReg + ", " + llvmElemType + "* " + elemPtrReg);
 
         setType(value.getType());

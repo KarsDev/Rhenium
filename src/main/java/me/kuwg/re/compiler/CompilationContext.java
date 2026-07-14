@@ -32,7 +32,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "@KNIGHT_OFFSETS = global i32** [8 de";
+    private static final String ERROR_LINE = " %3291, [0 x i32]*  %zzzz_3904_365";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -439,6 +439,7 @@ public final class CompilationContext {
                 .append("-flto -fuse-ld=lld ")
                 .append("-fno-exceptions ")
                 .append("-fno-rtti ")
+                .append("-lws2_32 ")
                 .append(extraClangArgs)
                 .append(" ")
                 .append(quote.apply(optimized))

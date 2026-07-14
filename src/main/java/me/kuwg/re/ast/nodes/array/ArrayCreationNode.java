@@ -1,5 +1,6 @@
 package me.kuwg.re.ast.nodes.array;
 
+import me.kuwg.re.ast.types.value.PointerValueNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.cast.CastManager;
 import me.kuwg.re.compiler.CompilationContext;
@@ -12,7 +13,7 @@ import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.Map;
 
-public class ArrayCreationNode extends ValueNode {
+public class ArrayCreationNode extends PointerValueNode {
     private final ValueNode size;
 
     public ArrayCreationNode(final String fileName, final int line, final TypeRef type, final ValueNode size) {
@@ -48,7 +49,6 @@ public class ArrayCreationNode extends ValueNode {
         }
 
         TypeRef elementType = evalType(type, cctx, fileName, line);
-        String llvmElemType = elementType.getLLVMName();
 
         long bytes = sizeLong * elementType.getSize();
 
@@ -62,10 +62,13 @@ public class ArrayCreationNode extends ValueNode {
         cctx.emit("call i8* @memset(i8* " + rawPtr + ", i32 0, i64 " + bytes + ")");
         cctx.nextRegister();
 
-        String arrReg = cctx.nextRegister();
-        cctx.emit(arrReg + " = bitcast i8* " + rawPtr + " to " + llvmElemType + "*");
+        ArrayType resultType = new ArrayType(sizeLong, elementType);
+        String llvmArrType = resultType.getLLVMName();
 
-        setType(new ArrayType(sizeLong, elementType));
+        String arrReg = cctx.nextRegister();
+        cctx.emit(arrReg + " = bitcast i8* " + rawPtr + " to " + llvmArrType + "*");
+
+        setType(resultType);
 
         return arrReg;
     }

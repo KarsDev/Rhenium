@@ -15,8 +15,8 @@ import java.util.Map;
 
 public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode {
     private final String name;
-    private TypeRef type;
     private final ValueNode value;
+    private TypeRef type;
 
     public GlobalVariableDeclarationNode(final String fileName, final int line, final String name, final TypeRef type, final ValueNode value) {
         super(fileName, line);
@@ -51,9 +51,9 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
         String llvmDecl;
 
         if (varType instanceof StructType) {
-            llvmDecl = "@" + name + " = global " + varType.getLLVMConstantName() + " zeroinitializer";
+            llvmDecl = "@GLOBAL$" + name + " = global " + varType.getLLVMName() + " zeroinitializer";
         } else {
-            llvmDecl = "@" + name + " = global " + varType.getLLVMConstantName() + " " + initialValue;
+            llvmDecl = "@GLOBAL$" + name + " = global " + varType.getLLVMName() + " " + initialValue;
         }
 
         cctx.declare(llvmDecl + " ; Global variable " + name);
@@ -61,17 +61,9 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
         String valueReg;
 
 
-        valueReg = "@" + name;
+        valueReg = "@GLOBAL$" + name;
 
-
-        RVariable globalVar = new RVariable(
-                name,
-                false,
-                true,
-                varType,
-                "@" + name,
-                valueReg
-        );
+        RVariable globalVar = new RVariable(name, false, true, varType, "@GLOBAL$" + name, valueReg);
 
         cctx.addGlobal(globalVar);
     }

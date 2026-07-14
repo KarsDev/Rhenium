@@ -60,6 +60,7 @@ public class ArrayNode extends PointerValueNode {
         long size = arrType.size();
 
         String llvmElemType = elementType.getLLVMName();
+        String llvmArrType = arrType.getLLVMName();
 
         long bytes = size * elementType.getSize();
 
@@ -69,12 +70,12 @@ public class ArrayNode extends PointerValueNode {
         cctx.emit(rawPtr + " = call i8* @malloc(i64 " + bytes + ")");
 
         String arrPtr = cctx.nextRegister();
-        cctx.emit(arrPtr + " = bitcast i8* " + rawPtr + " to " + llvmElemType + "*");
+        cctx.emit(arrPtr + " = bitcast i8* " + rawPtr + " to " + llvmArrType + "*");
 
         for (int i = 0; i < size; i++) {
             String gepReg = cctx.nextRegister();
 
-            cctx.emit(gepReg + " = getelementptr " + llvmElemType + ", " + llvmElemType + "* " + arrPtr + ", i64 " + i);
+            cctx.emit(gepReg + " = getelementptr " + llvmArrType + ", " + llvmArrType + "* " + arrPtr + ", i64 0, i64 " + i);
             if (elementType instanceof ArrayType innerArr) {
                 long innerBytes = innerArr.size() * innerArr.inner().getSize();
 
@@ -125,7 +126,7 @@ public class ArrayNode extends PointerValueNode {
         for (int i = 0; i < values.size(); i++) {
             if (i != 0) sb.append(", ");
 
-            sb.append(inner.getLLVMConstantName())
+            sb.append(inner.getLLVMName())
                     .append(" ")
                     .append(constantValues.get(i));
         }

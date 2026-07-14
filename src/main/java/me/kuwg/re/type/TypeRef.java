@@ -15,10 +15,6 @@ public interface TypeRef {
 
     String getLLVMName();
 
-    default String getLLVMConstantName() {
-        return getLLVMName();
-    }
-
     String getMangledName();
 
     boolean equals(TypeRef other);

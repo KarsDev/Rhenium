@@ -38,7 +38,7 @@ public class LenNode extends ValueNode {
         } else if (valueType instanceof ArrayType arrType) {
             long size = arrType.size();
 
-            if (size == ArrayType.UNKNOWN_SIZE) {
+            if (arrType.isDynamic()) {
                 new RInvalidLenError("unknown size", fileName, line).raise();
             } else {
                 cctx.emit(longReg + " = add i64 0, " + size + " ; array length");
