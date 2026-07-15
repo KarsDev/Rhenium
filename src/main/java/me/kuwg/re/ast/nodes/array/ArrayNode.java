@@ -5,7 +5,6 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.array.RArrayTypesMismatchError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
@@ -90,7 +89,7 @@ public class ArrayNode extends PointerValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Array", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

@@ -3,7 +3,6 @@ package me.kuwg.re.ast.nodes.ternary;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.condition.RInvalidConditionError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
@@ -30,7 +29,7 @@ public class TernaryOperatorNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Ternary operator", fileName, line);
+        compileAndGet(cctx);
     }
 
     @Override

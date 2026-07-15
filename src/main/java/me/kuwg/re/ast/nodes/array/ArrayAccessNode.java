@@ -5,7 +5,6 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.cast.CastManager;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
@@ -54,7 +53,7 @@ public class ArrayAccessNode extends VariableReference {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Array Access", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

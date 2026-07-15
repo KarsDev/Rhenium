@@ -4,7 +4,6 @@ import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.constants.NumberNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.LongBuiltinType;
@@ -43,7 +42,7 @@ public class PointerCreationNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Pointer Creation", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

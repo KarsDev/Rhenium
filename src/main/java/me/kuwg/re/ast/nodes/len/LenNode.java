@@ -3,7 +3,6 @@ package me.kuwg.re.ast.nodes.len;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.len.RInvalidLenError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.StrBuiltinType;
@@ -56,7 +55,7 @@ public class LenNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("len", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

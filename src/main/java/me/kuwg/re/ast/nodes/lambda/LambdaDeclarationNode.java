@@ -7,7 +7,6 @@ import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.lambda.LambdaType;
@@ -27,7 +26,7 @@ public class LambdaDeclarationNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("lambda", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override
@@ -41,7 +40,8 @@ public class LambdaDeclarationNode extends ValueNode {
         for (final FunctionParameter param : params) {
             cctx.addVariable(new RVariable(param.name(), param.mutable(), false, param.type(), "tva", "tvr"));
         }
-        cloned.compileAndGet(cctx);
+
+        cloned.compile(cctx);
 
         cctx.popScope();
         cctx.popFunctionBody();

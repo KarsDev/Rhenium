@@ -9,7 +9,6 @@ import me.kuwg.re.compiler.struct.StructCompiler;
 import me.kuwg.re.compiler.variable.RParamValue;
 import me.kuwg.re.error.errors.struct.RGenStructInitError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.ArrayList;
@@ -73,7 +72,7 @@ public class GenStructInitNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Generic Struct Initialization", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

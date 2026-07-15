@@ -3,7 +3,6 @@ package me.kuwg.re.ast.nodes.expression;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.expr.RUnsupportedUnaryExpressionError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.ByteBuiltinType;
 import me.kuwg.re.type.builtin.IntBuiltinType;
@@ -53,7 +52,7 @@ public class BitwiseNotNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Bitwise NOT", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

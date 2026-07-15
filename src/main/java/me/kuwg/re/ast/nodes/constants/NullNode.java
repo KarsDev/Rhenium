@@ -1,7 +1,6 @@
 package me.kuwg.re.ast.nodes.constants;
 
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.ptr.NullType;
 
 public class NullNode extends ConstantNode {
@@ -23,7 +22,7 @@ public class NullNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Null", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package me.kuwg.re.ast.nodes.constants;
 
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
@@ -113,6 +112,6 @@ public class NumberNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Number", fileName, line).raise();
+        compileAndGet(cctx);
     }
 }

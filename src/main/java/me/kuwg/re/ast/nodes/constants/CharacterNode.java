@@ -1,7 +1,6 @@
 package me.kuwg.re.ast.nodes.constants;
 
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public class CharacterNode extends ConstantNode {
@@ -28,7 +27,7 @@ public class CharacterNode extends ConstantNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Char", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

@@ -69,7 +69,7 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
         if (path == null) {
             new RNativeCPPError("Native C++ module not found: " + name, fileName, line).raise();
         }
-        cctx.addNativeCPPModule(path);
+        cctx.addNativeCPPModule(name, path);
     }
 
     @Override

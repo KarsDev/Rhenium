@@ -701,7 +701,7 @@ public final class ASTParser {
             return new ReturnNode(fileName, line, null);
         }
 
-        ValueNode value = parseValue();
+        ValueNode value = outOfBounds(0) ? null : parseValue();
         return new ReturnNode(fileName, line, value);
     }
 

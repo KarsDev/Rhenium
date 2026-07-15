@@ -49,7 +49,7 @@ public final class CompilationContext {
     private final Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private final Map<String, RDefaultStruct> structs = new HashMap<>();
     private final Stack<String> catchScopeStack = new Stack<>();
-    private final List<Path> nativeCPPModules = new ArrayList<>();
+    private final Map<String, Path> nativeCPPModules = new LinkedHashMap<>();
     private final Set<String> declaredIR = new LinkedHashSet<>();
     private final Set<String> declaredStructs = new LinkedHashSet<>();
     private final Set<String> declaredGlobals = new HashSet<>();
@@ -190,8 +190,8 @@ public final class CompilationContext {
         return catchScopeStack.pop();
     }
 
-    public void addNativeCPPModule(Path path) {
-        nativeCPPModules.add(path);
+    public void addNativeCPPModule(String id, Path path) {
+        nativeCPPModules.putIfAbsent(id, path);
     }
 
     public boolean declareOnce(String name) {
@@ -397,7 +397,7 @@ public final class CompilationContext {
         StringBuilder cmd = new StringBuilder();
         List<String> bcFiles = new ArrayList<>();
 
-        for (Path p : nativeCPPModules) {
+        for (Path p : nativeCPPModules.values()) {
             String src = p.toString();
             String bc = src + ".bc";
 
@@ -443,10 +443,14 @@ public final class CompilationContext {
                 .append("-mtune=native ")
                 .append("-funroll-loops ")
                 .append("-fomit-frame-pointer ")
-                .append("-flto -fuse-ld=lld ")
+                .append("-flto ")
+                .append("-fuse-ld=lld ")
                 .append("-fno-exceptions ")
                 .append("-fno-rtti ")
                 .append("-lws2_32 ")
+                .append("-lgdi32 ")
+                .append("-luser32 ")
+                .append("-lgdiplus ")
                 .append(extraClangArgs)
                 .append(" ")
                 .append(quote.apply(optimized))

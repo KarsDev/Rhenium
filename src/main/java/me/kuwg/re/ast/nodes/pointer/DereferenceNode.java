@@ -4,7 +4,6 @@ import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.deref.RDerefNotPointerError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.ptr.PointerType;
@@ -42,15 +41,11 @@ public class DereferenceNode extends VariableReference {
 
         String ptrValueReg;
 
-        if (var.addrReg() != null) {
-            ptrValueReg = cctx.nextRegister();
-            cctx.emit(ptrValueReg + " = load "
-                    + ptr.getLLVMName() + ", "
-                    + toPtr(ptr.getLLVMName())
-                    + var.addrReg());
-        } else {
-            ptrValueReg = var.valueReg();
-        }
+        ptrValueReg = cctx.nextRegister();
+        cctx.emit(ptrValueReg + " = load "
+                + ptr.getLLVMName() + ", "
+                + toPtr(ptr.getLLVMName())
+                + var.addrReg());
 
         String destReg = cctx.nextRegister();
         cctx.emit(destReg + " = load "
@@ -63,7 +58,7 @@ public class DereferenceNode extends VariableReference {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Dereference", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override
@@ -85,15 +80,11 @@ public class DereferenceNode extends VariableReference {
 
         String ptrValueReg;
 
-        if (var.addrReg() != null) {
-            ptrValueReg = cctx.nextRegister();
-            cctx.emit(ptrValueReg + " = load "
-                    + ptr.getLLVMName() + ", "
-                    + toPtr(ptr.getLLVMName())
-                    + var.addrReg());
-        } else {
-            ptrValueReg = var.valueReg();
-        }
+        ptrValueReg = cctx.nextRegister();
+        cctx.emit(ptrValueReg + " = load "
+                + ptr.getLLVMName() + ", "
+                + toPtr(ptr.getLLVMName())
+                + var.addrReg());
 
         String valueReg;
 

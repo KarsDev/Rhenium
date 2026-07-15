@@ -2,7 +2,6 @@ package me.kuwg.re.ast.nodes.expression;
 
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.type.TypeRef;
@@ -48,7 +47,7 @@ public class BinaryExpressionNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Binary Expression", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

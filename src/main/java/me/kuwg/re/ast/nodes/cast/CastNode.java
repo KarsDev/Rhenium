@@ -4,7 +4,6 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.cast.CastManager;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.cast.RNotPrimitiveCastError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.Map;
@@ -34,7 +33,7 @@ public class CastNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Cast", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

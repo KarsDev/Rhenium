@@ -4,7 +4,6 @@ import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.struct.StructType;
@@ -83,7 +82,7 @@ public class AsyncDeclarationNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Async Declaration", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

@@ -12,7 +12,6 @@ import me.kuwg.re.error.errors.struct.RGenStructInitError;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.error.errors.trait.RInheritanceError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.type.TypeRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +59,7 @@ public class StructInitNode extends ValueNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Struct Initialization", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override

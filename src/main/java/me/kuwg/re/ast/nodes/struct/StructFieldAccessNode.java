@@ -9,7 +9,6 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.enums.REnumFieldNotFoundError;
 import me.kuwg.re.error.errors.struct.RStructAccessError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
-import me.kuwg.re.error.errors.value.RValueMustBeUsedError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
@@ -114,7 +113,7 @@ public class StructFieldAccessNode extends VariableReference {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RValueMustBeUsedError("Struct Field", fileName, line).raise();
+        compileAndGet(cctx);
     }
 
     @Override
