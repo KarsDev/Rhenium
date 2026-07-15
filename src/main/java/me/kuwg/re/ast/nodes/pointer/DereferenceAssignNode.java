@@ -1,5 +1,6 @@
 package me.kuwg.re.ast.nodes.pointer;
 
+import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.type.TypeRef;
@@ -35,6 +36,14 @@ public class DereferenceAssignNode extends ValueNode {
         String valueReg = value.compileAndGet(cctx);
 
         PointerType ptrType = (PointerType) pointer.getType();
+
+        TypeRef varType = evalType(ptrType.inner(), cctx, fileName, line);
+
+        if (!varType.equals(value.getType())) {
+            ValueNode castNode = new CastNode(fileName, line, varType, value);
+            valueReg = castNode.compileAndGet(cctx);
+        }
+
         String innerLLVM = ptrType.inner().getLLVMName();
 
         cctx.emit("; Dereference assign");
