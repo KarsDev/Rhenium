@@ -29,22 +29,42 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     private final String name;
     private final List<FunctionParameter> parameters;
     private final boolean inline;
+    private final boolean extern;
     private final BlockNode block;
     private String llvmName;
     private TypeRef returnType;
     private boolean registered = false;
 
-    public FunctionDeclarationNode(final String fileName, final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
-        this(fileName, line, isGeneric, name, parameters, false, returnType, block);
+    public FunctionDeclarationNode(
+            final String fileName,
+            final int line,
+            final boolean isGeneric,
+            final String name,
+            final List<FunctionParameter> parameters,
+            final TypeRef returnType,
+            final BlockNode block
+    ) {
+        this(fileName, line, isGeneric, name, parameters, false, false, returnType, block);
     }
 
-    public FunctionDeclarationNode(final String fileName, final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final boolean inline, final TypeRef returnType, final BlockNode block) {
+    public FunctionDeclarationNode(
+            final String fileName,
+            final int line,
+            final boolean isGeneric,
+            final String name,
+            final List<FunctionParameter> parameters,
+            final boolean inline,
+            final boolean extern,
+            final TypeRef returnType,
+            final BlockNode block
+    ) {
         super(fileName, line);
         this.isGeneric = isGeneric;
         this.name = name;
 
         this.parameters = parameters;
         this.inline = inline;
+        this.extern = extern;
         this.returnType = returnType;
         this.block = block.clone();
 
@@ -214,7 +234,19 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     }
 
     private String getEmissionLLVMName(CompilationContext cctx) {
-        return isMain() ? "main" : getLLVMName(cctx);
+        if (isMain()) return "main";
+
+        if (extern) {
+            String qualified = getQualifiedName(cctx);
+
+            if (qualified.startsWith("\"") && qualified.endsWith("\"")) {
+                return qualified;
+            }
+
+            return qualified;
+        }
+
+        return getLLVMName(cctx);
     }
 
     public boolean isMain() {

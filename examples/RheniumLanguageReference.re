@@ -577,6 +577,16 @@ struct Word inherits LetterContainer, Printable, Writeable:
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
+  EXTERN FUNCTION
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+// declares an extern (see C++ docs) function, name won't be mangled
+extern func write():
+    println("Hello World!")
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT
 <=------------------------=>|<=>|<=-----------------------=>
 */

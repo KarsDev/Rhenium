@@ -370,7 +370,7 @@ public final class ASTParser {
             case "while" -> parseWhileKeyword();
             case "break" -> parseBreakKeyword();
             case "continue" -> parseContinueKeyword();
-            case "func" -> parseFuncKeyword();
+            case "func" -> parseFuncKeyword(false);
             case "for" -> parseForKeyword();
             case "range" -> parseRangeKeyword();
             case "return" -> parseReturnKeyword();
@@ -605,7 +605,7 @@ public final class ASTParser {
         return new ContinueNode(fileName, previous().line());
     }
 
-    private @SubFunc ASTNode parseFuncKeyword() {
+    private @SubFunc ASTNode parseFuncKeyword(boolean extern) {
         int line = line();
 
         String name = identifier();
@@ -622,7 +622,7 @@ public final class ASTParser {
 
         BlockNode block = parseBlock();
 
-        FunctionDeclarationNode fdn = new FunctionDeclarationNode(fileName, line, false, name, params, inline, returnType, block);
+        FunctionDeclarationNode fdn = new FunctionDeclarationNode(fileName, line, false, name, params, inline, extern, returnType, block);
 
         if (fdn.isMain() && inline) {
             return new RParserError("Cannot inline main function", fileName, line).raise();
@@ -1713,7 +1713,8 @@ public final class ASTParser {
         return new EnumDeclarationNode(fileName, line, name, fields);
     }
 
-    private @SubFunc NativeCPPNode parseExternKeyword() {
+    private @SubFunc ASTNode parseExternKeyword() {
+        if (matchAndConsume(KEYWORD, "func")) return parseFuncKeyword(true);
         return parseExtern(false);
     }
 
