@@ -93,27 +93,30 @@ public final class ASTParser {
     private final String fileName;
     private final Token[] tokens;
     private final boolean initial;
+    private final ModuleLoadingHelper loader;
     private List<String> currentGenericTypes = new ArrayList<>();
     private int tokenIndex;
 
-    public ASTParser(final String fileName, final Token[] tokens) {
+    public ASTParser(final String fileName, final Token[] tokens, final ModuleLoadingHelper loader) {
         this.fileName = fileName;
         this.tokens = tokens;
+        this.loader = loader;
         this.initial = true;
         this.typeMap = new HashMap<>();
     }
 
-    public ASTParser(final String fileName, final Token[] tokens, final Map<String, TypeRef> typeMap) {
+    public ASTParser(final String fileName, final Token[] tokens, final Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader) {
         this.fileName = fileName;
         this.tokens = tokens;
+        this.loader = loader;
         this.initial = true;
         this.typeMap = typeMap;
         if (typeMap.isEmpty() && !fileName.contains("default")) throw new RuntimeException("name=" + fileName);
     }
 
     private void includeInitialModules(AST ast) {
-        ModuleLoadingHelper.collectModuleTypes(fileName, 0, fileName, Constants.Parser.DEFAULT_MODULE_NAME, null, typeMap).forEach(typeMap::putIfAbsent);
-        ast.addChild(new UsingNode(fileName, 0, null, Constants.Parser.DEFAULT_MODULE_NAME, null));
+        loader.collectModuleTypes(fileName, 0, fileName, Constants.Parser.DEFAULT_MODULE_NAME, null, typeMap).forEach(typeMap::putIfAbsent);
+        ast.addChild(new UsingNode(fileName, 0, Constants.Parser.DEFAULT_MODULE_NAME, null));
     }
 
     public AST parse() {
@@ -522,9 +525,9 @@ public final class ASTParser {
             pkg = null;
         }
 
-        ModuleLoadingHelper.collectModuleTypes(fileName, line, fileName, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
+        loader.collectModuleTypes(fileName, line, fileName, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
 
-        return new UsingNode(fileName, line, fileName, name.toString(), pkg);
+        return new UsingNode(fileName, line, name.toString(), pkg);
     }
 
     private @SubFunc ASTNode parsePtrKeyword() {
@@ -2302,7 +2305,7 @@ public final class ASTParser {
             pkg = null;
         }
 
-        ModuleLoadingHelper.collectModuleTypes(fileName, line, fileName, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
+        loader.collectModuleTypes(fileName, line, fileName, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
     }
 
     private void collectEnumTypes() {

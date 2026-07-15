@@ -8,13 +8,11 @@ import me.kuwg.re.type.TypeRef;
 import java.util.Map;
 
 public class UsingNode extends ASTNode implements GlobalNode {
-    private final String sourceFile;
     private final String name;
     private final String pkg;
 
-    public UsingNode(final String fileName, final int line, final String sourceFile, final String name, final String pkg) {
+    public UsingNode(final String fileName, final int line, final String name, final String pkg) {
         super(fileName, line);
-        this.sourceFile = sourceFile;
         this.name = name.toLowerCase();
         this.pkg = pkg;
     }
@@ -26,7 +24,7 @@ public class UsingNode extends ASTNode implements GlobalNode {
     @Override
     public void compile(final CompilationContext cctx) {
         cctx.declare("; Using " + name);
-        cctx.include(line, sourceFile, name, pkg);
+        cctx.include(line, fileName, name, pkg);
     }
 
     @Override

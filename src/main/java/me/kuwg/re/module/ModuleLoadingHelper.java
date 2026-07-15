@@ -2,7 +2,6 @@ package me.kuwg.re.module;
 
 import me.kuwg.re.ast.AST;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.module.RModuleCouldNotBeLoadedError;
 import me.kuwg.re.error.errors.module.RModuleNotFoundError;
 import me.kuwg.re.parser.ASTParser;
@@ -13,14 +12,26 @@ import me.kuwg.re.type.TypeRef;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public final class ModuleLoadingHelper {
-    private ModuleLoadingHelper() {
-        throw new RInternalError();
+    private final Set<String> loadedModules = new HashSet<>();
+    private final Set<String> loadingModules = new HashSet<>();
+
+    private final Set<String> collectedModules = new HashSet<>();
+    private final Set<String> collectingModules = new HashSet<>();
+    private static String fileKey(Path file) {
+        return "file:" + file.toAbsolutePath().normalize();
     }
 
-    public static void loadModule(final String fileName, int line, Map<String, TypeRef> typeMap, String sourceFile, String name, String pkg, CompilationContext cctx) {
+    private static String nativeKey(String name) {
+        return "native:" + name;
+    }
+
+    public void loadModule(final String fileName, int line, Map<String, TypeRef> typeMap,
+                           String sourceFile, String name, String pkg, CompilationContext cctx) {
         if (pkg == null) {
             loadNativeModule(fileName, line, typeMap, name, cctx);
             return;
@@ -36,52 +47,73 @@ public final class ModuleLoadingHelper {
             }
         }
 
-
         if (base == null) {
             new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
             return;
         }
 
-        Path file = base.resolve(name + ".re");
+        Path file = base.resolve(name + ".re").normalize().toAbsolutePath();
+        String key = fileKey(file);
 
-        if (!Files.exists(file)) {
-            new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
+        if (loadedModules.contains(key) || loadingModules.contains(key)) {
             return;
         }
 
-        String src;
+        loadingModules.add(key);
         try {
-            src = Files.readString(file);
-        } catch (IOException e) {
-            new RModuleCouldNotBeLoadedError(pkg + "->" + name, fileName, line).raise();
+            if (!Files.exists(file)) {
+                new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
+                return;
+            }
+
+            String src;
+            try {
+                src = Files.readString(file);
+            } catch (IOException e) {
+                new RModuleCouldNotBeLoadedError(pkg + "->" + name, fileName, line).raise();
+                return;
+            }
+
+            load(typeMap, file.toString(), src, cctx);
+            loadedModules.add(key);
+        } finally {
+            loadingModules.remove(key);
+        }
+    }
+
+    private void loadNativeModule(final String fileName, int line, Map<String, TypeRef> typeMap, String name, CompilationContext cctx) {
+        String key = nativeKey(name);
+
+        if (loadedModules.contains(key) || loadingModules.contains(key)) {
             return;
         }
 
-        load(typeMap, file.toString(), src, cctx);
-    }
+        loadingModules.add(key);
+        try {
+            String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
+            if (src == null) {
+                new RModuleNotFoundError(name, fileName, line).raise();
+                return;
+            }
 
-    private static void loadNativeModule(final String fileName, int line, Map<String, TypeRef> typeMap, String name, CompilationContext cctx) {
-        String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
-        if (src == null) {
-            new RModuleNotFoundError(name, fileName, line).raise();
-            return;
+            load(typeMap, name, src, cctx);
+            loadedModules.add(key);
+        } finally {
+            loadingModules.remove(key);
         }
-
-        load(typeMap, name, src, cctx);
     }
 
-    private static void load(Map<String, TypeRef> typeMap, String module, String src, CompilationContext cctx) {
+    private void load(Map<String, TypeRef> typeMap, String module, String src, CompilationContext cctx) {
         var tokens = Tokenizer.tokenize(src);
-        ASTParser parser = new ASTParser(module, tokens, typeMap);
-
+        ASTParser parser = new ASTParser(module, tokens, typeMap, this);
         cctx.addTypes(parser.typeMap);
-
         AST ast = parser.parse();
-
         ast.compile(cctx);
     }
 
-    public static Map<String, TypeRef> collectModuleTypes(final String fileName, int line, String sourceFile, String name, String pkg, Map<String, TypeRef> typeMap) {
+    public Map<String, TypeRef> collectModuleTypes(final String fileName, int line,
+                                                   String sourceFile, String name, String pkg,
+                                                   Map<String, TypeRef> typeMap) {
         if (pkg == null) {
             return collectNativeModuleTypes(fileName, line, name, typeMap);
         }
@@ -97,40 +129,63 @@ public final class ModuleLoadingHelper {
         }
 
         if (base == null) {
-            new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
-            return Map.of();
+            return new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
         }
 
-        Path file = base.resolve(name + ".re");
-        if (!Files.exists(file)) {
-            new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
-            return Map.of();
+        Path file = base.resolve(name + ".re").normalize().toAbsolutePath();
+        String key = fileKey(file);
+
+        if (collectedModules.contains(key) || collectingModules.contains(key)) {
+            return typeMap;
         }
 
-        String src;
+        collectingModules.add(key);
         try {
-            src = Files.readString(file);
-        } catch (IOException e) {
-            new RModuleCouldNotBeLoadedError(pkg + "->" + name, fileName, line).raise();
-            return Map.of();
-        }
+            if (!Files.exists(file)) {
+                return new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
+            }
 
-        return collectTypes(file.toString(), src, typeMap);
+            String src;
+            try {
+                src = Files.readString(file);
+            } catch (IOException e) {
+                return new RModuleCouldNotBeLoadedError(pkg + "->" + name, fileName, line).raise();
+            }
+
+            Map<String, TypeRef> out = collectTypes(file.toString(), src, typeMap);
+            collectedModules.add(key);
+            return out;
+        } finally {
+            collectingModules.remove(key);
+        }
     }
 
-    private static Map<String, TypeRef> collectNativeModuleTypes(final String fileName, int line, String name, Map<String, TypeRef> typeMap) {
-        String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
-        if (src == null) {
-            new RModuleNotFoundError(name, fileName, line).raise();
-            return Map.of();
+    private Map<String, TypeRef> collectNativeModuleTypes(final String fileName, int line,
+                                                          String name, Map<String, TypeRef> typeMap) {
+        String key = nativeKey(name);
+
+        if (collectedModules.contains(key) || collectingModules.contains(key)) {
+            return typeMap;
         }
 
-        return collectTypes(name, src, typeMap);
+        collectingModules.add(key);
+        try {
+            String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
+            if (src == null) {
+                return new RModuleNotFoundError(name, fileName, line).raise();
+            }
+
+            Map<String, TypeRef> out = collectTypes(name, src, typeMap);
+            collectedModules.add(key);
+            return out;
+        } finally {
+            collectingModules.remove(key);
+        }
     }
 
-    private static Map<String, TypeRef> collectTypes(String module, String src, Map<String, TypeRef> typeMap) {
+    private Map<String, TypeRef> collectTypes(String module, String src, Map<String, TypeRef> typeMap) {
         var tokens = Tokenizer.tokenize(src);
-        ASTParser parser = new ASTParser(module, tokens, typeMap);
+        ASTParser parser = new ASTParser(module, tokens, typeMap, this);
 
         parser.collectTypesOnly();
         return parser.typeMap;

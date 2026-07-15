@@ -37,13 +37,14 @@ public final class CompilationContext {
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
+    private final ModuleLoadingHelper loader;
+
     private final List<String> irCode = new ArrayList<>();
     private final StringBuilder declarations = new StringBuilder();
     private final StringBuilder globalCode = new StringBuilder();
     private final Deque<StringBuilder> codeStack = new ArrayDeque<>();
     private final Map<String, RVariable> variables = new HashMap<>();
     private final RFunctions functions = new RFunctions();
-    private final List<String> includedModules = new ArrayList<>();
     private final Stack<LoopContext> loopStack = new Stack<>();
     private final Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private final Map<String, RDefaultStruct> structs = new HashMap<>();
@@ -56,13 +57,15 @@ public final class CompilationContext {
     private final Map<String, REnum> enums = new HashMap<>();
     private final Map<String, Trait> traits = new HashMap<>();
     private final CopyFunctionGenerator copy = new CopyFunctionGenerator(this);
+
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
 
-    public CompilationContext(final String fileName, Map<String, TypeRef> typeMap) {
+    public CompilationContext(final String fileName, Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader) {
         this.fileName = fileName;
         this.typeMap = typeMap;
+        this.loader = loader;
 
         irCode.add("; Generated LLVM IR\n\n");
         codeStack.push(globalCode);
@@ -214,11 +217,9 @@ public final class CompilationContext {
     }
 
     public void include(int line, String sourceFile, String name, String pkg) {
-        if (includedModules.contains(name)) return;
         String str = name + (pkg == null ? "" : " in " + pkg);
         declare(" ; USING MODULE " + str);
-        includedModules.add(name);
-        ModuleLoadingHelper.loadModule(fileName, line, typeMap, sourceFile, name, pkg, this);
+        loader.loadModule(fileName, line, typeMap, sourceFile, name, pkg, this);
     }
 
     public Stack<LoopContext> getLoopStack() {

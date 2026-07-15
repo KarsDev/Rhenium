@@ -4,6 +4,7 @@ import me.kuwg.re.ast.AST;
 import me.kuwg.re.cli.Arguments;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.frontend.Frontend;
+import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.runner.CommandRunner;
 
 import java.io.File;
@@ -21,9 +22,11 @@ public final class CompilerPipeline {
     public void run() {
         try {
             Frontend frontend = new Frontend(args.inputFile());
-            var ast = frontend.parse();
+            ModuleLoadingHelper loader = new ModuleLoadingHelper();
 
-            CompilationContext cctx = new CompilationContext(args.inputFile().getName(), frontend.typeMap);
+            var ast = frontend.parse(loader);
+
+            CompilationContext cctx = new CompilationContext(args.inputFile().getName(), frontend.typeMap, loader);
             ast.compile(cctx);
 
             String command = cctx.compileAndGet(args.llvmFile(), args.executableFile(), args.clangArgs());

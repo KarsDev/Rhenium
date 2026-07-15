@@ -12,7 +12,7 @@ final class ErrorManager {
         System.err.println("  At line " + error.getLine());
         System.err.println("  Internal error name: \"" + getIEN(error.getCode()) + "\"");
 
-        System.exit(error.getCode());
+        //System.exit(error.getCode());
         throw new RuntimeException();
     }
 
