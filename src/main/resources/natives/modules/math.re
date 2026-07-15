@@ -40,6 +40,14 @@ namespace Math:
     func toRadians(deg: double) -> double:
         return deg * DEG_TO_RAD
 
+    generic func clamp<N>(val: N, min: N, max: N) -> N:
+        if (val < min):
+            return min
+        else:
+            if (val > max):
+                return max
+        return val
+
     // Builtins:
 
     // Returns the sine of an angle

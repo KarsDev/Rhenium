@@ -3,6 +3,7 @@ package me.kuwg.re.ast.nodes.blocks;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.module.UsingNode;
 import me.kuwg.re.ast.nodes.struct.StructDeclarationNode;
+import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
 import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.RInternalError;
@@ -35,15 +36,7 @@ public class ASTBlockNode extends ASTNode {
         nodes.stream().filter(node -> node instanceof TopLevelNode)
                 .map(node -> (TopLevelNode) node).forEach(top -> top.load(cctx));
 
-        Iterator<ASTNode> alpha = nodes.iterator();
 
-        while (alpha.hasNext()) {
-            ASTNode node = alpha.next();
-            if (node instanceof StructDeclarationNode) {
-                node.compile(cctx);
-                alpha.remove();
-            }
-        }
 
         Iterator<ASTNode> beta = nodes.iterator();
         while (beta.hasNext()) {
@@ -51,6 +44,15 @@ public class ASTBlockNode extends ASTNode {
             if (node instanceof UsingNode using) {
                 using.compile(cctx);
                 beta.remove();
+            }
+        }
+
+        Iterator<ASTNode> alpha = nodes.iterator();
+        while (alpha.hasNext()) {
+            ASTNode node = alpha.next();
+            if (node instanceof StructDeclarationNode || node instanceof GenStructDeclarationNode) {
+                node.compile(cctx);
+                alpha.remove();
             }
         }
 

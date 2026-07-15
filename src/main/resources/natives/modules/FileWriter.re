@@ -11,6 +11,10 @@ struct FileWriter:
 
 // Implement FileWriter functions
 impl FileWriter:
+    init(file: File):
+        this.file = file
+        this.isOpen = false
+        this.append = false
 
     // Opens the file for writing (truncate)
     func open() -> bool:
