@@ -63,7 +63,7 @@ impl List<T>:
     // Gets an element at a given index
     func get(idx: int) -> T:
         if (idx < 0 or idx >= this.size):
-            raise "Index out of bounds for size " + this.size
+            raise "Index " + idx + " out of bounds for size " + this.size
         return this.items[idx]
 
     // Sets an element in the list at a given index

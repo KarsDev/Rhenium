@@ -11,6 +11,7 @@ import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.ReturnNode;
 import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.constants.*;
+import me.kuwg.re.ast.nodes.copy.CopyNode;
 import me.kuwg.re.ast.nodes.enumeration.EnumDeclarationNode;
 import me.kuwg.re.ast.nodes.expression.BinaryExpressionNode;
 import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
@@ -395,6 +396,7 @@ public final class ASTParser {
             case "enum" -> parseEnumKeyword();
             case "extern" -> parseExternKeyword();
             case "trait" -> parseTraitKeyword();
+            case "copy" -> parseCopyKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, fileName, line()).raise();
         };
     }
@@ -1170,7 +1172,7 @@ public final class ASTParser {
                         }
                     } else {
                         tokenIndex--;
-                        continue;
+                        break;
                     }
                 }
 
@@ -1181,7 +1183,7 @@ public final class ASTParser {
                 var params = parseParamsCall();
 
                 node = new GenericFunctionCallNode(fileName, line, name, genTypes, params);
-                continue;
+                break;
             }
 
             break;
@@ -1796,6 +1798,18 @@ public final class ASTParser {
         if (!typeMap.containsKey(name)) typeMap.put(name, new TraitType(name, functions));
 
         return new TraitDeclarationNode(fileName, line, name, functions);
+    }
+
+    private @SubFunc ASTNode parseCopyKeyword() {
+        int line = line();
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for copy expression", fileName, line()).raise();
+
+        ValueNode value = parseValue();
+
+        if (!matchAndConsume(DIVIDER, ")"))
+            return new RParserError("Expected ')' for copy expression", fileName, line()).raise();
+        return new CopyNode(fileName, line, value);
     }
 
     /*

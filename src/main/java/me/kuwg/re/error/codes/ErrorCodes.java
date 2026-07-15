@@ -50,4 +50,5 @@ public final class ErrorCodes {
     public static final int STRUCT_GEN_FIELD_ERROR = 46;
     public static final int NOT_CONSTANT_ERROR = 47;
     public static final int DIVISION_BY_ZERO_ERROR = 48;
+    public static final int INVALID_COPY_TYPE_ERROR = 49;
 }

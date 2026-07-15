@@ -28,20 +28,22 @@
       ...
 */
 generic struct Option<T>:
-    value: ptr -> T
+    value: T
+    present: bool
 
 impl Option<T>:
     // Creates an empty Option
     init():
-        this.value = null
+        this.present = false
     
     // Creates an Option containing a value
     init(value: T):
-        this.value = ptr(value)
+        this.value = copy(value)
+        this.present = true
 
     // Returns true if a value is present
     func isPresent() -> bool:
-        return cast<anyptr>(this.value) != null
+        return present
 
     // Returns true if no value is present
     func isEmpty() -> bool:
@@ -52,11 +54,11 @@ impl Option<T>:
         if (not this.isPresent()):
             raise "Option is empty"
         
-        return @(this.value)
+        return this.value
     
     // Returns the contained value or 'other' if the Option is empty
     func orElse(other: T) -> T:
-        return @(this.value) if this.isPresent() else other
+        return this.value if this.isPresent() else other
     
     // Returns the contained value or raises an exception with the message if empty
     func expect(message: str) -> T:

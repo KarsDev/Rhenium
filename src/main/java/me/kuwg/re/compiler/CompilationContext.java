@@ -10,6 +10,7 @@ import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.copy.CopyFunctionGenerator;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.function.RMainFunctionError;
 import me.kuwg.re.module.ModuleLoadingHelper;
@@ -54,6 +55,7 @@ public final class CompilationContext {
     private final Deque<String> namespaceStack = new ArrayDeque<>();
     private final Map<String, REnum> enums = new HashMap<>();
     private final Map<String, Trait> traits = new HashMap<>();
+    private final CopyFunctionGenerator copy = new CopyFunctionGenerator(this);
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -370,6 +372,10 @@ public final class CompilationContext {
 
     public boolean isTraitDeclared(String name) {
         return traits.containsKey(name);
+    }
+
+    public void ensureCopyFunction(TypeRef type, String fileName, int line) {
+        copy.ensure(type, fileName, line);
     }
 
     private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs) {
