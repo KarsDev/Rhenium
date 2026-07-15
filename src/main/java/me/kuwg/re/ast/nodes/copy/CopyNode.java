@@ -21,6 +21,8 @@ public class CopyNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        cctx.emit("; copy");
+
         String valueReg = value.compileAndGet(cctx);
         TypeRef type = value.getType();
         setType(type);
