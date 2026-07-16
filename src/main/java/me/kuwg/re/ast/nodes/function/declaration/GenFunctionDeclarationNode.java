@@ -40,12 +40,17 @@ public class GenFunctionDeclarationNode extends ASTNode implements TopLevelNode 
     public void compile(final CompilationContext cctx) {
         if (registered) return;
 
+        cctx.declare("; Generic function declaration " + name);
+
         load(cctx);
     }
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Function Declaration: ").append(NEWLINE).append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE).append(indent).append(TAB).append("Type Parameters: ").append(typeParameters).append(NEWLINE).append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
+        sb.append(indent).append("Generic Function Declaration: ").append(NEWLINE)
+                .append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE)
+                .append(indent).append(TAB).append("Type Parameters: ").append(typeParameters).append(NEWLINE)
+                .append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
         params.forEach(p -> p.write(sb, indent + TAB + TAB));
         sb.append(indent).append(TAB).append("Return Type: ").append(returnType.getName()).append(NEWLINE);
         block.write(sb, indent + TAB);

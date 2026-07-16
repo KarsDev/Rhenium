@@ -41,7 +41,7 @@ public class EnumDeclarationNode extends ASTNode implements GlobalNode, TopLevel
     @Override
     public void compile(final CompilationContext cctx) {
         if (!loaded) load(cctx);
-        cctx.declare("; Enum Declaration" + name);
+        cctx.declare("; Enum Declaration " + name);
     }
 
     @Override

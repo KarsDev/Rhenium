@@ -142,7 +142,12 @@ public class StructFunctionCallNode extends VariableReference {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("StructFunctionCall: ").append(struct).append(".").append(name).append("(...)\n");
+        sb.append(indent).append("Struct Function Call:").append(NEWLINE)
+                .append(indent).append(TAB).append("Struct:").append(NEWLINE);
+        struct.write(sb, indent + TAB + TAB);
+        sb.append(indent).append(TAB).append("Function Name: ").append(name).append(NEWLINE)
+                .append(indent).append(TAB).append("Params: ").append(NEWLINE);
+        params.forEach(p -> p.write(sb, indent + TAB + TAB));
     }
 
     @Override

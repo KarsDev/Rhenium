@@ -45,7 +45,9 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Builtin Function Declaration: ").append(NEWLINE).append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE).append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
+        sb.append(indent).append("Builtin Function Declaration: ").append(NEWLINE)
+                .append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE)
+                .append(indent).append(TAB).append("Parameters: ").append(NEWLINE);
         parameters.forEach(p -> p.write(sb, indent + TAB));
     }
 
