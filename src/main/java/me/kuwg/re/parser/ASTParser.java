@@ -441,6 +441,10 @@ public final class ASTParser {
                 if (!match(OPERATOR, "=")) type = parseType(false);
                 else type = null;
 
+                if (type instanceof NoneBuiltinType) {
+                    yield new RParserError("Variables cannot be declared with type 'none'", fileName, line).raise();
+                }
+
                 if (!matchAndConsume(OPERATOR, "=")) {
                     yield new RParserError("Expected '=' for variable assignment", fileName, line()).raise();
                 }
