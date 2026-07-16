@@ -294,6 +294,7 @@ public class Tokenizer {
             case '"' -> '"';
             case '\'' -> '\'';
             case '\\' -> '\\';
+            case '0' -> '\0';
             default -> {
                 except("Invalid escape sequence: \\" + c);
                 yield c;

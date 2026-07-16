@@ -587,6 +587,59 @@ extern func write():
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
+  DELETE
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+// The `delete` keyword is used to release resources owned by an object.
+// A delete block behaves similarly to a destructor and is called when
+// `delete <object>` is executed.
+// The destructor of struct variables that are instantiated in a block 
+// is automatically called when it falls out of scope.
+
+using memory
+using string
+
+struct CharBuf:
+    inner: ptr -> char
+    length: int
+
+impl CharBuf:
+    init(s: str):
+        this.length = len(s)
+
+        raw = Memory::malloc(this.length + 1)
+        chars = cast<ptr -> char>(raw)
+
+        Memory::memcpy(raw, cast<ptr -> char>(s), this.length)
+        chars[this.length] = '\0'
+
+        this.inner = chars
+
+    delete:
+        if (this.inner != null):
+            Memory::free(cast<anyptr>(this.inner))
+            this.inner = null
+
+        this.length = 0
+
+    func getInner() -> str:
+        if (this.inner == null):
+            return ""
+
+        return strFromChars(this.inner, this.length)
+
+buf = init CharBuf("Hello World")
+
+println("before delete: " + buf.getInner())
+
+delete buf
+
+// Safe after deletion (the object invalidates itself)
+println("after delete: '" + buf.getInner() + "'")
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT
 <=------------------------=>|<=>|<=-----------------------=>
 */

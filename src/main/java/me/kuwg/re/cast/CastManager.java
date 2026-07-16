@@ -33,6 +33,7 @@ public final class CastManager {
         if (from instanceof AnyPointerType) return fromAnyPointer(fileName, line, valReg, type, cctx);
         if (from instanceof PointerType ptr) return fromPointer(fileName, line, ptr.inner(), valReg, type, cctx);
         if (from instanceof ArrayType arr) return fromArray(fileName, line, arr, valReg, type, cctx);
+        if (from instanceof StrBuiltinType) return fromStr(fileName, line, valReg, type, cctx);
 
         return new RIncompatibleCastError(from, type, fileName, line).raise();
     }
@@ -312,6 +313,13 @@ public final class CastManager {
             return result;
         }
 
+        if (to instanceof StrBuiltinType &&
+                fromInner instanceof CharBuiltinType) {
+            result = cctx.nextRegister();
+            cctx.emit(result + " = bitcast " + fromPtr.getLLVMName() + " " + valReg + " to " + to.getLLVMName());
+            return result;
+        }
+
         return new RIncompatibleCastError(new PointerType(fromInner), to, fileName, line).raise();
     }
 
@@ -331,5 +339,28 @@ public final class CastManager {
         }
 
         return new RIncompatibleCastError(from, to, fileName, line).raise();
+    }
+
+    private static String fromStr(final String fileName, int line, String valReg, TypeRef to, CompilationContext cctx) {
+        if (to instanceof StrBuiltinType) return valReg;
+
+        String result = cctx.nextRegister();
+
+        if (to instanceof AnyPointerType) {
+            cctx.emit(result + " = bitcast " + BuiltinTypes.STR.getType().getLLVMName() + " " + valReg + " to i8*");
+            return result;
+        }
+
+        if (to instanceof PointerType) {
+            cctx.emit(result + " = bitcast " + BuiltinTypes.STR.getType().getLLVMName() + " " + valReg + " to " + to.getLLVMName());
+            return result;
+        }
+
+        if (to instanceof LongBuiltinType) {
+            cctx.emit(result + " = ptrtoint " + BuiltinTypes.STR.getType().getLLVMName() + " " + valReg + " to i64");
+            return result;
+        }
+
+        return new RIncompatibleCastError(BuiltinTypes.STR.getType(), to, fileName, line).raise();
     }
 }

@@ -137,7 +137,7 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
                     new FunctionParameter(
                             "self",
                             false,
-                            cctxStruct.type()
+                            new PointerType(cctxStruct.type())
                     )
             );
 

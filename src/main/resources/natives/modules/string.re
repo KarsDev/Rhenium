@@ -536,3 +536,17 @@ func strReplace(s: str, search: str, replace: str) -> str:
 
     result = strConcat(result, strSub(s, start))
     return result
+
+_Builtin func strFromChars(chars: ptr -> char, length: int) -> str = """
+entry:
+    %size = add i32 %length, 1
+    %size64 = zext i32 %size to i64
+
+    %buf = call i8* @malloc(i64 %size64)
+    call i8* @memcpy(i8* %buf, i8* %chars, i32 %length)
+
+    %end = getelementptr i8, i8* %buf, i32 %length
+    store i8 0, i8* %end
+
+    ret i8* %buf
+"""
