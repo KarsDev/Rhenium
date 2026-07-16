@@ -354,7 +354,10 @@ vy = v.y
 /*
 Struct methods
 
-Use self.<var> to access the struct variable
+Use this.<var> to access the struct variable or this.<func>([params]) to call a function
+
+The 'self' keyword is the reppresentation of the current struct pointer,
+instead, the 'this' keyword reppresents the dereference of the self (@self)
 */
 
 impl Vec2:
@@ -364,11 +367,11 @@ impl Vec2:
       this.y = y
 
     func length() -> int:
-        return self.x * self.x + self.y * self.y
+        return this.x * this.x + this.y * this.y
 
-    func scale(f: int):
-        self.x = self.x * f
-        self.y = self.y * f
+    func scale(f: this):
+        this.x = self.x * f
+        this.y = this.y * f
 
 /*
 Method calls
