@@ -12,7 +12,7 @@ declare i8* @memset(i8*, i32, i64)  ; Fill memory with a constant byte
 namespace Memory:
     // Allocates a block of memory of the given 'size' (in bytes).
     // Returns an 'anyptr' (void*) to the start of the block.
-    _Builtin func alloc(size: long) -> anyptr = """
+    _Builtin func malloc(size: long) -> anyptr = """
     entry:
         ; Calls the C malloc function with the 64-bit size integer.
         %ptr = call i8* @malloc(i64 %size)
