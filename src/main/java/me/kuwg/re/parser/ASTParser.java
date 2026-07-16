@@ -12,6 +12,8 @@ import me.kuwg.re.ast.nodes.blocks.ReturnNode;
 import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.constants.*;
 import me.kuwg.re.ast.nodes.copy.CopyNode;
+import me.kuwg.re.ast.nodes.delete.DeleteNode;
+import me.kuwg.re.ast.nodes.destructor.DestructorNode;
 import me.kuwg.re.ast.nodes.enumeration.EnumDeclarationNode;
 import me.kuwg.re.ast.nodes.expression.BinaryExpressionNode;
 import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
@@ -400,6 +402,7 @@ public final class ASTParser {
             case "extern" -> parseExternKeyword();
             case "trait" -> parseTraitKeyword();
             case "copy" -> parseCopyKeyword();
+            case "delete" -> parseDeleteKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, fileName, line()).raise();
         };
     }
@@ -614,7 +617,7 @@ public final class ASTParser {
 
         boolean inline = matchAndConsume(KEYWORD, "inline");
 
-        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : NoneBuiltinType.INSTANCE;
+        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : BuiltinTypes.NONE.getType();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for function declaration", fileName, line).raise();
@@ -950,14 +953,27 @@ public final class ASTParser {
 
         List<RConstructor> constructors = new ArrayList<>();
 
+        BlockNode destructor = null;
+
         while (iterator.hasNext()) {
             var next = iterator.next();
 
-            if (next.getClass().getSimpleName().contains("Gen"))
+            if (next.getClass().getSimpleName().contains("Gen")) {
                 return new RParserError("Generic functions in structs are not supported", fileName, line).raise();
-            if (next.getClass().getSimpleName().contains("FunctionDeclarationNode")) continue;
-            if (!(next instanceof ConstructorDeclarationNode cdn))
+            } else if (next.getClass().getSimpleName().contains("FunctionDeclarationNode")) {
+                continue;
+            } else if (next instanceof DestructorNode dn) {
+                iterator.remove();
+                if (destructor != null) {
+                    return new RParserError("Destructor already declared", fileName, line).raise();
+                }
+                destructor = dn.getBlock();
+                continue;
+            }
+
+            if (!(next instanceof ConstructorDeclarationNode cdn)) {
                 return new RImplNotFunctionError(fileName, next.getLine()).raise();
+            }
 
             iterator.remove();
 
@@ -966,7 +982,7 @@ public final class ASTParser {
             constructors.add(constructor);
         }
 
-        return new StructImplNode(fileName, line, struct, constructors, block.getNodes());
+        return new StructImplNode(fileName, line, struct, constructors, block.getNodes(), destructor);
     }
 
     private @SubFunc ASTNode parseGlobal() {
@@ -1273,7 +1289,7 @@ public final class ASTParser {
                 return new RParserError("Expected ')' for async function declaration", fileName, line).raise();
             }
         } else {
-            returnType = NoneBuiltinType.INSTANCE;
+            returnType = BuiltinTypes.NONE.getType();
         }
 
         if (!matchAndConsume(OPERATOR, ":"))
@@ -1308,7 +1324,7 @@ public final class ASTParser {
         currentGenericTypes = new ArrayList<>(typeParameters.stream().map(TypeParameter::name).toList());
 
         var params = parseParamsDeclare(true);
-        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : NoneBuiltinType.INSTANCE;
+        TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : BuiltinTypes.NONE.getType();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for function declaration", fileName, line).raise();
@@ -1784,7 +1800,7 @@ public final class ASTParser {
 
             List<FunctionParameter> params = parseParamsDeclare(false);
 
-            TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : NoneBuiltinType.INSTANCE;
+            TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : BuiltinTypes.NONE.getType();
 
             if (functions.containsKey(fname)) {
                 return new RParserError("Duplicate trait function: " + fname, fileName, line).raise();
@@ -1814,6 +1830,22 @@ public final class ASTParser {
         if (!matchAndConsume(DIVIDER, ")"))
             return new RParserError("Expected ')' for copy expression", fileName, line()).raise();
         return new CopyNode(fileName, line, value);
+    }
+
+    private @SubFunc ASTNode parseDeleteKeyword() {
+        int line = line();
+
+        if (matchAndConsume(OPERATOR, ":")) {
+            return new DestructorNode(fileName, line, parseBlock());
+        }
+
+        ValueNode value = parseValue();
+
+        if (!(value instanceof VariableReference ref)) {
+            return new RParserError("Expected variable reference for delete", fileName, line).raise();
+        }
+
+        return new DeleteNode(fileName, line, ref);
     }
 
     /*

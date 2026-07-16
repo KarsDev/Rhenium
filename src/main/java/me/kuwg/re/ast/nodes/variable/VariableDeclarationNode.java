@@ -176,6 +176,13 @@ public class VariableDeclarationNode extends ValueNode {
         RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded);
         cctx.addVariable(v);
 
+        if (varType instanceof StructType st) {
+            RDefaultStruct struct = cctx.getStruct(st.getName());
+            if (struct != null && struct.getDestructor() != null) {
+                cctx.registerDestructor(addrReg, struct.getDestructor());
+            }
+        }
+
         return valueReg;
     }
 

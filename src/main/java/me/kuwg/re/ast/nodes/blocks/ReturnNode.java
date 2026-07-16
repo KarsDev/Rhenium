@@ -5,7 +5,7 @@ import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 import java.util.Map;
 
@@ -46,7 +46,7 @@ public class ReturnNode extends ASTNode implements InterruptNode {
     }
 
     public TypeRef getValueType() {
-        if (value == null) return NoneBuiltinType.INSTANCE;
+        if (value == null) return BuiltinTypes.NONE.getType();
         return value.getType();
     }
 

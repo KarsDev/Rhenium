@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.struct;
 
 import me.kuwg.re.ast.ASTNode;
+import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.function.declaration.BuiltinFunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.function.declaration.FunctionParameter;
@@ -13,7 +14,7 @@ import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.struct.RStructUndefinedError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
 
@@ -26,18 +27,21 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
     private final StructType struct;
     private final List<RConstructor> constructors;
     private final List<ASTNode> functions;
+    private final BlockNode destructor;
 
     private final List<PreparedFunction> loadedConstructors = new ArrayList<>();
     private final List<PreparedFunction> loadedFunctions = new ArrayList<>();
     private final List<PreparedBuiltinFunction> loadedBuiltinFunctions = new ArrayList<>();
     private final List<RFunction> eagerFunctions = new ArrayList<>();
+    private PreparedFunction loadedDestructor;
     private boolean loaded = false;
 
-    public StructImplNode(final String fileName, final int line, final StructType struct, final List<RConstructor> constructors, final List<ASTNode> functions) {
+    public StructImplNode(final String fileName, final int line, final StructType struct, final List<RConstructor> constructors, final List<ASTNode> functions, final BlockNode destructor) {
         super(fileName, line);
         this.struct = struct;
         this.constructors = constructors;
         this.functions = functions;
+        this.destructor = destructor;
     }
 
     public static String generateName(String struct, String name) {
@@ -50,6 +54,7 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
     public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
         constructors.forEach(c -> c.block().replaceGenerics(generics, cctx));
         functions.forEach(f -> f.replaceGenerics(generics, cctx));
+        destructor.replaceGenerics(generics, cctx);
     }
 
     @Override
@@ -72,7 +77,7 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
                     false,
                     lookupName,
                     params,
-                    NoneBuiltinType.INSTANCE,
+                    BuiltinTypes.NONE.getType(),
                     constructor.block()
             );
 
@@ -125,6 +130,31 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
             }
 
             throw new RInternalError("Not function declaration: " + fn);
+        }
+
+        if (destructor != null) {
+            List<FunctionParameter> params = List.of(
+                    new FunctionParameter(
+                            "self",
+                            false,
+                            cctxStruct.type()
+                    )
+            );
+
+            String fname = "\"" + struct.getMangledName() + ":destructor\"";
+
+            FunctionDeclarationNode dtor = new FunctionDeclarationNode(
+                    fileName,
+                    line,
+                    false,
+                    fname,
+                    params,
+                    BuiltinTypes.NONE.getType(),
+                    destructor
+            );
+
+            dtor.load(cctx);
+            loadedDestructor = new PreparedFunction(dtor, fname);
         }
 
         loaded = true;
@@ -186,6 +216,19 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
         for (RFunction fn : eagerFunctions) {
             cctxStruct.functions().add(fn);
         }
+
+        if (loadedDestructor != null) {
+            loadedDestructor.node.compile(cctx);
+
+            RFunction compiled = cctx.getFunction(
+                    loadedDestructor.lookupName,
+                    extractTypes(loadedDestructor.node.getParameters())
+            );
+
+            if (compiled != null) {
+                cctxStruct.setDestructor(compiled);
+            }
+        }
     }
 
     @Override
@@ -220,7 +263,7 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
         List<ASTNode> functionsCloned = new ArrayList<>();
         IntStream.range(0, functions.size()).forEach(i -> functionsCloned.add(i, functions.get(i).clone()));
 
-        return new StructImplNode(fileName, line, struct, constructorsCloned, functionsCloned);
+        return new StructImplNode(fileName, line, struct, constructorsCloned, functionsCloned, destructor.clone());
     }
 
     private static final class PreparedFunction {

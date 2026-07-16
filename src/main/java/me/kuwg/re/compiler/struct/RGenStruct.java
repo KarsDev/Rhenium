@@ -10,7 +10,7 @@ import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
@@ -149,7 +149,7 @@ public final class RGenStruct extends RDefaultStruct {
                 withSelf.add(new FunctionParameter("self", false, new PointerType(struct.type())));
                 withSelf.addAll(substitutedParams);
 
-                FunctionDeclarationNode fn = new FunctionDeclarationNode(fileName, ctor.block().getNodes().get(0).getLine(), false, mangledName, withSelf, NoneBuiltinType.INSTANCE, ctor.block().clone());
+                FunctionDeclarationNode fn = new FunctionDeclarationNode(fileName, ctor.block().getNodes().get(0).getLine(), false, mangledName, withSelf, BuiltinTypes.NONE.getType(), ctor.block().clone());
 
                 fn.replaceGenerics(combined, cctx);
                 fn.compile(cctx);

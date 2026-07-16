@@ -6,6 +6,7 @@ import me.kuwg.re.compiler.enums.REnum;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
+import me.kuwg.re.compiler.struct.RPendingDestructor;
 import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.variable.RStructField;
@@ -33,7 +34,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = " %3291, [0 x i32]*  %zzzz_3904_365";
+    private static final String ERROR_LINE = "call void @free(ptr %27)";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -56,6 +57,7 @@ public final class CompilationContext {
     private final Deque<String> namespaceStack = new ArrayDeque<>();
     private final Map<String, REnum> enums = new HashMap<>();
     private final Map<String, Trait> traits = new HashMap<>();
+    private final Deque<List<RPendingDestructor>> destructorScopes = new ArrayDeque<>();
     private final CopyFunctionGenerator copy = new CopyFunctionGenerator(this);
 
     private int registerCounter = 1;
@@ -282,6 +284,34 @@ public final class CompilationContext {
         return ns.isEmpty() ? name : ns + "$$" + name;
     }
 
+    public void pushDestructorScope() {
+        destructorScopes.push(new ArrayList<>());
+    }
+
+    public void registerDestructor(String addrReg, RFunction destructor) {
+        if (destructorScopes.isEmpty()) {
+            return;
+        }
+
+        destructorScopes.peek().add(new RPendingDestructor(addrReg, destructor));
+    }
+
+    public void unregisterDestructor(String addrReg) {
+        for (List<RPendingDestructor> scope : destructorScopes) {
+            scope.removeIf(d -> d.addrReg().equals(addrReg));
+        }
+    }
+
+    public void popDestructorScope() {
+        List<RPendingDestructor> dtors = destructorScopes.pop();
+
+        for (int i = dtors.size() - 1; i >= 0; i--) {
+            RPendingDestructor d = dtors.get(i);
+
+            emit("call void @" + d.destructor().llvmName() + "(ptr " + d.addrReg() + ")");
+        }
+    }
+
     public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs) throws IOException {
         var main = getFunction("main", List.of());
 
@@ -382,10 +412,7 @@ public final class CompilationContext {
     private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
 
-        final String extraClangArgs =
-                (clangArgs == null || clangArgs.isEmpty())
-                        ? ""
-                        : " " + String.join(" ", clangArgs);
+        final String extraClangArgs = (clangArgs == null || clangArgs.isEmpty()) ? "" : " " + String.join(" ", clangArgs);
 
         String tempBase = executableFile;
         int lastDot = tempBase.lastIndexOf('.');
@@ -401,13 +428,7 @@ public final class CompilationContext {
             String src = p.toString();
             String bc = src + ".bc";
 
-            cmd.append("clang++ -O3 -march=native -mtune=native -flto -c -emit-llvm -std=c++17")
-                    .append(extraClangArgs)
-                    .append(" ")
-                    .append(quote.apply(src))
-                    .append(" -o ")
-                    .append(quote.apply(bc))
-                    .append(and);
+            cmd.append("clang++ -O3 -march=native -mtune=native -flto -c -emit-llvm -std=c++17").append(extraClangArgs).append(" ").append(quote.apply(src)).append(" -o ").append(quote.apply(bc)).append(and);
 
             bcFiles.add(bc);
         }
@@ -415,10 +436,7 @@ public final class CompilationContext {
         String linked = tempBase + ".linked.bc";
 
         if (!bcFiles.isEmpty()) {
-            cmd.append("llvm-link -o ")
-                    .append(quote.apply(linked))
-                    .append(" ")
-                    .append(quote.apply(llvmFile));
+            cmd.append("llvm-link -o ").append(quote.apply(linked)).append(" ").append(quote.apply(llvmFile));
 
             for (String bc : bcFiles) {
                 cmd.append(" ").append(quote.apply(bc));
@@ -431,32 +449,9 @@ public final class CompilationContext {
 
         String optimized = tempBase + ".opt.bc";
 
-        cmd.append("opt -passes=\"default<O3>\" ")
-                .append(quote.apply(linked))
-                .append(" -o ")
-                .append(quote.apply(optimized))
-                .append(and);
+        cmd.append("opt -passes=\"default<O3>\" ").append(quote.apply(linked)).append(" -o ").append(quote.apply(optimized)).append(and);
 
-        cmd.append("clang++ ")
-                .append("-O3 ")
-                .append("-march=native ")
-                .append("-mtune=native ")
-                .append("-funroll-loops ")
-                .append("-fomit-frame-pointer ")
-                .append("-flto ")
-                .append("-fuse-ld=lld ")
-                .append("-fno-exceptions ")
-                .append("-fno-rtti ")
-                .append("-lws2_32 ")
-                .append("-lgdi32 ")
-                .append("-luser32 ")
-                .append("-lgdiplus ")
-                .append(extraClangArgs)
-                .append(" ")
-                .append(quote.apply(optimized))
-                .append(" -o ")
-                .append(quote.apply(executableFile))
-                .append(and);
+        cmd.append("clang++ ").append("-O3 ").append("-march=native ").append("-mtune=native ").append("-funroll-loops ").append("-fomit-frame-pointer ").append("-flto ").append("-fuse-ld=lld ").append("-fno-exceptions ").append("-fno-rtti ").append("-lws2_32 ").append("-lgdi32 ").append("-luser32 ").append("-lgdiplus ").append(extraClangArgs).append(" ").append(quote.apply(optimized)).append(" -o ").append(quote.apply(executableFile)).append(and);
 
         cmd.append(deleteCmd).append(quote.apply(optimized)).append(" ");
 

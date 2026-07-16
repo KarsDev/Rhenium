@@ -7,7 +7,7 @@ public final class ErrorCodes {
     public static final int VARIABLE_REASSIGNMENT_TYPE_ERROR = 3;
     public static final int VARIABLE_NOT_MUTABLE_ERROR = 4;
     public static final int FUNCTION_NOT_FOUND_ERROR = 5;
-    public static final int VALUE_MUST_BE_USED_ERROR = 6;
+    public static final int DELETE_TYPE_ERROR = 6;
     public static final int MODULE_NOT_FOUND_ERROR = 7;
     public static final int FUNCTION_ALREADY_EXISTS_ERROR = 8;
     public static final int MODULE_NOT_LOADED_FOUND_ERROR = 9;
@@ -51,4 +51,6 @@ public final class ErrorCodes {
     public static final int NOT_CONSTANT_ERROR = 47;
     public static final int DIVISION_BY_ZERO_ERROR = 48;
     public static final int INVALID_COPY_TYPE_ERROR = 49;
+    public static final int DESTRUCTOR_OUT_OF_SCOPE_ERROR = 50;
+
 }

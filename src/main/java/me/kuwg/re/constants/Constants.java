@@ -21,7 +21,7 @@ public abstract class Constants {
                 "byte", "short", "int", "long",
                 "float", "double",
                 "bool", "char", "str", "ptr", "arr",
-                "struct", "init", "impl", "self", "this", "inherits", "enum", "trait",
+                "struct", "init", "impl", "self", "this", "inherits", "enum", "trait", "delete",
                 "try", "catch", "raise",
                 "is",
                 "async",

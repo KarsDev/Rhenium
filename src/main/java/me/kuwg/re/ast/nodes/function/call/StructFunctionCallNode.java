@@ -10,6 +10,7 @@ import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
@@ -121,6 +122,9 @@ public class StructFunctionCallNode extends VariableReference {
             cctx.emit(result + " = " + call);
             return result;
         }
+
+        setType(BuiltinTypes.NONE.getType());
+        if (name.equals("delete")) return "";
 
         StringBuilder sig = new StringBuilder("(");
         for (int i = 0; i < argTypes.size(); i++) {

@@ -59,7 +59,7 @@ public class CopyNode extends ValueNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("CopyNode:").append(NEWLINE);
+        sb.append(indent).append("Copy:").append(NEWLINE);
         value.write(sb, indent + TAB);
     }
 

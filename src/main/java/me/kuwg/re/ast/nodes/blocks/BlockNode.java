@@ -14,6 +14,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.block.RBlockSyntaxError;
 import me.kuwg.re.error.errors.function.RFunctionReturnTypeMismatchError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.writer.Writeable;
 
@@ -46,6 +47,8 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
         boolean terminated = false;
 
+        cctx.pushDestructorScope();
+
         for (final ASTNode node : nodes) {
             if (terminated) {
                 new RBlockSyntaxError("Block gets interrupted but continues", fileName, node.getLine()).raise();
@@ -58,6 +61,8 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
                 terminated = true;
             }
         }
+
+        cctx.popDestructorScope();
 
         compiled = true;
     }
@@ -121,7 +126,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
         if (!hasReturn && !(returnType instanceof NoneBuiltinType) && mustReturn) {
             new RFunctionReturnTypeMismatchError(
                     returnType,
-                    NoneBuiltinType.INSTANCE,
+                    BuiltinTypes.NONE.getType(),
                     fileName, nodes.isEmpty() ? -1 : nodes.get(nodes.size() - 1).getLine()
             ).raise();
         }
