@@ -59,21 +59,18 @@ Native C++ bindings
 */
 
 /*
- Using _Builtin does not actually load any function in the Rhenium compiler,
- and this means that you can't call them in normal ways,
- but you can use them in LLVM declarations (Such as _IR or _Builtin func)
- */
-_NativeCPP("native.cpp") _Builtin
+ Loads the functions and the resource C++ file.
+ This is usually only used by the compiler native interface.
 
-/*
- Loads the functions and the resource C++ file
+ Using _Builtin doesn't actually define any function,
+ making them not usable without the LLVM implementation
 */
-_NativeCPP("math.cpp") int add(a: int, b: int) and int sub(a: int, b: int)
+_NativeCPP("math") int add(a: int, b: int) and int sub(a: int, b: int)
 
 // If the C++ file is not in the resources it can be loaded with the extern keyword
-extern("math.cpp") _Builtin
+extern("math") _Builtin
 // or
-extern("math.cpp") int add(a: int, b: int)
+extern("math") int add(a: int, b: int)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
@@ -85,7 +82,8 @@ Supported type categories:
 - Struct types
 - Pointer types
 - Array types
-- Range types
+- Lambda types
+- Range types (Variables can't have range type)
 
 Note:
     You don't need to specify the type when declaring a variable
@@ -95,7 +93,6 @@ a: int = 10
 b: bool = true
 c: char = 'x'
 s: str = "hello"
-n: none = none
 
 /*
 Pointer types
@@ -103,7 +100,7 @@ Syntax:
     ptr -> <type>
 */
 
-pa: ptr -> int = ptr(a)
+pointer_to_a: ptr -> int = ptr(a)
 
 /*
 Array types
@@ -117,17 +114,17 @@ arr_int: arr -> int = [1, 2, 3]
 Type queries
 */
 
-// Get the type of the variable a
-ta = typeof(a)
+// Get the string type reppresentation of the variable a
+a_type: str = typeof(a)
 
-// Get the LLVM representation of the type of the variable a
-tb = typeofLLVM(a)
+// Get the LLVM string representation of the type of the variable a
+a_llvm_type: str = typeofLLVM(a)
 
 /*
 Type checking
 */
 
-// Checks if a is an instance of an integer
+// Checks if a is an integer
 is_int = a is int
 
 /*
@@ -138,7 +135,7 @@ is_int = a is int
 Assignment forms:
     x = value
     x: type = value
-    x: mut type = value
+    x: mut [type] = value
 
 Note:
     Variables are IMMUTABLE by default
@@ -147,6 +144,8 @@ Note:
 // Deduced type: int
 x = 5
 y: int = 10
+
+// Here the compiler deduces the 'int' type and sets 'z' as mutable
 z: mut = 15
 
 /*
@@ -225,7 +224,7 @@ log("hello")
 Inline functions
 */
 
-// inlines the functions after compilation
+// inlines the functions after compilation, purely a perforemance choice
 func write(l: str) inline:
   println(l)
 
@@ -251,7 +250,7 @@ While loops
 */
 
 while (a < 10):
-    a = a + 1
+    a += 1
     if (a == 5):
         continue
     if (a == 8):
@@ -270,9 +269,9 @@ Range forms
 range(<start>[, <end>[, <step>]])
 */
 
-r: mut = range(5)
-r = range(0, 5)
-r = range(0, 10, 2)
+r: mut = range(5) // from 0 to 5
+r = range(0, 5) // from 0 to 5
+r = range(0, 10, 2) // from 0 to 10 by incrementing by 2 every time (0, 2, 4, 6, 8, 10)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
@@ -312,13 +311,20 @@ match (tw):
 <=------------------------=>|<=>|<=-----------------------=>
 */
 
-nums = [1, 2, 3]
+nums = [1, 2, 3] // creates the static array
 
-first = nums[0]
+first = nums[0] // arrays start at index 0
 
-nums[1] = 42
+nums[1] = 42 // sets the nums array index 1 ( nums[1] = 2 ) to 42
 
-size = len(nums)
+size = len(nums) // returns 3
+
+
+// Arrays can also be dynamic, their memory must be handled using the 'delete' keyword
+
+dynarr = init arr -> int(5) // creates an int array of size 5
+
+delete dynarr
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
@@ -342,7 +348,7 @@ _Builtin struct NotInit:
 Struct initialization
 */
 
-v = init Vec2(3, 4)
+v = init Vec2(3, 4) // Uses the default constructor, sets x=3 and y=4
 
 /*
 Field access
@@ -370,8 +376,8 @@ impl Vec2:
         return this.x * this.x + this.y * this.y
 
     func scale(f: this):
-        this.x = self.x * f
-        this.y = this.y * f
+        this.x =* f
+        this.y =* f
 
 /*
 Method calls
@@ -416,9 +422,9 @@ Dereference assignment
 <=------------------------=>|<=>|<=-----------------------=>
 */
 
-casted = cast<int>(a)
+casted = cast<int>(a) // casts 'a' to an integer
 
-sz = sizeof(a)
+sz = sizeof(a) // gets the size of a, it's the equivalent of sizeof(int)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
@@ -430,8 +436,8 @@ sz = sizeof(a)
 Raise exceptions
 */
 
-raise "something went wrong"
-raise none
+raise "something went wrong" // prints the error
+raise none // doesn't print anything
 
 /*
 Try / Catch
@@ -492,8 +498,10 @@ b = init Box<int>(12)
 <=------------------------=>|<=>|<=-----------------------=>
 */
 
-// define lambda called square
+// define lambda called square that takes a parameter called x with type int and multiplies it by itself
 square = lambda(x: int) = x*x
+
+// the lambda will be compiled as a function, so it's called as one
 
 // call square lambda
 v = square(2)
@@ -514,7 +522,7 @@ namespace Alpha:
 // calls function beta in namespace Alpha
 Alpha::beta()
 
-// gets the global variable I
+// gets the global variable I in namespace Alpha
 Alpha::I
 
 /*
@@ -557,6 +565,7 @@ enum Cars:
 <=------------------------=>|<=>|<=-----------------------=>
 */
 
+// defines trait Vehicle that requires a function called vroom
 trait Vehicle:
   func wroom()
 
@@ -633,13 +642,8 @@ impl CharBuf:
         return strFromChars(this.inner, this.length)
 
 buf = init CharBuf("Hello World")
-
-println("before delete: " + buf.getInner())
-
 delete buf
-
-// Safe after deletion (the object invalidates itself)
-println("after delete: '" + buf.getInner() + "'")
+buf.getInner() // Safe after deletion (the object invalidates itself)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
