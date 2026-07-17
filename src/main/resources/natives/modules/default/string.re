@@ -411,7 +411,7 @@ func strSplit(s: str, split: str) -> StrDynArr:
 
     values = init arr -> str(count)
 
-    start : mut= 0
+    start: mut = 0
     outIndex: mut = 0
 
     pos = strIndexOf(s, split)
@@ -528,13 +528,13 @@ func strReplace(s: str, search: str, replace: str) -> str:
     pos: mut = strIndexOf(s, search, start)
 
     while (pos != -1):
-        result = strConcat(result, strSubRange(s, start, pos))
-        result = strConcat(result, replace)
+        result += strSubRange(s, start, pos)
+        result += replace
 
         start = pos + len(search)
         pos = strIndexOf(s, search, start)
 
-    result = strConcat(result, strSub(s, start))
+    result += strSub(s, start)
     return result
 
 _Builtin func strFromChars(chars: ptr -> char, length: int) -> str = """

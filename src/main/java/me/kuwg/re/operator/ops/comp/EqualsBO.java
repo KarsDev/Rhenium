@@ -33,7 +33,6 @@ public final class EqualsBO extends BinaryOperator {
         }
 
         if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
-            c.cctx().include(-1, null, "string", null);
 
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(resReg + " = call i1 @strEquals(i8* " + c.leftReg() + ", i8* " + c.rightReg() + ")");

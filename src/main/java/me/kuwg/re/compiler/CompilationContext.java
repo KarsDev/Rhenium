@@ -449,9 +449,28 @@ public final class CompilationContext {
 
         String optimized = tempBase + ".opt.bc";
 
-        cmd.append("opt -passes=\"default<O3>\" ").append(quote.apply(linked)).append(" -o ").append(quote.apply(optimized)).append(and);
+        cmd.append("opt -passes=\"default<O3>,globaldce\" ").append(quote.apply(linked)).append(" -o ").append(quote.apply(optimized)).append(and);
 
-        cmd.append("clang++ ").append("-O3 ").append("-march=native ").append("-mtune=native ").append("-funroll-loops ").append("-fomit-frame-pointer ").append("-flto ").append("-fuse-ld=lld ").append("-fno-exceptions ").append("-fno-rtti ").append("-lws2_32 ").append("-lgdi32 ").append("-luser32 ").append("-lgdiplus ").append(extraClangArgs).append(" ").append(quote.apply(optimized)).append(" -o ").append(quote.apply(executableFile)).append(and);
+        cmd.append("clang++ ")
+                .append("-O3 ")
+                .append("-march=native ")
+                .append("-mtune=native ")
+                .append("-funroll-loops ")
+                .append("-fomit-frame-pointer ")
+                .append("-flto=full ")
+                .append("-fuse-ld=lld ")
+                .append("-fno-exceptions ")
+                .append("-fno-rtti ")
+                .append("-lws2_32 ")
+                .append("-lgdi32 ")
+                .append("-luser32 ")
+                .append("-lgdiplus ")
+                .append(extraClangArgs)
+                .append(" ")
+                .append(quote.apply(optimized))
+                .append(" -o ")
+                .append(quote.apply(executableFile))
+                .append(and);
 
         cmd.append(deleteCmd).append(quote.apply(optimized)).append(" ");
 

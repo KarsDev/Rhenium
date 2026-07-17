@@ -94,7 +94,6 @@ public final class AddBO extends BinaryOperator {
     }
 
     private String compileStringOperation(BinaryOperatorContext c) {
-        c.cctx().include(-1, null, "string", null);
 
         String left = c.leftReg();
         String right = c.rightReg();

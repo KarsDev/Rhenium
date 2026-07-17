@@ -76,8 +76,6 @@ public class RaiseNode extends ASTNode implements InterruptNode {
                                 String strReg = new StringNode(fileName, line, message).compileAndGet(cctx);
                                 String msgReg = cctx.nextRegister();
 
-                                cctx.include(-1, null, "string", null);
-
                                 cctx.emit(
                                         msgReg + " = call i8* @strConcat(i8* " +
                                                 strReg +

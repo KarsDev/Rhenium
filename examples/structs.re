@@ -1,6 +1,3 @@
-using string
-
-
 struct Person:
     name: str
     age: int

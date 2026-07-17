@@ -2,7 +2,6 @@ using File
 using FileWriter
 using FileReader
 
-
 func main() -> int:
     input = init File("file_input.txt") 
 
