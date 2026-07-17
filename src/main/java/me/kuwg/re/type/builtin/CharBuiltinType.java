@@ -27,4 +27,9 @@ public final class CharBuiltinType extends BuiltinType {
     public String getLLVMName() {
         return "i8";
     }
+
+    @Override
+    public String getZeroValue() {
+        return "0";
+    }
 }

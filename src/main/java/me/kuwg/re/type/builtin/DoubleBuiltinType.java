@@ -27,4 +27,9 @@ public final class DoubleBuiltinType extends BuiltinType {
     public String getLLVMName() {
         return "double";
     }
+
+    @Override
+    public String getZeroValue() {
+        return "0.0";
+    }
 }

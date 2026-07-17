@@ -40,6 +40,11 @@ public record RangeType(ValueNode start, ValueNode end, ValueNode step) implemen
     }
 
     @Override
+    public String getZeroValue() {
+        throw new RInternalError();
+    }
+
+    @Override
     public boolean equals(final TypeRef o) {
         if (!(o instanceof final RangeType rangeType)) return false;
 

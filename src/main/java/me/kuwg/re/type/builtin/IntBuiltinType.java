@@ -27,4 +27,9 @@ public final class IntBuiltinType extends BuiltinType {
     public String getLLVMName() {
         return "i32";
     }
+
+    @Override
+    public String getZeroValue() {
+        return "0";
+    }
 }

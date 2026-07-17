@@ -70,6 +70,11 @@ public record GenStructType(List<TypeParameter> genericTypes, String name, List<
     }
 
     @Override
+    public String getZeroValue() {
+        return "zeroinitializer";
+    }
+
+    @Override
     public boolean equals(final TypeRef o) {
         if (!(o instanceof final GenStructType type)) return false;
 

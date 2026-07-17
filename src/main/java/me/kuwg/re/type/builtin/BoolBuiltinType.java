@@ -24,6 +24,11 @@ public final class BoolBuiltinType extends BuiltinType {
     }
 
     @Override
+    public String getZeroValue() {
+        return "false";
+    }
+
+    @Override
     public String getLLVMName() {
         return "i1";
     }

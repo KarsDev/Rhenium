@@ -44,6 +44,11 @@ public final class NullType implements TypeRef {
     }
 
     @Override
+    public String getZeroValue() {
+        return "null";
+    }
+
+    @Override
     public int hashCode() {
         return 0;
     }

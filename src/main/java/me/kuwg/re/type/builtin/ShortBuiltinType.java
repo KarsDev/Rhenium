@@ -27,4 +27,9 @@ public final class ShortBuiltinType extends BuiltinType {
     public String getLLVMName() {
         return "i16";
     }
+
+    @Override
+    public String getZeroValue() {
+        return "0";
+    }
 }

@@ -39,6 +39,11 @@ public record TraitType(String name, Map<String, TraitFunction> functions) imple
     }
 
     @Override
+    public String getZeroValue() {
+        throw new RInternalError();
+    }
+
+    @Override
     public boolean equals(final TypeRef o) {
         throw new RInternalError();
     }

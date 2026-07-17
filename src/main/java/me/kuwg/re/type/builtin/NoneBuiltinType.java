@@ -1,5 +1,6 @@
 package me.kuwg.re.type.builtin;
 
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 
 public final class NoneBuiltinType extends BuiltinType {
@@ -26,5 +27,10 @@ public final class NoneBuiltinType extends BuiltinType {
     @Override
     public String getLLVMName() {
         return "void";
+    }
+
+    @Override
+    public String getZeroValue() {
+        throw new RInternalError();
     }
 }

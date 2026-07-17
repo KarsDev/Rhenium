@@ -63,6 +63,11 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
     }
 
     @Override
+    public String getZeroValue() {
+        return "zeroinitializer";
+    }
+
+    @Override
     public boolean equals(final TypeRef other) {
         return equals((Object) other);
     }

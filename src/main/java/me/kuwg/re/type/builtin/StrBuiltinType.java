@@ -28,4 +28,9 @@ public final class StrBuiltinType extends BuiltinType implements IterableTypeRef
     public String getLLVMName() {
         return "i8*";
     }
+
+    @Override
+    public String getZeroValue() {
+        return "null";
+    }
 }

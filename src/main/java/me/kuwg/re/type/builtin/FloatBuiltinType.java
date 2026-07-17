@@ -27,4 +27,9 @@ public final class FloatBuiltinType extends BuiltinType {
     public String getLLVMName() {
         return "float";
     }
+
+    @Override
+    public String getZeroValue() {
+        return "0.0";
+    }
 }

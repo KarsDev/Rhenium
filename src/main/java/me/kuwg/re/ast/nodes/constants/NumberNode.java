@@ -22,16 +22,17 @@ public class NumberNode extends ConstantNode {
         }
 
         char last = literal.charAt(literal.length() - 1);
-        if (last == 'l' || last == 's' || last == 'b') {
-            literal = literal.substring(0, literal.length() - 1);
-        }
+
+        if (last == 'b') return BuiltinTypes.BYTE.getType();
+        if (last == 's') return BuiltinTypes.SHORT.getType();
+        if (last == 'l') return BuiltinTypes.LONG.getType();
 
         long value = parseLong(literal);
+
         if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
             return BuiltinTypes.INT.getType();
-        } else {
-            return BuiltinTypes.LONG.getType();
         }
+        return BuiltinTypes.LONG.getType();
     }
 
     private static Number parseNumber(String literal) {

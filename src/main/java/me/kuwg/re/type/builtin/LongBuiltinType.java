@@ -27,4 +27,9 @@ public final class LongBuiltinType extends BuiltinType {
     public String getLLVMName() {
         return "i64";
     }
+
+    @Override
+    public String getZeroValue() {
+        return "0";
+    }
 }

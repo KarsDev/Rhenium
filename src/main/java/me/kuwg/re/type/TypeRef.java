@@ -19,6 +19,8 @@ public interface TypeRef {
 
     boolean equals(TypeRef other);
 
+    String getZeroValue();
+
     default long getAlignment() {
         return getSize();
     }

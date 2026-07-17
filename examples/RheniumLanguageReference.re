@@ -647,6 +647,26 @@ buf.getInner() // Safe after deletion (the object invalidates itself)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
+  ZERO
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+/*
+ The 'zero' keyword is used for initializing a variable without explicitly passing the value.
+ The format is zero <type>
+ Using the same variable won't cause any error.
+*/
+
+i = zero int
+
+j: CharBuf = zero // type is not required in explicit variable declarations
+
+// 'zero' can also be used for function returns as it's considered a value, but the type is explicitly required
+func test() -> int:
+  return zero int // returns 0
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT
 <=------------------------=>|<=>|<=-----------------------=>
 */

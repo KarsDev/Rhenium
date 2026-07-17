@@ -2,6 +2,7 @@ package me.kuwg.re.ast.nodes.variable;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
 import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
+import me.kuwg.re.ast.nodes.zero.ZeroInitializerNode;
 import me.kuwg.re.ast.types.value.PointerValueNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
@@ -51,6 +52,10 @@ public class VariableDeclarationNode extends ValueNode {
 
         if (variable instanceof StructFieldAccessNode && oldVar == null) {
             return new RVariableNotFoundError(variable.getCompleteName(), fileName, line).raise();
+        }
+
+        if (value instanceof ZeroInitializerNode zero && zero.getType() == null && type != null) {
+            zero.setType(type);
         }
 
         String valueReg = value.compileAndGet(cctx);
@@ -201,8 +206,6 @@ public class VariableDeclarationNode extends ValueNode {
         RDefaultStruct struct = cctx.getStruct(s.getName());
         if (!struct.inherited().contains(t.name()))
             new RVariableTypeError(type.getName(), traitType.getName(), fileName, line).raise();
-
-
     }
 
     @Override

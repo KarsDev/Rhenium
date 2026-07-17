@@ -69,6 +69,11 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
     }
 
     @Override
+    public String getZeroValue() {
+        return "zeroinitializer";
+    }
+
+    @Override
     public @NotNull String toString() {
         return "struct " + name;
     }

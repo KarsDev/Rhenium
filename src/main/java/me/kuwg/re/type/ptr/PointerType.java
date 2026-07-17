@@ -36,6 +36,11 @@ public record PointerType(TypeRef inner) implements TypeRef {
     }
 
     @Override
+    public String getZeroValue() {
+        return "null";
+    }
+
+    @Override
     public boolean equals(final TypeRef o) {
         if (!(o instanceof final PointerType that)) return false;
 

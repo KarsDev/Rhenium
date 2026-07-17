@@ -66,6 +66,14 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
     }
 
     @Override
+    public String getZeroValue() {
+        if (isDynamic()) {
+            return "null";
+        }
+        return "zeroinitializer";
+    }
+
+    @Override
     public int hashCode() {
         long result = size;
         result = 31 * result + Objects.hashCode(inner);

@@ -55,6 +55,11 @@ public final class LambdaType implements TypeRef {
     }
 
     @Override
+    public String getZeroValue() {
+        return "null";
+    }
+
+    @Override
     public String getMangledName() {
         return "L";
     }

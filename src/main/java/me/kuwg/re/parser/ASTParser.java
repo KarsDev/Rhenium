@@ -53,6 +53,7 @@ import me.kuwg.re.ast.nodes.type.TypeofNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
 import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
+import me.kuwg.re.ast.nodes.zero.ZeroInitializerNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.function.RDefFunction;
 import me.kuwg.re.compiler.function.RFunction;
@@ -403,6 +404,7 @@ public final class ASTParser {
             case "trait" -> parseTraitKeyword();
             case "copy" -> parseCopyKeyword();
             case "delete" -> parseDeleteKeyword();
+            case "zero" -> parseZeroKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, fileName, line()).raise();
         };
     }
@@ -1850,6 +1852,12 @@ public final class ASTParser {
         }
 
         return new DeleteNode(fileName, line, ref);
+    }
+
+    private @SubFunc ZeroInitializerNode parseZeroKeyword() {
+        int line = line();
+
+        return new ZeroInitializerNode(fileName, line, parseOptionalType().orElse(null));
     }
 
     /*

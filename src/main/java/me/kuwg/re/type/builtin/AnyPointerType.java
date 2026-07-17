@@ -29,6 +29,11 @@ public final class AnyPointerType extends BuiltinType {
     }
 
     @Override
+    public String getZeroValue() {
+        return "null";
+    }
+
+    @Override
     public boolean equals(final TypeRef other) {
         return other instanceof AnyPointerType;
     }

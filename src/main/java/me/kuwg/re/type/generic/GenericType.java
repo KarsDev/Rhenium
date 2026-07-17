@@ -35,6 +35,11 @@ public record GenericType(String name) implements TypeRef {
     }
 
     @Override
+    public String getZeroValue() {
+        throw new RInternalError();
+    }
+
+    @Override
     public boolean equals(TypeRef other) {
         return other instanceof GenericType gen
                 && name.equals(gen.name());
