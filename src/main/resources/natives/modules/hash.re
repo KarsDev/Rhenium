@@ -10,10 +10,5 @@ namespace Hash:
 
     // Returns the equality of two objects hash code
     generic func eq<T>(a: T, b: T) -> bool:
-        aData = ptr(a)
-        aLength = sizeof(a)
-        bData = ptr(b)
-        bLength = sizeof(b)
-
-        return HashCodeEquals(aData, aLength, bData, bLength)
+        return hash(a) == hash(b)
      

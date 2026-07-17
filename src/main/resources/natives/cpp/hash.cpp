@@ -12,9 +12,4 @@ extern "C" {
 
         return static_cast<int>(hash);
     }
-
-    bool HashCodeEquals(void* aData, long aSize, void* bData, long bSize) {
-        return HashCode(aData, aSize) == HashCode(bData, bSize);
-    }
-    
 }
