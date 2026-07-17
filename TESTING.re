@@ -5,7 +5,6 @@ using hash
 using list
 using map
 using math
-using memory
 using network
 using number
 using option
