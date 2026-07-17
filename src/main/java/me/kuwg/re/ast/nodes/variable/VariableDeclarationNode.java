@@ -118,7 +118,7 @@ public class VariableDeclarationNode extends ValueNode {
             }
         }
 
-        String addrReg = "%" + variable.getSimpleName() + RVariable.makeUnique(variable.getSimpleName());
+        String addrReg = "%" + RVariable.makeUnique(variable.getSimpleName());
 
 
         if (varType instanceof ArrayType && value instanceof VariableReference) {
