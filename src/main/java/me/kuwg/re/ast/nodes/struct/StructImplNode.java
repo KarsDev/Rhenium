@@ -166,7 +166,7 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
             load(cctx);
         }
 
-        cctx.emit("; Struct impl");
+        cctx.declare("; Struct impl");
 
         RDefaultStruct cctxStruct = cctx.getStruct(struct.name());
         if (cctxStruct == null) {

@@ -219,8 +219,6 @@ public final class CompilationContext {
     }
 
     public void include(int line, String sourceFile, String name, String pkg) {
-        String str = name + (pkg == null ? "" : " in " + pkg);
-        declare(" ; USING MODULE " + str);
         loader.loadModule(fileName, line, typeMap, sourceFile, name, pkg, this);
     }
 
