@@ -117,9 +117,6 @@ Type queries
 // Get the string type reppresentation of the variable a
 a_type: str = typeof(a)
 
-// Get the LLVM string representation of the type of the variable a
-a_llvm_type: str = typeofLLVM(a)
-
 /*
 Type checking
 */

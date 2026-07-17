@@ -10,12 +10,10 @@ import java.util.Map;
 
 public class TypeofNode extends ValueNode {
     private final ValueNode valueNode;
-    private final boolean llvm;
 
-    public TypeofNode(final String fileName, final int line, final ValueNode valueNode, final boolean llvm) {
+    public TypeofNode(final String fileName, final int line, final ValueNode valueNode) {
         super(fileName, line, BuiltinTypes.STR.getType());
         this.valueNode = valueNode;
-        this.llvm = llvm;
     }
 
     @Override
@@ -30,7 +28,7 @@ public class TypeofNode extends ValueNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append(llvm ? "Typeof(LLVM): " : "Typeof: ").append(NEWLINE);
+        sb.append(indent).append("Typeof: ").append(NEWLINE);
         valueNode.write(sb, indent + TAB);
     }
 
@@ -38,12 +36,12 @@ public class TypeofNode extends ValueNode {
     public String compileAndGet(final CompilationContext cctx) {
         valueNode.compileAndGet(cctx);
 
-        cctx.emit("; Typeof" + (llvm ? " LLVM" : ""));
-        return new StringNode(fileName, line, llvm ? valueNode.getType().getLLVMName() : valueNode.getType().getName()).compileAndGet(cctx);
+        cctx.emit("; Typeof");
+        return new StringNode(fileName, line, valueNode.getType().getName()).compileAndGet(cctx);
     }
 
     @Override
     public TypeofNode clone() {
-        return new TypeofNode(fileName, line, valueNode.clone(), llvm);
+        return new TypeofNode(fileName, line, valueNode.clone());
     }
 }
