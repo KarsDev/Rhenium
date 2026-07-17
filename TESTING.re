@@ -29,6 +29,7 @@ func main() -> int:
     testConnections()
     testLambda()
     testNamespaces()
+    testZero()
 
     println("\nAll test passed successfully")
 
@@ -155,8 +156,8 @@ func testNativeFunctions():
         raise "Error with sizeof"
     if (typeof(i) != "int"):
         raise "Error with typeof"
-    if (typeofLLVM(i) != "i32"):
-        raise "Error with typeofLLVM"
+    if (len("abc") != 3):
+        raise "Error with len"
 
     println("Native functions testing passed successfully")
 
@@ -236,3 +237,9 @@ func testNamespaces():
         raise "Error with namespaces"
     
     println("Namespaces test passed successfully")
+
+func testZero():
+    a = 0
+    b = zero int
+    if (a != b):
+        raise "Error with zero"

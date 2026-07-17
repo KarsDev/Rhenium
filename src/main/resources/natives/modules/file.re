@@ -34,5 +34,5 @@ impl File:
         return result
 
     // Deletes the file and returns true if it has been deleted successfully
-    func delete() -> bool:
+    func deleteFile() -> bool:
         return BFN_00(5, (@self).name) // 5 -> delete file
