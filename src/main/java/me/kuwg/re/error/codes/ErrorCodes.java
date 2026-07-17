@@ -52,5 +52,5 @@ public final class ErrorCodes {
     public static final int DIVISION_BY_ZERO_ERROR = 48;
     public static final int INVALID_COPY_TYPE_ERROR = 49;
     public static final int DESTRUCTOR_OUT_OF_SCOPE_ERROR = 50;
-
+    public static final int CONSTRUCTOR_OUT_OF_SCOPE_ERROR = 51;
 }

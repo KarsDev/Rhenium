@@ -5,7 +5,7 @@ import me.kuwg.re.error.manager.RError;
 
 public class RDestructorOutOfScopeError extends RError {
     public RDestructorOutOfScopeError(final String fileName, final int line) {
-        super("Destructor out of scope", fileName, line);
+        super("Destructor declaration out of scope", fileName, line);
     }
 
     @Override

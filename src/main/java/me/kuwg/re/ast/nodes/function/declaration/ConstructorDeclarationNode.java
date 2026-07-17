@@ -3,7 +3,7 @@ package me.kuwg.re.ast.nodes.function.declaration;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.parser.RParserError;
+import me.kuwg.re.error.errors.constructor.RConstructorOutOfScopeError;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.List;
@@ -28,12 +28,12 @@ public class ConstructorDeclarationNode extends ASTNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        new RParserError("Constructor declaration out of its scope", fileName, line).raise();
+        new RConstructorOutOfScopeError(fileName, line).raise();
     }
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        new RParserError("Constructor declaration out of its scope", fileName, line).raise();
+        new RConstructorOutOfScopeError(fileName, line).raise();
     }
 
     @Override
