@@ -276,6 +276,8 @@ public final class CastManager {
             PointerType ptrToElem = new PointerType(elemType);
             cctx.emit(result + " = bitcast i8* " + valReg + " to " + ptrToElem.getLLVMName());
             return result;
+        } else if (to instanceof StrBuiltinType) {
+            return valReg;
         } else if (!(to instanceof PointerType)) {
             if (to instanceof AnyPointerType) return valReg;
             return new RIncompatibleCastError(BuiltinTypes.ANYPTR.getType(), to, fileName, line).raise();

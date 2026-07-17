@@ -539,14 +539,14 @@ func strReplace(s: str, search: str, replace: str) -> str:
 
 _Builtin func strFromChars(chars: ptr -> char, length: int) -> str = """
 entry:
-    %size = add i32 %length, 1
-    %size64 = zext i32 %size to i64
-
-    %buf = call i8* @malloc(i64 %size64)
-    call i8* @memcpy(i8* %buf, i8* %chars, i32 %length)
-
-    %end = getelementptr i8, i8* %buf, i32 %length
-    store i8 0, i8* %end
-
-    ret i8* %buf
+    %size = add i32 %length, 1                          
+    %size64 = zext i32 %size to i64                     ; size: long = length + 1
+                                                        
+    %buf = call i8* @malloc(i64 %size64)                ; buf = Memory::malloc(size)
+    call i8* @memcpy(i8* %buf, i8* %chars, i32 %length) ; Memory::memcpy(buf, chars, length)
+                                                        
+    %end = getelementptr i8, i8* %buf, i32 %length      ; bufCast = cast<ptr -> char>(buf)
+    store i8 0, i8* %end                                ; bufCast[length] = '\0'
+                                                        
+    ret i8* %buf                                        ; return cast<str>(buf)
 """
