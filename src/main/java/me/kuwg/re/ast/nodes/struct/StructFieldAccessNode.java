@@ -39,7 +39,7 @@ public class StructFieldAccessNode extends VariableReference {
         }
 
         cctx.emit("; Struct field access");
-        TypeRef structType = cctx.resolveConcrete(structVar.type());
+        TypeRef structType = cctx.resolveConcrete(structVar.type(), line);
         if (!(structType instanceof StructType st)) {
             return new RVariableTypeError("struct", structType.getName(), fileName, line).raise();
         }
@@ -64,6 +64,8 @@ public class StructFieldAccessNode extends VariableReference {
         if (index == -1) {
             return new RStructAccessError("Struct '" + st.name() + "' has no field '" + fieldName + "'", fileName, line).raise();
         }
+
+        fieldType = evalType(fieldType, cctx, fileName, line);
 
         setType(fieldType);
 
@@ -157,7 +159,7 @@ public class StructFieldAccessNode extends VariableReference {
 
         String loaded = cctx.nextRegister();
 
-        TypeRef concrete = cctx.resolveConcrete(fieldType);
+        TypeRef concrete = cctx.resolveConcrete(fieldType, line);
         String ftln = concrete.getLLVMName();
 
         cctx.emit(loaded + " = load " + ftln + ", " + toPtr(ftln) + fieldPtr);

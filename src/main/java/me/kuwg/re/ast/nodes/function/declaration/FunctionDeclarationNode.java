@@ -135,7 +135,9 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             final FunctionParameter param = parameters.get(i);
 
             String paramPtr = "%" + param.name() + ".addr";
-            TypeRef pt = types.get(i);
+
+            TypeRef pt = evalType(types.get(i), cctx, fileName, line);
+
             cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
             cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 

@@ -8,6 +8,8 @@ import me.kuwg.re.type.builtin.*;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.StructType;
+import me.kuwg.re.type.union.UnionType;
 
 public final class CastManager {
     public static String executeCast(final String fileName, int line, ValueNode value, TypeRef type, CompilationContext cctx) {
@@ -34,15 +36,25 @@ public final class CastManager {
         if (from instanceof PointerType ptr) return fromPointer(fileName, line, ptr.inner(), valReg, type, cctx);
         if (from instanceof ArrayType arr) return fromArray(fileName, line, arr, valReg, type, cctx);
         if (from instanceof StrBuiltinType) return fromStr(fileName, line, valReg, type, cctx);
+        if (from instanceof UnionType union) return fromUnion(fileName, line, union, valReg, type, cctx);
+        if (from instanceof StructType struct) return fromStruct(fileName, line, struct, valReg, type, cctx);
 
         return new RIncompatibleCastError(from, type, fileName, line).raise();
     }
 
     private static String fromNull(final String fileName, int line, TypeRef to, CompilationContext cctx) {
-        if (!(to instanceof PointerType || to instanceof AnyPointerType))
+        if (!(to instanceof PointerType || to instanceof AnyPointerType || to instanceof StrBuiltinType)) {
             return new RIncompatibleCastError(NullType.INSTANCE, to, fileName, line).raise();
+        }
+
         String result = cctx.nextRegister();
-        cctx.emit(result + " = bitcast ptr null to " + to.getLLVMName());
+
+        if (to instanceof StrBuiltinType) {
+            cctx.emit(result + " = bitcast ptr null to i8*");
+        } else {
+            cctx.emit(result + " = bitcast ptr null to " + to.getLLVMName());
+        }
+
         return result;
     }
 
@@ -315,8 +327,7 @@ public final class CastManager {
             return result;
         }
 
-        if (to instanceof StrBuiltinType &&
-                fromInner instanceof CharBuiltinType) {
+        if (to instanceof StrBuiltinType && fromInner instanceof CharBuiltinType) {
             result = cctx.nextRegister();
             cctx.emit(result + " = bitcast " + fromPtr.getLLVMName() + " " + valReg + " to " + to.getLLVMName());
             return result;
@@ -364,5 +375,51 @@ public final class CastManager {
         }
 
         return new RIncompatibleCastError(BuiltinTypes.STR.getType(), to, fileName, line).raise();
+    }
+
+    private static String fromUnion(final String fileName, final int line, final UnionType from, final String valReg, final TypeRef to, final CompilationContext cctx) {
+        if (!from.contains(to)) {
+            return new RIncompatibleCastError(from, to, fileName, line).raise();
+        }
+
+        String result = cctx.nextRegister();
+        cctx.emit(result + " = bitcast " + from.getLLVMName() + " " + valReg + " to " + to.getLLVMName());
+
+        return result;
+    }
+
+    private static String fromStruct(final String fileName, final int line, final StructType from, final String valReg, final TypeRef to, final CompilationContext cctx) {
+        if (!(to instanceof UnionType union)) {
+            return new RIncompatibleCastError(from, to, fileName, line).raise();
+        }
+
+        int tag = union.variants().indexOf(from);
+        if (tag < 0) {
+            return new RIncompatibleCastError(from, to, fileName, line).raise();
+        }
+
+        String unionPtr = cctx.nextRegister();
+        cctx.emit(unionPtr + " = alloca " + union.getLLVMName());
+
+        // tag field
+        String tagPtr = cctx.nextRegister();
+        cctx.emit(tagPtr + " = getelementptr inbounds " + union.getLLVMName() + ", " + union.getLLVMName() + "* " + unionPtr + ", i32 0, i32 0");
+
+        cctx.emit("store i32 " + tag + ", i32* " + tagPtr);
+
+        // payload field
+        String payloadPtr = cctx.nextRegister();
+        cctx.emit(payloadPtr + " = getelementptr inbounds " + union.getLLVMName() + ", " + union.getLLVMName() + "* " + unionPtr + ", i32 0, i32 1");
+
+        // reinterpret payload as the struct
+        String structPtr = cctx.nextRegister();
+        cctx.emit(structPtr + " = bitcast [" + (union.getSize() - 4) + " x i8]* " + payloadPtr + " to " + from.getLLVMName() + "*");
+
+        cctx.emit("store " + from.getLLVMName() + " " + valReg + ", " + from.getLLVMName() + "* " + structPtr);
+
+        String result = cctx.nextRegister();
+        cctx.emit(result + " = load " + union.getLLVMName() + ", " + union.getLLVMName() + "* " + unionPtr);
+
+        return result;
     }
 }

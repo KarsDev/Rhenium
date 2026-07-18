@@ -12,6 +12,7 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.StructType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -42,27 +43,32 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode, TopLev
 
     @Override
     public void compile(final CompilationContext cctx) {
-        String mangledName = type.getMangledName();
+        final List<TypeRef> resolvedFields = new ArrayList<>(fields.size());
 
-        StringBuilder sb = new StringBuilder("; Struct declaration\n");
-        sb.append("%struct.").append(mangledName).append(" = type { ");
-
-        for (int i = 0; i < fields.size(); i++) {
-            TypeRef fieldType = resolveFieldType(fields.get(i).type(), cctx);
+        for (RStructField field : fields) {
+            TypeRef fieldType = resolveFieldType(field.type(), cctx);
+            fieldType = evalType(fieldType, cctx, fileName, line);
 
             if (fieldType instanceof AppliedGenStructType applied) {
-                throw new IllegalStateException("Unresolved applied generic struct field: " + applied.getName() + " in struct " + name);
+                throw new IllegalStateException(
+                        "Unresolved applied generic struct field: " + applied.getName() + " in struct " + name
+                );
             }
 
-            sb.append(fieldType.getLLVMName());
+            resolvedFields.add(fieldType);
+        }
 
-            if (i + 1 < fields.size()) {
-                sb.append(", ");
-            }
+        final String llvmName = type.getLLVMName();
+
+        StringBuilder sb = new StringBuilder("; Struct declaration\n");
+        sb.append(llvmName).append(" = type { ");
+
+        for (int i = 0; i < resolvedFields.size(); i++) {
+            sb.append(resolvedFields.get(i).getLLVMName());
+            if (i + 1 < resolvedFields.size()) sb.append(", ");
         }
 
         sb.append(" }");
-
         cctx.declare(sb.toString());
     }
 
@@ -78,7 +84,7 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode, TopLev
 
         var baseStruct = cctx.getStruct(applied.base().getName());
         if (baseStruct instanceof RGenStruct genStruct) {
-            return genStruct.instantiate(applied.args(), cctx).type();
+            return genStruct.instantiate(applied.args(), cctx, line).type();
         }
 
         return new RStructGenFieldError("Cannot resolve applied generic struct type '" + applied.getName() + "'; " + "no generic struct template named '" + applied.base().getName() + "' was found.", fileName, line).raise();

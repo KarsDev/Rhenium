@@ -40,7 +40,7 @@ public class DeleteNode extends ASTNode {
             return;
         }
 
-        TypeRef type = cctx.resolveConcrete(variable.type());
+        TypeRef type = cctx.resolveConcrete(variable.type(), line);
         cctx.emit("; Delete " + value.getCompleteName());
 
         if (type.isPointer()) {

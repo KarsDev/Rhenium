@@ -65,7 +65,7 @@ public class GenStructInitNode extends ValueNode {
 
         replaceGenerics(bindings, cctx);
 
-        RStruct specialized = genStruct.instantiate(genericTypes, cctx);
+        RStruct specialized = genStruct.instantiate(genericTypes, cctx, line);
 
         return StructCompiler.compile(fileName, line, cctx, specialized, values, this);
     }

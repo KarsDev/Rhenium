@@ -31,18 +31,22 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
         return line;
     }
 
-    public static TypeRef replaceGenericType(TypeRef current, Map<String, TypeRef> generics, final CompilationContext cctx) {
+    protected TypeRef replaceGenericType(TypeRef current, Map<String, TypeRef> generics, final CompilationContext cctx) {
+        return replaceGenericType(current, generics, cctx, line);
+    }
+
+    public static TypeRef replaceGenericType(TypeRef current, Map<String, TypeRef> generics, final CompilationContext cctx, int line) {
         if (current instanceof GenericType genericType) {
             return generics.get(genericType.name());
         }
 
         if (current instanceof AppliedGenStructType a) {
-            a.args().replaceAll(f -> replaceGenericType(f, generics, cctx));
-            return ((RGenStruct) cctx.getStruct(a.base().name())).instantiate(a.args(), cctx).type();
+            a.args().replaceAll(f -> replaceGenericType(f, generics, cctx, line));
+            return ((RGenStruct) cctx.getStruct(a.base().name())).instantiate(a.args(), cctx, line).type();
         }
 
         if (current instanceof PointerType p) {
-            TypeRef newInner = replaceGenericType(p.inner(), generics, cctx);
+            TypeRef newInner = replaceGenericType(p.inner(), generics, cctx, line);
             if (newInner != p.inner()) {
                 return new PointerType(newInner);
             }
@@ -50,7 +54,7 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
         }
 
         if (current instanceof ArrayType a) {
-            TypeRef newInner = replaceGenericType(a.inner(), generics, cctx);
+            TypeRef newInner = replaceGenericType(a.inner(), generics, cctx, line);
             if (newInner != a.inner()) {
                 return new ArrayType(a.size(), newInner);
             }
@@ -61,7 +65,7 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
             List<TypeRef> newFields = new ArrayList<>();
 
             for (TypeRef t : s.fieldTypes()) {
-                newFields.add(replaceGenericType(t, generics, cctx));
+                newFields.add(replaceGenericType(t, generics, cctx, line));
             }
 
             return new StructType(s.getName(), newFields);
@@ -82,7 +86,7 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
         if (type instanceof AppliedGenStructType ags) {
             String structName = ags.base().name();
             RGenStruct struct = (RGenStruct) cctx.getStruct(structName);
-            type = (T) struct.instantiate(ags.args(), cctx).type();
+            type = (T) struct.instantiate(ags.args(), cctx, line).type();
         } else if (type instanceof PointerType ptr) {
             type = (T) new PointerType(evalType(ptr.inner(), cctx, fileName, line));
         } else if (type instanceof ArrayType arr) {

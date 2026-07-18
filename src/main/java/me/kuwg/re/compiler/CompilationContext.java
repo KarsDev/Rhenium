@@ -22,6 +22,7 @@ import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
+import me.kuwg.re.type.union.UnionType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -34,7 +35,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "call void @free(ptr %27)";
+    private static final String ERROR_LINE = "%state.addr = alloca %struct.RegexParserState_List$10RegexToken_int e";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -59,6 +60,7 @@ public final class CompilationContext {
     private final Map<String, Trait> traits = new HashMap<>();
     private final Deque<List<RPendingDestructor>> destructorScopes = new ArrayDeque<>();
     private final CopyFunctionGenerator copy = new CopyFunctionGenerator(this);
+    private final Map<String, UnionType> unions = new HashMap<>();
 
     private int registerCounter = 1;
     private int indentLevel = 1;
@@ -407,6 +409,14 @@ public final class CompilationContext {
         copy.ensure(type, fileName, line);
     }
 
+    public void addUnion(String name, UnionType type) {
+        unions.put(name, type);
+    }
+
+    public UnionType getUnion(String name) {
+        return unions.get(name);
+    }
+
     private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
 
@@ -482,14 +492,14 @@ public final class CompilationContext {
         return cmd.toString().trim();
     }
 
-    public TypeRef resolveConcrete(TypeRef t) {
+    public TypeRef resolveConcrete(TypeRef t, final int line) {
         if (t instanceof AppliedGenStructType a) {
-            List<TypeRef> args = a.args().stream().map(this::resolveConcrete).toList();
+            List<TypeRef> args = a.args().stream().map(t1 -> resolveConcrete(t1, line)).toList();
             RGenStruct gen = (RGenStruct) getStruct(a.base().name());
-            return gen.instantiate(args, this).type();
+            return gen.instantiate(args, this, line).type();
         }
-        if (t instanceof PointerType p) return new PointerType(resolveConcrete(p.inner()));
-        if (t instanceof ArrayType a) return new ArrayType(a.size(), resolveConcrete(a.inner()));
+        if (t instanceof PointerType p) return new PointerType(resolveConcrete(p.inner(), line));
+        if (t instanceof ArrayType a) return new ArrayType(a.size(), resolveConcrete(a.inner(), line));
         return t;
     }
 }
