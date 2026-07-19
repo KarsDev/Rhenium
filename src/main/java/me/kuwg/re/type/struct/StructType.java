@@ -5,8 +5,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 public record StructType(String name, List<TypeRef> fieldTypes) implements TypeRef {
+    static long alignTo(long value, long alignment) {
+        return (value + alignment - 1) & -alignment;
+    }
+
     @Override
     public boolean isPrimitive() {
         return false;
@@ -85,7 +90,8 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
         return Objects.equals(name, type.name) && Objects.equals(fieldTypes, type.fieldTypes);
     }
 
-    static long alignTo(long value, long alignment) {
-        return (value + alignment - 1) & -alignment;
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        return new StructType(name, fieldTypes.stream().map(type -> type.resolve(resolver)).toList());
     }
 }

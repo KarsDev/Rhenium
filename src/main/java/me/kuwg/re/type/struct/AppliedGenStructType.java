@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static me.kuwg.re.compiler.struct.RGenStruct.encodeType;
@@ -21,8 +22,7 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
     public boolean isCompatibleWith(final TypeRef other) {
         if (!(other instanceof AppliedGenStructType o)) return false;
 
-        return Objects.equals(base.getName(), o.base.getName())
-                && Objects.equals(args, o.args);
+        return Objects.equals(base.getName(), o.base.getName()) && Objects.equals(args, o.args);
     }
 
     @Override
@@ -32,11 +32,7 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
 
     @Override
     public String getName() {
-        return base.getName() + "<" +
-                args.stream()
-                        .map(t -> t instanceof GenericType g ? g.name() : t.getName())
-                        .collect(Collectors.joining(", "))
-                + ">";
+        return base.getName() + "<" + args.stream().map(t -> t instanceof GenericType g ? g.name() : t.getName()).collect(Collectors.joining(", ")) + ">";
     }
 
     @Override
@@ -78,5 +74,10 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
         if (!base.getName().equals(st.getName().split("\\$")[0])) return false;
 
         return st.fieldTypes().equals(args);
+    }
+
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        return new AppliedGenStructType((GenStructType) base.resolve(resolver), args.stream().map(arg -> arg.resolve(resolver)).toList());
     }
 }

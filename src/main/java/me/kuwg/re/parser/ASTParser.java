@@ -86,6 +86,7 @@ import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 import me.kuwg.re.type.trait.TraitType;
+import me.kuwg.re.type.undefined.UndefinedType;
 
 import java.util.*;
 
@@ -2215,46 +2216,124 @@ public final class ASTParser {
     external utilities
      */
 
+    private TypeRef collectType(final boolean generics) {
+        if (!match(IDENTIFIER) && !match(KEYWORD)) {
+            return null;
+        }
+
+        int line = line();
+        String typeName = consume().value();
+
+        switch (typeName) {
+            case "ptr" -> {
+                return collectPointerType(line, generics);
+            }
+            case "arr" -> {
+                return collectArrayType(line, generics);
+            }
+            case "lambda" -> {
+                return collectLambdaType(line, generics);
+            }
+            case "struct" -> {
+                if (!match(IDENTIFIER)) {
+                    return new UndefinedType("struct", line, fileName);
+                }
+
+                String name = consume().value();
+                TypeRef type = typeMap.get(name);
+                return type != null ? type : new UndefinedType(name, line, fileName);
+            }
+        }
+
+        if (typeMap.containsKey(typeName)) {
+            return typeMap.get(typeName);
+        }
+
+        TypeRef builtin = BuiltinTypes.getByName(typeName);
+        if (builtin != null) {
+            return builtin;
+        }
+
+        if (currentGenericTypes.contains(typeName) || generics) {
+            return new GenericType(typeName);
+        }
+
+        return new UndefinedType(typeName, line, fileName);
+    }
+
+    private TypeRef collectPointerType(int line, boolean generics) {
+        if (!matchAndConsume(OPERATOR, "->")) {
+            return new UndefinedType("ptr", line, fileName);
+        }
+
+        TypeRef inner = collectType(generics);
+        return inner == null ? new UndefinedType("ptr", line, fileName) : new PointerType(inner);
+    }
+
+    private TypeRef collectArrayType(int line, boolean generics) {
+        if (!matchAndConsume(OPERATOR, "->")) {
+            return new UndefinedType("arr", line, fileName);
+        }
+
+        TypeRef inner = collectType(generics);
+        return inner == null ? new UndefinedType("arr", line, fileName) : new ArrayType(ArrayType.UNKNOWN_SIZE, inner);
+    }
+
+    private TypeRef collectLambdaType(int line, boolean generics) {
+        if (!matchAndConsume(DIVIDER, "(")) {
+            return new UndefinedType("lambda", line, fileName);
+        }
+
+        List<TypeRef> params = new ArrayList<>();
+        if (!matchAndConsume(DIVIDER, ")")) {
+            do {
+                params.add(collectType(generics));
+            } while (matchAndConsume(DIVIDER, ","));
+
+            if (!matchAndConsume(DIVIDER, ")")) {
+                return new UndefinedType("lambda", line, fileName);
+            }
+        }
+
+        if (!matchAndConsume(OPERATOR, "->")) {
+            return new UndefinedType("lambda", line, fileName);
+        }
+
+        TypeRef inner = collectType(generics);
+        return new LambdaType(params, inner);
+    }
+
     public void collectTypesOnly() {
         tokenIndex = 0;
 
         while (!match(EOF)) {
             removeNewlines();
 
-            if (match(KEYWORD, "generic")) {
-                consume();
-
-                if (match(KEYWORD, "struct")) {
-                    consume();
+            if (matchAndConsume(KEYWORD, "generic")) {
+                if (matchAndConsume(KEYWORD, "struct")) {
                     collectStructType(true);
                     continue;
                 }
             }
 
-            if (match(KEYWORD, "_Builtin")) {
-                consume();
-
-                if (match(KEYWORD, "struct")) {
-                    consume();
+            if (matchAndConsume(KEYWORD, "_Builtin")) {
+                if (matchAndConsume(KEYWORD, "struct")) {
                     collectStructType(false);
                     continue;
                 }
             }
 
-            if (match(KEYWORD, "struct")) {
-                consume();
+            if (matchAndConsume(KEYWORD, "struct")) {
                 collectStructType(false);
                 continue;
             }
 
-            if (match(KEYWORD, "using")) {
-                consume();
+            if (matchAndConsume(KEYWORD, "using")) {
                 collectUsingTypes();
                 continue;
             }
 
-            if (match(KEYWORD, "enum")) {
-                consume();
+            if (matchAndConsume(KEYWORD, "enum")) {
                 collectEnumTypes();
                 continue;
             }
@@ -2262,6 +2341,19 @@ public final class ASTParser {
             if (outOfBounds(0)) return;
             consume();
         }
+
+        resolveCollectedTypes();
+    }
+
+    private void resolveCollectedTypes() {
+        Map<String, TypeRef> resolved = new HashMap<>();
+
+        for (Map.Entry<String, TypeRef> entry : typeMap.entrySet()) {
+            resolved.put(entry.getKey(), entry.getValue().resolve(typeMap::get));
+        }
+
+        typeMap.clear();
+        typeMap.putAll(resolved);
     }
 
     private void collectStructType(boolean generic) {
@@ -2308,7 +2400,7 @@ public final class ASTParser {
                 continue;
             }
 
-            TypeRef fieldType = parseType(generic);
+            TypeRef fieldType = collectType(generic);
             fieldTypes.add(fieldType);
 
             if (match(OPERATOR, "=")) {

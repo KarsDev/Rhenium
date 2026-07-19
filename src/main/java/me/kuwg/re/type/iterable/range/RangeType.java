@@ -7,6 +7,7 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.IterableTypeRef;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 public record RangeType(ValueNode start, ValueNode end, ValueNode step) implements IterableTypeRef {
     @Override
@@ -49,5 +50,10 @@ public record RangeType(ValueNode start, ValueNode end, ValueNode step) implemen
         if (!(o instanceof final RangeType rangeType)) return false;
 
         return Objects.equals(end, rangeType.end) && Objects.equals(step, rangeType.step) && Objects.equals(start, rangeType.start);
+    }
+
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        throw new RInternalError();
     }
 }

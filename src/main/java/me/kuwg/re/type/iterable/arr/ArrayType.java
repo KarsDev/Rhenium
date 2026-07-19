@@ -5,6 +5,7 @@ import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.IterableTypeRef;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
     public static final int UNKNOWN_SIZE = -1;
@@ -78,5 +79,10 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
         long result = size;
         result = 31 * result + Objects.hashCode(inner);
         return (int) result;
+    }
+
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        return new ArrayType(size, inner.resolve(resolver));
     }
 }

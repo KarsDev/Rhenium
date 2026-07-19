@@ -2,6 +2,8 @@ package me.kuwg.re.type.ptr;
 
 import me.kuwg.re.type.TypeRef;
 
+import java.util.function.Function;
+
 public final class NullType implements TypeRef {
     public static final TypeRef INSTANCE = new NullType();
 
@@ -51,5 +53,10 @@ public final class NullType implements TypeRef {
     @Override
     public int hashCode() {
         return 0;
+    }
+
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        return this;
     }
 }

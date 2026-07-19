@@ -7,10 +7,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static me.kuwg.re.type.struct.StructType.alignTo;
 
-public record GenStructType(List<TypeParameter> genericTypes, String name, List<TypeRef> fieldTypes) implements TypeRef {
+public record GenStructType(List<TypeParameter> genericTypes, String name,
+                            List<TypeRef> fieldTypes) implements TypeRef {
     @Override
     public boolean isPrimitive() {
         return false;
@@ -79,5 +81,10 @@ public record GenStructType(List<TypeParameter> genericTypes, String name, List<
         if (!(o instanceof final GenStructType type)) return false;
 
         return Objects.equals(name, type.name) && Objects.equals(fieldTypes, type.fieldTypes);
+    }
+
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        return new GenStructType(genericTypes, name, fieldTypes.stream().map(type -> type.resolve(resolver)).toList());
     }
 }

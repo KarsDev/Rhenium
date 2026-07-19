@@ -3,6 +3,7 @@ package me.kuwg.re.type.lambda;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.List;
+import java.util.function.Function;
 
 public final class LambdaType implements TypeRef {
     private final List<TypeRef> parameters;
@@ -35,8 +36,7 @@ public final class LambdaType implements TypeRef {
     public boolean equals(TypeRef other) {
         if (!(other instanceof LambdaType l)) return false;
 
-        return returnType.equals(l.returnType)
-                && parameters.equals(l.parameters);
+        return returnType.equals(l.returnType) && parameters.equals(l.parameters);
     }
 
     @Override
@@ -62,5 +62,10 @@ public final class LambdaType implements TypeRef {
     @Override
     public String getMangledName() {
         return "L";
+    }
+
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        return new LambdaType(parameters.stream().map(type -> type.resolve(resolver)).toList(), returnType.resolve(resolver));
     }
 }

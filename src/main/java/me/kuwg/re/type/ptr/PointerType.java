@@ -3,6 +3,7 @@ package me.kuwg.re.type.ptr;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 public record PointerType(TypeRef inner) implements TypeRef {
     @Override
@@ -45,5 +46,10 @@ public record PointerType(TypeRef inner) implements TypeRef {
         if (!(o instanceof final PointerType that)) return false;
 
         return Objects.equals(inner, that.inner);
+    }
+
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        return new PointerType(inner.resolve(resolver));
     }
 }
