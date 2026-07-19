@@ -6,20 +6,25 @@ import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.trait.TraitFunction;
+import me.kuwg.re.error.errors.trait.RInheritanceError;
 import me.kuwg.re.error.errors.trait.RTraitAlreadyDeclaredError;
 import me.kuwg.re.type.TypeRef;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TraitDeclarationNode extends ASTNode implements GlobalNode, TopLevelNode {
     private boolean loaded;
 
     private final String name;
+    private final List<String> inheritedTraits;
     private final Map<String, TraitFunction> functions;
 
-    public TraitDeclarationNode(final String fileName, final int line, final String name, final Map<String, TraitFunction> functions) {
+    public TraitDeclarationNode(final String fileName, final int line, final String name, final List<String> inheritedTraits, final Map<String, TraitFunction> functions) {
         super(fileName, line);
         this.name = name;
+        this.inheritedTraits = inheritedTraits;
         this.functions = functions;
     }
 
@@ -59,9 +64,21 @@ public class TraitDeclarationNode extends ASTNode implements GlobalNode, TopLeve
             return;
         }
 
+        Map<String, TraitFunction> allFunctions = new HashMap<>(functions);
+
+        inheritedTraits.forEach(inherited -> {
+            Trait trait = cctx.getTrait(inherited);
+            if (trait == null) {
+                new RInheritanceError("Trait not found: " + inherited, fileName, line).raise();
+                return;
+            }
+
+            allFunctions.putAll(trait.functions());
+        });
+
         cctx.addTrait(
                 name,
-                new Trait(name, functions)
+                new Trait(name, allFunctions)
         );
 
         loaded = true;

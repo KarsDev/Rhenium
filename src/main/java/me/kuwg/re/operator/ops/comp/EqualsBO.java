@@ -25,11 +25,25 @@ public final class EqualsBO extends BinaryOperator {
         TypeRef leftType = c.leftType();
         TypeRef rightType = c.rightType();
 
-        if ((leftType instanceof NullType && !(rightType instanceof AnyPointerType)) ||
-                (rightType instanceof NullType && !(leftType instanceof AnyPointerType))) {
+        if ((leftType instanceof NullType &&
+                !(rightType instanceof AnyPointerType || rightType instanceof StrBuiltinType)) ||
+                (rightType instanceof NullType &&
+                        !(leftType instanceof AnyPointerType || leftType instanceof StrBuiltinType))) {
             return new RUnsupportedBinaryExpressionError(
                     leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
             ).raise();
+        }
+
+        if (leftType instanceof StrBuiltinType && rightType instanceof NullType) {
+            String resReg = c.cctx().nextRegister();
+            c.cctx().emit(resReg + " = icmp eq ptr " + c.leftReg() + ", null");
+            return res(resReg, BuiltinTypes.BOOL.getType());
+        }
+
+        if (leftType instanceof NullType && rightType instanceof StrBuiltinType) {
+            String resReg = c.cctx().nextRegister();
+            c.cctx().emit(resReg + " = icmp eq ptr null, " + c.rightReg());
+            return res(resReg, BuiltinTypes.BOOL.getType());
         }
 
         if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
@@ -143,9 +157,16 @@ public final class EqualsBO extends BinaryOperator {
             return "true";
         }
 
-        if ((leftType instanceof NullType && !(rightType instanceof AnyPointerType)) ||
-                (rightType instanceof NullType && !(leftType instanceof AnyPointerType))) {
+        if ((leftType instanceof NullType &&
+                !(rightType instanceof AnyPointerType || rightType instanceof StrBuiltinType)) ||
+                (rightType instanceof NullType &&
+                        !(leftType instanceof AnyPointerType || leftType instanceof StrBuiltinType))) {
             return unsupported(leftType, rightType, left).raise();
+        }
+
+        if ((leftType instanceof StrBuiltinType && rightType instanceof NullType) ||
+                (leftType instanceof NullType && rightType instanceof StrBuiltinType)) {
+            return "false";
         }
 
         if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {

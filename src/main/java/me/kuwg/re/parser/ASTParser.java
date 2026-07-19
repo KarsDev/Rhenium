@@ -50,6 +50,7 @@ import me.kuwg.re.ast.nodes.struct.gen.GenStructInitNode;
 import me.kuwg.re.ast.nodes.ternary.TernaryOperatorNode;
 import me.kuwg.re.ast.nodes.trait.TraitDeclarationNode;
 import me.kuwg.re.ast.nodes.type.TypeofNode;
+import me.kuwg.re.ast.nodes.union.UnionDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
 import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
@@ -86,7 +87,7 @@ import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 import me.kuwg.re.type.trait.TraitType;
-import me.kuwg.re.type.undefined.UndefinedType;
+import me.kuwg.re.type.union.UnionType;
 
 import java.util.*;
 
@@ -1775,6 +1776,14 @@ public final class ASTParser {
         int line = line();
         String name = identifier();
 
+        List<String> inheritedTraits = new ArrayList<>();
+
+        if (matchAndConsume(KEYWORD, "inherits")) {
+            do {
+                inheritedTraits.add(identifier());
+            } while (matchAndConsume(DIVIDER, ","));
+        }
+
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for trait declaration", fileName, line).raise();
         }
@@ -1785,7 +1794,7 @@ public final class ASTParser {
         consume();
 
         if (!match(INDENT)) {
-            return new RParserError("Expected indented enum body", fileName, line).raise();
+            return new RParserError("Expected indented trait body", fileName, line).raise();
         }
         consume();
 
@@ -1823,7 +1832,7 @@ public final class ASTParser {
 
         if (!typeMap.containsKey(name)) typeMap.put(name, new TraitType(name, functions));
 
-        return new TraitDeclarationNode(fileName, line, name, functions);
+        return new TraitDeclarationNode(fileName, line, name, inheritedTraits, functions);
     }
 
     private @SubFunc ASTNode parseCopyKeyword() {
@@ -1858,6 +1867,54 @@ public final class ASTParser {
         int line = line();
 
         return new ZeroInitializerNode(fileName, line, parseOptionalType().orElse(null));
+    }
+
+    private @SubFunc UnionDeclarationNode parseUnionKeyword() {
+        int line = line();
+
+        String name = identifier();
+
+        if (!matchAndConsume(OPERATOR, ":"))
+            return new RParserError("Expected ':' for union declaration", fileName, line).raise();
+
+        if (!match(NEWLINE)) {
+            return new RParserError("Expected newline after union declaration", fileName, line).raise();
+        }
+        consume();
+
+        if (!match(INDENT)) {
+            return new RParserError("Expected indented union body", fileName, line).raise();
+        }
+        consume();
+
+        List<StructType> variants = new ArrayList<>();
+
+        while (!match(EOF) && !match(DEDENT)) {
+            removeNewlines();
+
+            if (match(EOF) || match(DEDENT)) {
+                break;
+            }
+
+            TypeRef type = parseType(false);
+
+            if (!(type instanceof StructType structType))
+                return new RParserError("Unions allow only struct types", fileName, line()).raise();
+
+            variants.add(structType);
+        }
+
+        if (match(DEDENT)) {
+            consume();
+        } else if (!match(EOF)) {
+            return new RParserError("Expected dedent to close enum declaration", fileName, line).raise();
+        }
+
+        UnionType type = new UnionType(name, variants);
+
+        addType(type.getName(), type);
+
+        return new UnionDeclarationNode(fileName, line, type);
     }
 
     /*
@@ -2216,93 +2273,6 @@ public final class ASTParser {
     external utilities
      */
 
-    private TypeRef collectType(final boolean generics) {
-        if (!match(IDENTIFIER) && !match(KEYWORD)) {
-            return null;
-        }
-
-        int line = line();
-        String typeName = consume().value();
-
-        switch (typeName) {
-            case "ptr" -> {
-                return collectPointerType(line, generics);
-            }
-            case "arr" -> {
-                return collectArrayType(line, generics);
-            }
-            case "lambda" -> {
-                return collectLambdaType(line, generics);
-            }
-            case "struct" -> {
-                if (!match(IDENTIFIER)) {
-                    return new UndefinedType("struct", line, fileName);
-                }
-
-                String name = consume().value();
-                TypeRef type = typeMap.get(name);
-                return type != null ? type : new UndefinedType(name, line, fileName);
-            }
-        }
-
-        if (typeMap.containsKey(typeName)) {
-            return typeMap.get(typeName);
-        }
-
-        TypeRef builtin = BuiltinTypes.getByName(typeName);
-        if (builtin != null) {
-            return builtin;
-        }
-
-        if (currentGenericTypes.contains(typeName) || generics) {
-            return new GenericType(typeName);
-        }
-
-        return new UndefinedType(typeName, line, fileName);
-    }
-
-    private TypeRef collectPointerType(int line, boolean generics) {
-        if (!matchAndConsume(OPERATOR, "->")) {
-            return new UndefinedType("ptr", line, fileName);
-        }
-
-        TypeRef inner = collectType(generics);
-        return inner == null ? new UndefinedType("ptr", line, fileName) : new PointerType(inner);
-    }
-
-    private TypeRef collectArrayType(int line, boolean generics) {
-        if (!matchAndConsume(OPERATOR, "->")) {
-            return new UndefinedType("arr", line, fileName);
-        }
-
-        TypeRef inner = collectType(generics);
-        return inner == null ? new UndefinedType("arr", line, fileName) : new ArrayType(ArrayType.UNKNOWN_SIZE, inner);
-    }
-
-    private TypeRef collectLambdaType(int line, boolean generics) {
-        if (!matchAndConsume(DIVIDER, "(")) {
-            return new UndefinedType("lambda", line, fileName);
-        }
-
-        List<TypeRef> params = new ArrayList<>();
-        if (!matchAndConsume(DIVIDER, ")")) {
-            do {
-                params.add(collectType(generics));
-            } while (matchAndConsume(DIVIDER, ","));
-
-            if (!matchAndConsume(DIVIDER, ")")) {
-                return new UndefinedType("lambda", line, fileName);
-            }
-        }
-
-        if (!matchAndConsume(OPERATOR, "->")) {
-            return new UndefinedType("lambda", line, fileName);
-        }
-
-        TypeRef inner = collectType(generics);
-        return new LambdaType(params, inner);
-    }
-
     public void collectTypesOnly() {
         tokenIndex = 0;
 
@@ -2334,26 +2304,18 @@ public final class ASTParser {
             }
 
             if (matchAndConsume(KEYWORD, "enum")) {
-                collectEnumTypes();
+                collectEnumType();
+                continue;
+            }
+
+            if (matchAndConsume(KEYWORD, "trait")) {
+                collectTraitType();
                 continue;
             }
 
             if (outOfBounds(0)) return;
             consume();
         }
-
-        resolveCollectedTypes();
-    }
-
-    private void resolveCollectedTypes() {
-        Map<String, TypeRef> resolved = new HashMap<>();
-
-        for (Map.Entry<String, TypeRef> entry : typeMap.entrySet()) {
-            resolved.put(entry.getKey(), entry.getValue().resolve(typeMap::get));
-        }
-
-        typeMap.clear();
-        typeMap.putAll(resolved);
     }
 
     private void collectStructType(boolean generic) {
@@ -2400,7 +2362,7 @@ public final class ASTParser {
                 continue;
             }
 
-            TypeRef fieldType = collectType(generic);
+            TypeRef fieldType = parseType(generic);
             fieldTypes.add(fieldType);
 
             if (match(OPERATOR, "=")) {
@@ -2444,7 +2406,7 @@ public final class ASTParser {
         loader.collectModuleTypes(fileName, line, fileName, name.toString(), pkg, typeMap).forEach(typeMap::putIfAbsent);
     }
 
-    private void collectEnumTypes() {
+    private void collectEnumType() {
         String enumName = identifier();
 
         if (!matchAndConsume(OPERATOR, ":")) {
@@ -2497,5 +2459,69 @@ public final class ASTParser {
         }
 
         addType(enumName, valueType);
+    }
+
+    private void collectTraitType() {
+        if (!match(IDENTIFIER)) {
+            return;
+        }
+
+        String name = consume().value();
+
+        if (matchAndConsume(KEYWORD, "inherits")) {
+            do {
+                identifier(); // ignore inherited traits
+            } while (matchAndConsume(DIVIDER, ","));
+        }
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return;
+        }
+
+        removeNewlines();
+
+        if (!match(INDENT)) {
+            return;
+        }
+        consume();
+
+        Map<String, TraitFunction> functions = new LinkedHashMap<>();
+
+        while (!match(DEDENT) && !match(EOF)) {
+            removeNewlines();
+
+            if (match(DEDENT) || match(EOF)) {
+                break;
+            }
+
+            if (!matchAndConsume(KEYWORD, "func")) {
+                consume();
+                continue;
+            }
+
+            if (!match(IDENTIFIER)) {
+                continue;
+            }
+
+            String fname = consume().value();
+
+            List<FunctionParameter> params = parseParamsDeclare(false);
+
+            TypeRef returnType = matchAndConsume(OPERATOR, "->")
+                    ? parseType(false)
+                    : BuiltinTypes.NONE.getType();
+
+            functions.putIfAbsent(fname, new TraitFunction(fname, params, returnType));
+
+            while (!match(NEWLINE) && !match(DEDENT) && !match(EOF)) {
+                consume();
+            }
+        }
+
+        if (match(DEDENT)) {
+            consume();
+        }
+
+        addType(name, new TraitType(name, functions));
     }
 }

@@ -19,7 +19,7 @@ public final class CopyFunctionGenerator {
     }
 
     public void ensure(TypeRef type, String fileName, int line) {
-        type = cctx.resolveConcrete(type);
+        type = cctx.resolveConcrete(type, line);
 
         if (!generated.add(type.getMangledName())) {
             return;
@@ -30,7 +30,7 @@ public final class CopyFunctionGenerator {
         }
 
         if (type instanceof StructType st) {
-            emitStruct(st);
+            emitStruct(st, line);
         } else if (type instanceof ArrayType at) {
             emitArray(at);
         } else if (type instanceof PointerType pt) {
@@ -40,7 +40,7 @@ public final class CopyFunctionGenerator {
         }
     }
 
-    private void emitStruct(StructType st) {
+    private void emitStruct(StructType st, int line) {
         String fnName = "__copy_" + sanitize(st.getMangledName());
         String llvmType = st.getLLVMName();
         String ptrType = llvmType + "*";
@@ -51,7 +51,7 @@ public final class CopyFunctionGenerator {
                 .append(ptrType).append(" %src) {\n")
                 .append("entry:\n");
 
-        appendStructCopy(sb, st, "%dst", "%src", "  ");
+        appendStructCopy(sb, st, "%dst", "%src", "  ", line);
 
         sb.append("  ret void\n")
                 .append("}\n");
@@ -59,9 +59,9 @@ public final class CopyFunctionGenerator {
         cctx.declare(sb.toString());
     }
 
-    private void appendStructCopy(StringBuilder sb, StructType st, String dstPtr, String srcPtr, String indent) {
+    private void appendStructCopy(StringBuilder sb, StructType st, String dstPtr, String srcPtr, String indent, int line) {
         for (int i = 0; i < st.fieldTypes().size(); i++) {
-            TypeRef fieldType = cctx.resolveConcrete(st.fieldTypes().get(i));
+            TypeRef fieldType = cctx.resolveConcrete(st.fieldTypes().get(i), line);
 
             String fieldSrc = "%src_" + i;
             String fieldDst = "%dst_" + i;
@@ -77,7 +77,7 @@ public final class CopyFunctionGenerator {
                     .append(dstPtr).append(", i32 0, i32 ").append(i).append('\n');
 
             if (fieldType instanceof StructType nested) {
-                appendStructCopy(sb, nested, fieldDst, fieldSrc, indent);
+                appendStructCopy(sb, nested, fieldDst, fieldSrc, indent, line);
                 continue;
             }
 

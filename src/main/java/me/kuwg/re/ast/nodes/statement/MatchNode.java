@@ -99,12 +99,14 @@ public class MatchNode extends ASTNode {
 
             cctx.emit(label + ":");
             cctx.pushIndent();
+            cctx.pushScope();
 
             mc.block.compile(cctx);
 
             cctx.emit("br label %" + endLabel);
 
             cctx.popIndent();
+            cctx.popScope();
         }
 
         if (!defaultLabel.equals(endLabel)) {
@@ -113,7 +115,9 @@ public class MatchNode extends ASTNode {
 
             for (MatchCase mc : cases) {
                 if (mc.values == null || mc.values.isEmpty()) {
+                    cctx.pushScope();
                     mc.block.compile(cctx);
+                    cctx.popScope();
                     break;
                 }
             }
