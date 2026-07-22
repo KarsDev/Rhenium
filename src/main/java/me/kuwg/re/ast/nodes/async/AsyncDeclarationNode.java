@@ -13,7 +13,13 @@ import java.util.List;
 import java.util.Map;
 
 public class AsyncDeclarationNode extends ValueNode {
-    private static final TypeRef THREAD_TYPE = new StructType("Thread", List.of(BuiltinTypes.ANYPTR.getType()));
+    private static final TypeRef THREAD_TYPE;
+
+    static {
+        List<TypeRef> ft = new ArrayList<>();
+        ft.add(BuiltinTypes.ANYPTR.getType());
+        THREAD_TYPE = new StructType("Thread", ft);
+    }
 
     private TypeRef returnType;
     private final BlockNode block;

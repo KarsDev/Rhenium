@@ -1,22 +1,24 @@
 package me.kuwg.re.type.union;
 
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.struct.StructType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 public final class UnionType implements TypeRef {
-    private final String name;
-    private final List<StructType> variants;
+    private boolean resolved = false;
 
-    public UnionType(final String name, final @NotNull List<StructType> variants) {
+    private final String name;
+    private final List<TypeRef> variants;
+
+    public UnionType(final String name, final @NotNull List<TypeRef> variants) {
         this.name = name;
         this.variants = variants;
     }
 
-    public List<StructType> variants() {
+    public List<TypeRef> variants() {
         return variants;
     }
 
@@ -43,7 +45,7 @@ public final class UnionType implements TypeRef {
         long payloadSize = 0;
         long payloadAlign = 4;
 
-        for (StructType variant : variants) {
+        for (TypeRef variant : variants) {
             payloadSize = Math.max(payloadSize, variant.getSize());
             payloadAlign = Math.max(payloadAlign, variant.getAlignment());
         }
@@ -59,7 +61,7 @@ public final class UnionType implements TypeRef {
     public long getAlignment() {
         long max = 4;
 
-        for (StructType variant : variants) {
+        for (TypeRef variant : variants) {
             max = Math.max(max, variant.getAlignment());
         }
 
@@ -82,7 +84,7 @@ public final class UnionType implements TypeRef {
     }
 
     @Override
-    public boolean equals(final TypeRef other) {
+    public boolean equals(final Object other) {
         return other instanceof UnionType u && name.equals(u.name);
     }
 
@@ -101,7 +103,23 @@ public final class UnionType implements TypeRef {
         return Objects.hash(name);
     }
 
-    public long getPayloadSize() {
-        return variants.stream().mapToLong(StructType::getSize).max().orElse(0);
+    @Override
+    public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        if (resolved) {
+            return this;
+        }
+
+        resolved = true;
+
+        this.variants.replaceAll(t -> t.resolve(resolver));
+        return this;
+    }
+
+    public long payloadSize() {
+        long max = 0;
+        for (TypeRef variant : variants()) {
+            max = Math.max(max, variant.getSize());
+        }
+        return max;
     }
 }

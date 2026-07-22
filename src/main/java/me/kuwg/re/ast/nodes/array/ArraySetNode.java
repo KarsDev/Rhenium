@@ -75,9 +75,9 @@ public class ArraySetNode extends ValueNode {
         boolean isArrayValuedPtr = arrayType instanceof ArrayType;
 
         if (arrayType instanceof ArrayType arrType) {
-            elementType = arrType.inner();
+            elementType = arrType.getInner();
         } else if (arrayType instanceof PointerType ptrType) {
-            elementType = ptrType.inner();
+            elementType = ptrType.getInner();
         } else {
             return new RVariableTypeError("array or pointer", arrayType.getName(), fileName, line).raise();
         }

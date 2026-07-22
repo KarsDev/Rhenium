@@ -37,19 +37,19 @@ public class DereferenceAssignNode extends ValueNode {
 
         PointerType ptrType = (PointerType) pointer.getType();
 
-        TypeRef varType = evalType(ptrType.inner(), cctx, fileName, line);
+        TypeRef varType = evalType(ptrType.getInner(), cctx, fileName, line);
 
         if (!varType.equals(value.getType())) {
             ValueNode castNode = new CastNode(fileName, line, varType, value);
             valueReg = castNode.compileAndGet(cctx);
         }
 
-        String innerLLVM = ptrType.inner().getLLVMName();
+        String innerLLVM = ptrType.getInner().getLLVMName();
 
         cctx.emit("; Dereference assign");
         cctx.emit("store " + innerLLVM + " " + valueReg + ", " + innerLLVM + "* " + ptrReg + " ; dereference assign");
 
-        setType(ptrType.inner());
+        setType(ptrType.getInner());
     }
 
     @Override

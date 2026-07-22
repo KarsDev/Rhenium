@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class LambdaType implements TypeRef {
+    private boolean resolved = false;
+
     private final List<TypeRef> parameters;
-    private final TypeRef returnType;
+    private TypeRef returnType;
 
     public LambdaType(final List<TypeRef> parameters, final TypeRef returnType) {
         this.parameters = parameters;
@@ -33,7 +35,7 @@ public final class LambdaType implements TypeRef {
     }
 
     @Override
-    public boolean equals(TypeRef other) {
+    public boolean equals(Object other) {
         if (!(other instanceof LambdaType l)) return false;
 
         return returnType.equals(l.returnType) && parameters.equals(l.parameters);
@@ -66,6 +68,14 @@ public final class LambdaType implements TypeRef {
 
     @Override
     public TypeRef resolve(final Function<String, TypeRef> resolver) {
-        return new LambdaType(parameters.stream().map(type -> type.resolve(resolver)).toList(), returnType.resolve(resolver));
+        if (resolved) {
+            return this;
+        }
+
+        resolved = true;
+
+        parameters.replaceAll(type -> type.resolve(resolver));
+        returnType = returnType.resolve(resolver);
+        return this;
     }
 }

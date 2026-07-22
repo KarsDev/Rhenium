@@ -46,7 +46,7 @@ public record RangeType(ValueNode start, ValueNode end, ValueNode step) implemen
     }
 
     @Override
-    public boolean equals(final TypeRef o) {
+    public boolean equals(final Object o) {
         if (!(o instanceof final RangeType rangeType)) return false;
 
         return Objects.equals(end, rangeType.end) && Objects.equals(step, rangeType.step) && Objects.equals(start, rangeType.start);

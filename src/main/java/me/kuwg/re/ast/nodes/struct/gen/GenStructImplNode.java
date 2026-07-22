@@ -39,9 +39,9 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
     public void compile(CompilationContext cctx) {
         cctx.declare("; Generic Struct impl");
 
-        RDefaultStruct st = cctx.getStruct(type.name());
+        RDefaultStruct st = cctx.getStruct(type.getName());
         if (!(st instanceof RGenStruct genStruct)) {
-            new RStructUndefinedError(type.name(), fileName, line).raise();
+            new RStructUndefinedError(type.getName(), fileName, line).raise();
             return;
         }
 
@@ -51,7 +51,7 @@ public class GenStructImplNode extends ASTNode implements GlobalNode {
     @Override
     public void write(final StringBuilder sb, final String indent) {
         sb.append(indent).append("Gen Struct Impl: ").append(NEWLINE)
-                .append(TAB).append("Name: ").append(type.name()).append(NEWLINE)
+                .append(TAB).append("Name: ").append(type.getName()).append(NEWLINE)
                 .append(TAB).append("Generics: ").append(genericNames).append(NEWLINE)
                 .append(TAB).append("Functions:").append(NEWLINE);
         functions.forEach(f -> f.write(sb, indent + TAB + TAB));

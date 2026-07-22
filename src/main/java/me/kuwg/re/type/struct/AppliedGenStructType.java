@@ -42,7 +42,7 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
 
     @Override
     public @NotNull String toString() {
-        return "struct " + base.name();
+        return "struct " + base.getName();
     }
 
     @Override
@@ -64,20 +64,17 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
     }
 
     @Override
-    public boolean equals(final TypeRef other) {
-        return equals((Object) other);
-    }
-
-    @Override
     public boolean equals(final Object other) {
         if (!(other instanceof StructType st)) return false;
         if (!base.getName().equals(st.getName().split("\\$")[0])) return false;
 
-        return st.fieldTypes().equals(args);
+        return st.getFieldTypes().equals(args);
     }
 
     @Override
     public TypeRef resolve(final Function<String, TypeRef> resolver) {
+        // Resolve shall not mutate in AppliedGenStructType since the identity that must be preserved for recursive
+        // definitions is the base type
         return new AppliedGenStructType((GenStructType) base.resolve(resolver), args.stream().map(arg -> arg.resolve(resolver)).toList());
     }
 }

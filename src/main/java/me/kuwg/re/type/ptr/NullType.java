@@ -41,7 +41,7 @@ public final class NullType implements TypeRef {
     }
 
     @Override
-    public boolean equals(final TypeRef other) {
+    public boolean equals(final Object other) {
         return other instanceof NullType;
     }
 

@@ -12,6 +12,7 @@ import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.StructType;
 import me.kuwg.re.type.trait.TraitType;
+import me.kuwg.re.type.union.UnionType;
 import me.kuwg.re.writer.Writeable;
 
 import java.util.ArrayList;
@@ -42,20 +43,20 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
 
         if (current instanceof AppliedGenStructType a) {
             a.args().replaceAll(f -> replaceGenericType(f, generics, cctx, line));
-            return ((RGenStruct) cctx.getStruct(a.base().name())).instantiate(a.args(), cctx, line).type();
+            return ((RGenStruct) cctx.getStruct(a.base().getName())).instantiate(a.args(), cctx, line).type();
         }
 
         if (current instanceof PointerType p) {
-            TypeRef newInner = replaceGenericType(p.inner(), generics, cctx, line);
-            if (newInner != p.inner()) {
+            TypeRef newInner = replaceGenericType(p.getInner(), generics, cctx, line);
+            if (newInner != p.getInner()) {
                 return new PointerType(newInner);
             }
             return p;
         }
 
         if (current instanceof ArrayType a) {
-            TypeRef newInner = replaceGenericType(a.inner(), generics, cctx, line);
-            if (newInner != a.inner()) {
+            TypeRef newInner = replaceGenericType(a.getInner(), generics, cctx, line);
+            if (newInner != a.getInner()) {
                 return new ArrayType(a.size(), newInner);
             }
             return a;
@@ -64,7 +65,7 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
         if (current instanceof StructType s) {
             List<TypeRef> newFields = new ArrayList<>();
 
-            for (TypeRef t : s.fieldTypes()) {
+            for (TypeRef t : s.getFieldTypes()) {
                 newFields.add(replaceGenericType(t, generics, cctx, line));
             }
 
@@ -84,13 +85,25 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
     @SuppressWarnings("unchecked")
     public static <T extends TypeRef>  T evalType(T type, CompilationContext cctx, final String fileName, final int line) {
         if (type instanceof AppliedGenStructType ags) {
-            String structName = ags.base().name();
+            String structName = ags.base().getName();
             RGenStruct struct = (RGenStruct) cctx.getStruct(structName);
             type = (T) struct.instantiate(ags.args(), cctx, line).type();
         } else if (type instanceof PointerType ptr) {
-            type = (T) new PointerType(evalType(ptr.inner(), cctx, fileName, line));
+            type = (T) new PointerType(evalType(ptr.getInner(), cctx, fileName, line));
         } else if (type instanceof ArrayType arr) {
-            type = (T) new ArrayType(arr.size(), evalType(arr.inner(), cctx, fileName, line));
+            type = (T) new ArrayType(arr.size(), evalType(arr.getInner(), cctx, fileName, line));
+        } else if (type instanceof UnionType union) {
+            List<TypeRef> variants = new ArrayList<>(union.variants().size());
+            union.variants().forEach(v -> variants.add(evalType(v, cctx, fileName, line)));
+            type = (T) new UnionType(union.getName(), variants);
+        } else if (type instanceof StructType st) {
+            List<TypeRef> fields = new ArrayList<>(st.getFieldTypes().size());
+
+            for (TypeRef field : st.getFieldTypes()) {
+                fields.add(evalType(field, cctx, fileName, line));
+            }
+
+            type = (T) new StructType(st.getName(), fields);
         } else if (type instanceof TraitType) {
             return new RInheritanceError("Trait is not usable as a parameter", fileName, line).raise();
         }

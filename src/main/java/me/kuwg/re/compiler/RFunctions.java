@@ -107,13 +107,13 @@ final class RFunctions {
         if (param instanceof ArrayType pArr &&
                 arg   instanceof ArrayType aArr) {
 
-            return matchTypes(pArr.inner(), aArr.inner(), bindings);
+            return matchTypes(pArr.getInner(), aArr.getInner(), bindings);
         }
 
         if (param instanceof PointerType pPtr &&
                 arg   instanceof PointerType aPtr) {
 
-            return matchTypes(pPtr.inner(), aPtr.inner(), bindings);
+            return matchTypes(pPtr.getInner(), aPtr.getInner(), bindings);
         }
 
         boolean eq = param.equals(arg);
@@ -149,8 +149,8 @@ final class RFunctions {
             }
             return true;
         }
-        if (t instanceof ArrayType a) return isConcrete(a.inner());
-        if (t instanceof PointerType p) return isConcrete(p.inner());
+        if (t instanceof ArrayType a) return isConcrete(a.getInner());
+        if (t instanceof PointerType p) return isConcrete(p.getInner());
         return true;
     }
 

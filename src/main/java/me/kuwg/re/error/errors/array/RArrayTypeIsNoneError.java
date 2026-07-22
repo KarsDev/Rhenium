@@ -5,7 +5,7 @@ import me.kuwg.re.error.manager.RError;
 
 public class RArrayTypeIsNoneError extends RError {
     public RArrayTypeIsNoneError(final String fileName, final int line) {
-        super("Array inner type is none", fileName, line);
+        super("Array getInner type is none", fileName, line);
     }
 
     @Override

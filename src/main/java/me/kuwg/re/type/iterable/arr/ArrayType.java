@@ -7,8 +7,15 @@ import me.kuwg.re.type.iterable.IterableTypeRef;
 import java.util.Objects;
 import java.util.function.Function;
 
-public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
+public final class ArrayType implements IterableTypeRef {
     public static final int UNKNOWN_SIZE = -1;
+    private final long size;
+    private TypeRef inner;
+
+    public ArrayType(long size, TypeRef inner) {
+        this.size = size;
+        this.inner = inner;
+    }
 
     @Override
     public boolean isPrimitive() {
@@ -48,7 +55,7 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
 
     @Override
     public String getMangledName() {
-        return "arr" + size() + "_" + inner().getMangledName();
+        return "arr" + size() + "_" + getInner().getMangledName();
     }
 
     public boolean isDynamic() {
@@ -60,7 +67,7 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
     }
 
     @Override
-    public boolean equals(final TypeRef o) {
+    public boolean equals(final Object o) {
         if (!(o instanceof final ArrayType arrayType)) return false;
 
         return (size == -1 || arrayType.size == -1 || size == arrayType.size) && Objects.equals(inner, arrayType.inner);
@@ -83,6 +90,23 @@ public record ArrayType(long size, TypeRef inner) implements IterableTypeRef {
 
     @Override
     public TypeRef resolve(final Function<String, TypeRef> resolver) {
-        return new ArrayType(size, inner.resolve(resolver));
+        inner = inner.resolve(resolver);
+        return this;
     }
+
+    public long size() {
+        return size;
+    }
+
+    public TypeRef getInner() {
+        return inner;
+    }
+
+    @Override
+    public String toString() {
+        return "ArrayType[" +
+                "size=" + size + ", " +
+                "getInner=" + inner + ']';
+    }
+
 }

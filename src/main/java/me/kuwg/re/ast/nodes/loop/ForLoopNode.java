@@ -182,19 +182,19 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         cctx.emit(indexReg + " = alloca i32");
         cctx.emit("store i32 0, i32* " + indexReg);
 
-        String elemTypeLLVM = arr.inner().getLLVMName();
+        String elemTypeLLVM = arr.getInner().getLLVMName();
         cctx.emit('%' + llvmVariable + " = alloca " + elemTypeLLVM);
         String loopVarAddr = "%" + llvmVariable;
 
         String loopVarValue;
 
-        if (arr.inner() instanceof StructType) {
+        if (arr.getInner() instanceof StructType) {
             loopVarValue = loopVarAddr;
         } else {
             loopVarValue = cctx.nextRegister();
             cctx.emit(loopVarValue + " = load "
-                    + arr.inner().getLLVMName() + ", "
-                    + toPtr(arr.inner().getLLVMName())
+                    + arr.getInner().getLLVMName() + ", "
+                    + toPtr(arr.getInner().getLLVMName())
                     + loopVarAddr);
         }
 
@@ -202,7 +202,7 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
                 variable,
                 true,
                 true,
-                arr.inner(),
+                arr.getInner(),
                 loopVarAddr,
                 loopVarValue
         ));

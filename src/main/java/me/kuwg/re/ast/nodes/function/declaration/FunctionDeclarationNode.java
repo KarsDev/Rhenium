@@ -255,7 +255,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         if (!name.equals("main")) return false;
         if (parameters.isEmpty()) return true;
         if (parameters.size() != 1) return false;
-        return parameters.get(0).type() instanceof ArrayType arr && arr.inner() instanceof StrBuiltinType;
+        return parameters.get(0).type() instanceof ArrayType arr && arr.getInner() instanceof StrBuiltinType;
     }
 
     public String getName() {

@@ -7,7 +7,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public record StructType(String name, List<TypeRef> fieldTypes) implements TypeRef {
+public final class StructType implements TypeRef {
+    private final String name;
+    private final List<TypeRef> fieldTypes;
+
+    public StructType(String name, List<TypeRef> fieldTypes) {
+        this.name = name;
+        this.fieldTypes = fieldTypes;
+    }
+
+    private boolean resolved = false;
+
     static long alignTo(long value, long alignment) {
         return (value + alignment - 1) & -alignment;
     }
@@ -62,15 +72,7 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
 
     @Override
     public String getMangledName() {
-        if (fieldTypes().isEmpty()) {
-            return name();
-        }
-
-        StringBuilder sb = new StringBuilder(name());
-        for (TypeRef t : fieldTypes()) {
-            sb.append("_").append(t.getMangledName());
-        }
-        return sb.toString();
+        return name;
     }
 
     @Override
@@ -84,7 +86,7 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
     }
 
     @Override
-    public boolean equals(final TypeRef o) {
+    public boolean equals(final Object o) {
         if (!(o instanceof final StructType type)) return false;
 
         return Objects.equals(name, type.name) && Objects.equals(fieldTypes, type.fieldTypes);
@@ -92,6 +94,26 @@ public record StructType(String name, List<TypeRef> fieldTypes) implements TypeR
 
     @Override
     public TypeRef resolve(final Function<String, TypeRef> resolver) {
-        return new StructType(name, fieldTypes.stream().map(type -> type.resolve(resolver)).toList());
+        if (resolved) {
+            return this;
+        }
+
+        resolved = true;
+        this.fieldTypes.replaceAll(t -> t.resolve(resolver));
+        return this;
     }
+
+    public String name() {
+        return name;
+    }
+
+    public List<TypeRef> getFieldTypes() {
+        return fieldTypes;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, fieldTypes);
+    }
+
 }

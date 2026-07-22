@@ -33,7 +33,7 @@ public final class CastManager {
         if (from instanceof BoolBuiltinType) return fromBool(fileName, line, valReg, type, cctx);
         if (from instanceof CharBuiltinType) return fromChar(fileName, line, valReg, type, cctx);
         if (from instanceof AnyPointerType) return fromAnyPointer(fileName, line, valReg, type, cctx);
-        if (from instanceof PointerType ptr) return fromPointer(fileName, line, ptr.inner(), valReg, type, cctx);
+        if (from instanceof PointerType ptr) return fromPointer(fileName, line, ptr.getInner(), valReg, type, cctx);
         if (from instanceof ArrayType arr) return fromArray(fileName, line, arr, valReg, type, cctx);
         if (from instanceof StrBuiltinType) return fromStr(fileName, line, valReg, type, cctx);
         if (from instanceof UnionType union) return fromUnion(fileName, line, union, valReg, type, cctx);
@@ -284,7 +284,7 @@ public final class CastManager {
         String result = cctx.nextRegister();
 
         if (to instanceof ArrayType arrType) {
-            TypeRef elemType = arrType.inner();
+            TypeRef elemType = arrType.getInner();
             PointerType ptrToElem = new PointerType(elemType);
             cctx.emit(result + " = bitcast i8* " + valReg + " to " + ptrToElem.getLLVMName());
             return result;
@@ -339,14 +339,14 @@ public final class CastManager {
     private static String fromArray(final String fileName, int line, ArrayType from, String valReg, TypeRef to, CompilationContext cctx) {
         if (to instanceof AnyPointerType) {
             String result = cctx.nextRegister();
-            PointerType ptrToElem = new PointerType(from.inner());
+            PointerType ptrToElem = new PointerType(from.getInner());
             cctx.emit(result + " = bitcast " + ptrToElem.getLLVMName() + " " + valReg + " to i8*");
             return result;
         }
 
         if (to instanceof PointerType toPtr) {
             String result = cctx.nextRegister();
-            PointerType ptrToElem = new PointerType(from.inner());
+            PointerType ptrToElem = new PointerType(from.getInner());
             cctx.emit(result + " = bitcast " + ptrToElem.getLLVMName() + " " + valReg + " to " + toPtr.getLLVMName());
             return result;
         }
@@ -378,13 +378,22 @@ public final class CastManager {
     }
 
     private static String fromUnion(final String fileName, final int line, final UnionType from, final String valReg, final TypeRef to, final CompilationContext cctx) {
-        if (!from.contains(to)) {
+        if (!(to instanceof StructType structTo) || !from.contains(to)) {
             return new RIncompatibleCastError(from, to, fileName, line).raise();
         }
 
-        String result = cctx.nextRegister();
-        cctx.emit(result + " = bitcast " + from.getLLVMName() + " " + valReg + " to " + to.getLLVMName());
+        String unionPtr = cctx.nextRegister();
+        cctx.emit(unionPtr + " = alloca " + from.getLLVMName());
+        cctx.emit("store " + from.getLLVMName() + " " + valReg + ", " + from.getLLVMName() + "* " + unionPtr);
 
+        String payloadPtr = cctx.nextRegister();
+        cctx.emit(payloadPtr + " = getelementptr inbounds " + from.getLLVMName() + ", " + from.getLLVMName() + "* " + unionPtr + ", i32 0, i32 1");
+
+        String structPtr = cctx.nextRegister();
+        cctx.emit(structPtr + " = bitcast [" + from.payloadSize() + " x i8]* " + payloadPtr + " to " + structTo.getLLVMName() + "*");
+
+        String result = cctx.nextRegister();
+        cctx.emit(result + " = load " + structTo.getLLVMName() + ", " + structTo.getLLVMName() + "* " + structPtr);
         return result;
     }
 

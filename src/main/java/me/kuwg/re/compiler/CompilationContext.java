@@ -495,11 +495,11 @@ public final class CompilationContext {
     public TypeRef resolveConcrete(TypeRef t, final int line) {
         if (t instanceof AppliedGenStructType a) {
             List<TypeRef> args = a.args().stream().map(t1 -> resolveConcrete(t1, line)).toList();
-            RGenStruct gen = (RGenStruct) getStruct(a.base().name());
+            RGenStruct gen = (RGenStruct) getStruct(a.base().getName());
             return gen.instantiate(args, this, line).type();
         }
-        if (t instanceof PointerType p) return new PointerType(resolveConcrete(p.inner(), line));
-        if (t instanceof ArrayType a) return new ArrayType(a.size(), resolveConcrete(a.inner(), line));
+        if (t instanceof PointerType p) return new PointerType(resolveConcrete(p.getInner(), line));
+        if (t instanceof ArrayType a) return new ArrayType(a.size(), resolveConcrete(a.getInner(), line));
         return t;
     }
 }

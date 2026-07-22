@@ -34,7 +34,7 @@ public final class AnyPointerType extends BuiltinType {
     }
 
     @Override
-    public boolean equals(final TypeRef other) {
+    public boolean equals(final Object other) {
         return other instanceof AnyPointerType;
     }
 }

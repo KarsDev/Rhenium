@@ -5,7 +5,17 @@ import me.kuwg.re.type.TypeRef;
 import java.util.Objects;
 import java.util.function.Function;
 
-public record PointerType(TypeRef inner) implements TypeRef {
+public final class PointerType implements TypeRef {
+    private TypeRef inner;
+
+    public PointerType(TypeRef inner) {
+        this.inner = inner;
+    }
+
+    public TypeRef getInner() {
+        return inner;
+    }
+
     @Override
     public boolean isPrimitive() {
         return inner.isPrimitive();
@@ -33,7 +43,7 @@ public record PointerType(TypeRef inner) implements TypeRef {
 
     @Override
     public String getMangledName() {
-        return "ptr_" + inner().getMangledName();
+        return "ptr_" + getInner().getMangledName();
     }
 
     @Override
@@ -42,7 +52,7 @@ public record PointerType(TypeRef inner) implements TypeRef {
     }
 
     @Override
-    public boolean equals(final TypeRef o) {
+    public boolean equals(final Object o) {
         if (!(o instanceof final PointerType that)) return false;
 
         return Objects.equals(inner, that.inner);
@@ -50,6 +60,18 @@ public record PointerType(TypeRef inner) implements TypeRef {
 
     @Override
     public TypeRef resolve(final Function<String, TypeRef> resolver) {
-        return new PointerType(inner.resolve(resolver));
+        inner = inner.resolve(resolver);
+        return this;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(inner);
+    }
+
+    @Override
+    public String toString() {
+        return "PointerType[" +
+                "getInner=" + inner + ']';
     }
 }

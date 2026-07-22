@@ -35,7 +35,7 @@ public class DereferenceNode extends VariableReference {
 
         ptr = evalType(ptr, cctx, fileName, line);
 
-        setType(ptr.inner());
+        setType(ptr.getInner());
 
         cctx.emit(" ; Pointer dereference");
 
@@ -49,8 +49,8 @@ public class DereferenceNode extends VariableReference {
 
         String destReg = cctx.nextRegister();
         cctx.emit(destReg + " = load "
-                + ptr.inner().getLLVMName() + ", "
-                + toPtr(ptr.inner().getLLVMName())
+                + ptr.getInner().getLLVMName() + ", "
+                + toPtr(ptr.getInner().getLLVMName())
                 + ptrValueReg);
 
         return destReg;
@@ -88,23 +88,23 @@ public class DereferenceNode extends VariableReference {
 
         String valueReg;
 
-        if (ptr.inner() instanceof StructType) {
+        if (ptr.getInner() instanceof StructType) {
             valueReg = ptrValueReg;
         } else {
             valueReg = cctx.nextRegister();
             cctx.emit(valueReg + " = load "
-                    + ptr.inner().getLLVMName() + ", "
-                    + toPtr(ptr.inner().getLLVMName())
+                    + ptr.getInner().getLLVMName() + ", "
+                    + toPtr(ptr.getInner().getLLVMName())
                     + ptrValueReg);
         }
 
-        setType(ptr.inner());
+        setType(ptr.getInner());
 
         return new RVariable(
                 value.getSimpleName(),
                 true,
                 true,
-                ptr.inner(),
+                ptr.getInner(),
                 ptrValueReg,
                 valueReg
         );

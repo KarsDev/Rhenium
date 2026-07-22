@@ -40,7 +40,7 @@ public class ArrayNode extends PointerValueNode {
 
         var arr = new ArrayType(values.size(), values.get(0).getType());
 
-        if (arr.inner() instanceof NoneBuiltinType) {
+        if (arr.getInner() instanceof NoneBuiltinType) {
             return new RArrayTypeIsNoneError(fileName, line).raise();
         }
 
@@ -55,7 +55,7 @@ public class ArrayNode extends PointerValueNode {
         setType(inferType());
 
         ArrayType arrType = (ArrayType) getType();
-        TypeRef elementType = arrType.inner();
+        TypeRef elementType = arrType.getInner();
         long size = arrType.size();
 
         String llvmElemType = elementType.getLLVMName();
@@ -76,7 +76,7 @@ public class ArrayNode extends PointerValueNode {
 
             cctx.emit(gepReg + " = getelementptr " + llvmArrType + ", " + llvmArrType + "* " + arrPtr + ", i64 0, i64 " + i);
             if (elementType instanceof ArrayType innerArr) {
-                long innerBytes = innerArr.size() * innerArr.inner().getSize();
+                long innerBytes = innerArr.size() * innerArr.getInner().getSize();
 
                 cctx.emit("call void @llvm.memcpy.p0.p0.i64(" + "ptr " + gepReg + ", " + "ptr " + regs.get(i) + ", " + "i64 " + innerBytes + ", " + "i1 false)");
             } else {
@@ -116,7 +116,7 @@ public class ArrayNode extends PointerValueNode {
         setType(inferType());
 
         ArrayType arrType = (ArrayType) getType();
-        TypeRef inner = arrType.inner();
+        TypeRef inner = arrType.getInner();
 
         StringBuilder sb = new StringBuilder();
 

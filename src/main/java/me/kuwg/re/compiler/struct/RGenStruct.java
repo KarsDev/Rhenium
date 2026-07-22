@@ -35,9 +35,9 @@ public final class RGenStruct extends RDefaultStruct {
     }
 
     public RStruct instantiate(List<TypeRef> rawTypes, CompilationContext cctx, final int line) {
-        if (rawTypes.size() != type().genericTypes().size()) {
+        if (rawTypes.size() != type().getGenericTypes().size()) {
             throw new RuntimeException(
-                    "Expected " + type().genericTypes().size() + " generic arguments, got " + rawTypes.size()
+                    "Expected " + type().getGenericTypes().size() + " generic arguments, got " + rawTypes.size()
             );
         }
 
@@ -50,8 +50,8 @@ public final class RGenStruct extends RDefaultStruct {
         validateGenericConstraints(cctx, types);
 
         Map<String, TypeRef> mapping = new HashMap<>();
-        for (int i = 0; i < type().genericTypes().size(); i++) {
-            mapping.put(type().genericTypes().get(i).name(), types.get(i));
+        for (int i = 0; i < type().getGenericTypes().size(); i++) {
+            mapping.put(type().getGenericTypes().get(i).name(), types.get(i));
         }
 
         List<RStructField> newFields = new ArrayList<>();
@@ -117,7 +117,7 @@ public final class RGenStruct extends RDefaultStruct {
             sb.append("G");
             sb.append(base);
 
-            for (TypeRef inner : gen.fieldTypes()) {
+            for (TypeRef inner : gen.getFieldTypes()) {
                 sb.append(encodeType(inner));
             }
 
@@ -232,7 +232,7 @@ public final class RGenStruct extends RDefaultStruct {
     }
 
     private void validateGenericConstraints(CompilationContext cctx, List<TypeRef> actualTypes) {
-        List<TypeParameter> params = type().genericTypes();
+        List<TypeParameter> params = type().getGenericTypes();
 
         for (int i = 0; i < params.size(); i++) {
             TypeParameter tp = params.get(i);

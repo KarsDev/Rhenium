@@ -45,7 +45,7 @@ public class GenStructDeclarationNode extends ASTNode implements TopLevelNode {
         sb.append(indent).append("Generic Struct Declaration: ").append(NEWLINE);
         sb.append(indent).append(TAB).append("Name: ").append(name).append(NEWLINE);
         sb.append(indent).append(TAB).append("Types: ").append(NEWLINE);
-        type.genericTypes().forEach(t -> sb.append(indent).append(TAB).append(TAB).append("- ").append(t).append(NEWLINE));
+        type.getGenericTypes().forEach(t -> sb.append(indent).append(TAB).append(TAB).append("- ").append(t).append(NEWLINE));
         sb.append(indent).append(TAB).append("Fields: ").append(NEWLINE);
         for (final RStructField field : fields) {
             sb.append(indent).append(TAB).append(TAB).append("Name: ").append(field.name()).append(", Type: ")

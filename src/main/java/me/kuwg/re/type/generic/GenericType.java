@@ -42,7 +42,7 @@ public record GenericType(String name) implements TypeRef {
     }
 
     @Override
-    public boolean equals(TypeRef other) {
+    public boolean equals(Object other) {
         return other instanceof GenericType gen
                 && name.equals(gen.name());
     }

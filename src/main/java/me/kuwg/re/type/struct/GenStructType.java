@@ -5,14 +5,36 @@ import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
 import static me.kuwg.re.type.struct.StructType.alignTo;
 
-public record GenStructType(List<TypeParameter> genericTypes, String name,
-                            List<TypeRef> fieldTypes) implements TypeRef {
+public final class GenStructType implements TypeRef {
+    private boolean resolved = false;
+
+    private final List<TypeParameter> genericTypes;
+    private final String name;
+    private final List<TypeRef> fieldTypes;
+
+    public GenStructType(final List<TypeParameter> genericTypes,
+                         final String name,
+                         final List<TypeRef> fieldTypes) {
+        this.genericTypes = new ArrayList<>(genericTypes);
+        this.name = name;
+        this.fieldTypes = new ArrayList<>(fieldTypes);
+    }
+
+    public List<TypeParameter> getGenericTypes() {
+        return genericTypes;
+    }
+
+    public List<TypeRef> getFieldTypes() {
+        return fieldTypes;
+    }
+
     @Override
     public boolean isPrimitive() {
         return false;
@@ -20,8 +42,7 @@ public record GenStructType(List<TypeParameter> genericTypes, String name,
 
     @Override
     public boolean isCompatibleWith(final TypeRef other) {
-        if (!(other instanceof GenStructType s)) return false;
-        return Objects.equals(name, s.name);
+        return other instanceof GenStructType s && Objects.equals(name, s.name);
     }
 
     @Override
@@ -77,14 +98,30 @@ public record GenStructType(List<TypeParameter> genericTypes, String name,
     }
 
     @Override
-    public boolean equals(final TypeRef o) {
-        if (!(o instanceof final GenStructType type)) return false;
+    public boolean equals(final Object other) {
+        if (!(other instanceof GenStructType s)) {
+            return false;
+        }
 
-        return Objects.equals(name, type.name) && Objects.equals(fieldTypes, type.fieldTypes);
+        return Objects.equals(name, s.name)
+                && Objects.equals(genericTypes, s.genericTypes)
+                && Objects.equals(fieldTypes, s.fieldTypes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(genericTypes, name, fieldTypes);
     }
 
     @Override
     public TypeRef resolve(final Function<String, TypeRef> resolver) {
-        return new GenStructType(genericTypes, name, fieldTypes.stream().map(type -> type.resolve(resolver)).toList());
+        if (resolved) {
+            return this;
+        }
+
+        resolved = true;
+
+        this.fieldTypes.replaceAll(f -> f.resolve(resolver));
+        return this;
     }
 }

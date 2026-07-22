@@ -30,6 +30,8 @@ public class UnionDeclarationNode extends ASTNode implements TopLevelNode {
     public void load(final CompilationContext cctx) {
         if (loaded) return;
 
+        type = evalType(type, cctx, fileName, line);
+
         if (cctx.getUnion(type.getName()) != null) {
             new RUnionAlreadyExistsError(type.getName(), fileName, line).raise();
             return;
@@ -41,11 +43,12 @@ public class UnionDeclarationNode extends ASTNode implements TopLevelNode {
 
     @Override
     public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
-        final List<StructType> resolved = new ArrayList<>(type.variants().size());
+        final List<TypeRef> resolved = new ArrayList<>(type.variants().size());
 
-        for (final StructType variant : type.variants()) {
+        for (final TypeRef variant : type.variants()) {
             final TypeRef replaced = replaceGenericType(variant, generics, cctx);
-            resolved.add((StructType) cctx.resolveConcrete(replaced, line));
+            StructType t = (StructType) cctx.resolveConcrete(replaced, line);
+            resolved.add(t);
         }
 
         this.type = new UnionType(type.getName(), resolved);
@@ -54,12 +57,7 @@ public class UnionDeclarationNode extends ASTNode implements TopLevelNode {
     @Override
     public void compile(final CompilationContext cctx) {
         if (!loaded) load(cctx);
-        long payload = type.getPayloadSize();
-
-        cctx.declare(
-                type.getLLVMName() +
-                        " = type { i32, [" + payload + " x i8] }"
-        );
+        cctx.addIR(type.getLLVMName() + " = type { i32, [" + type.payloadSize() + " x i8] }");
     }
 
     @Override
@@ -68,7 +66,7 @@ public class UnionDeclarationNode extends ASTNode implements TopLevelNode {
                 .append(indent).append(TAB).append("Name: ").append(type.getName()).append(NEWLINE)
                 .append(indent).append(TAB).append("Variants:").append(NEWLINE);
 
-        for (final StructType variant : type.variants()) {
+        for (final TypeRef variant : type.variants()) {
             sb.append(indent).append(TAB).append(TAB)
                     .append("- ").append(variant.getName()).append(NEWLINE);
         }

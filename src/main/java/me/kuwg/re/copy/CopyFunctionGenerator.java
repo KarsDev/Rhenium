@@ -60,8 +60,8 @@ public final class CopyFunctionGenerator {
     }
 
     private void appendStructCopy(StringBuilder sb, StructType st, String dstPtr, String srcPtr, String indent, int line) {
-        for (int i = 0; i < st.fieldTypes().size(); i++) {
-            TypeRef fieldType = cctx.resolveConcrete(st.fieldTypes().get(i), line);
+        for (int i = 0; i < st.getFieldTypes().size(); i++) {
+            TypeRef fieldType = cctx.resolveConcrete(st.getFieldTypes().get(i), line);
 
             String fieldSrc = "%src_" + i;
             String fieldDst = "%dst_" + i;

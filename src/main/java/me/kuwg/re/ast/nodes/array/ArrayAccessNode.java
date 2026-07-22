@@ -96,9 +96,9 @@ public class ArrayAccessNode extends VariableReference {
         TypeRef elementType;
 
         if (arrayType instanceof ArrayType arrType) {
-            elementType = arrType.inner();
+            elementType = arrType.getInner();
         } else if (arrayType instanceof PointerType ptrType) {
-            elementType = ptrType.inner();
+            elementType = ptrType.getInner();
         } else if (arrayType.equals(BuiltinTypes.STR.getType())) {
             elementType = BuiltinTypes.CHAR.getType();
         } else {
@@ -130,11 +130,11 @@ public class ArrayAccessNode extends VariableReference {
         TypeRef arrayType = array.getType();
 
         if (arrayType instanceof ArrayType arrType) {
-            return arrType.inner();
+            return arrType.getInner();
         }
 
         if (arrayType instanceof PointerType ptrType) {
-            return ptrType.inner();
+            return ptrType.getInner();
         }
 
         if (arrayType.equals(BuiltinTypes.STR.getType())) {

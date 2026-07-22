@@ -38,7 +38,7 @@ public record UndefinedType(String name, int line, String fileName) implements T
     }
 
     @Override
-    public boolean equals(final TypeRef other) {
+    public boolean equals(final Object other) {
         throw new RInternalError();
     }
 

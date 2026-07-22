@@ -87,9 +87,11 @@ import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 import me.kuwg.re.type.trait.TraitType;
+import me.kuwg.re.type.undefined.UndefinedType;
 import me.kuwg.re.type.union.UnionType;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static me.kuwg.re.token.TokenType.*;
 
@@ -130,6 +132,9 @@ public final class ASTParser {
         if (initial) {
             includeInitialModules(ast);
         }
+
+        collectTypesOnly();
+        tokenIndex = 0;
 
         while (!tokens[tokenIndex].matches(EOF)) {
             ASTNode node = parseStatement();
@@ -406,6 +411,7 @@ public final class ASTParser {
             case "copy" -> parseCopyKeyword();
             case "delete" -> parseDeleteKeyword();
             case "zero" -> parseZeroKeyword();
+            case "union" -> parseUnionKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, fileName, line()).raise();
         };
     }
@@ -1471,8 +1477,8 @@ public final class ASTParser {
     private @SubFunc ASTNode parseGenericImpl(final int line, final GenStructType type) {
         var typeParameters = parseTypeParameters();
 
-        if (typeParameters.size() != type.genericTypes().size()) {
-            return new RParserError("Expected " + type.genericTypes().size() + " generic parameters but got " + typeParameters.size(), fileName, line).raise();
+        if (typeParameters.size() != type.getGenericTypes().size()) {
+            return new RParserError("Expected " + type.getGenericTypes().size() + " generic parameters but got " + typeParameters.size(), fileName, line).raise();
         }
 
         if (!matchAndConsume(OPERATOR, ":")) {
@@ -1538,11 +1544,11 @@ public final class ASTParser {
             TypeRef t = param.type();
             while (true) {
                 if (t instanceof PointerType ptr) {
-                    t = ptr.inner();
+                    t = ptr.getInner();
                     continue;
                 }
                 if (t instanceof ArrayType arr) {
-                    t = arr.inner();
+                    t = arr.getInner();
                     continue;
                 }
                 if (!(t instanceof GenericType gen)) break;
@@ -1887,7 +1893,7 @@ public final class ASTParser {
         }
         consume();
 
-        List<StructType> variants = new ArrayList<>();
+        List<TypeRef> variants = new ArrayList<>();
 
         while (!match(EOF) && !match(DEDENT)) {
             removeNewlines();
@@ -1898,10 +1904,10 @@ public final class ASTParser {
 
             TypeRef type = parseType(false);
 
-            if (!(type instanceof StructType structType))
+            if (!(type instanceof StructType))
                 return new RParserError("Unions allow only struct types", fileName, line()).raise();
 
-            variants.add(structType);
+            variants.add(type);
         }
 
         if (match(DEDENT)) {
@@ -2057,8 +2063,8 @@ public final class ASTParser {
                 return new RParserError("Expected '>' for generic type", fileName, line()).raise();
             }
 
-            if (gen.genericTypes().size() != genericTypes.size()) {
-                return new RParserError("Expected " + gen.genericTypes().size() + " generic arguments but got " + genericTypes.size(), fileName, line()).raise();
+            if (gen.getGenericTypes().size() != genericTypes.size()) {
+                return new RParserError("Expected " + gen.getGenericTypes().size() + " generic arguments but got " + genericTypes.size(), fileName, line()).raise();
             }
 
             return new AppliedGenStructType(gen, genericTypes);
@@ -2273,6 +2279,77 @@ public final class ASTParser {
     external utilities
      */
 
+    private TypeRef collectType(final boolean generics) {
+        if (!match(IDENTIFIER) && !match(KEYWORD)) {
+            return null;
+        }
+
+        int line = line();
+        String typeName = consume().value();
+
+        switch (typeName) {
+            case "ptr" -> {
+                return collectPointerType(line ,generics);
+            }
+            case "arr" -> {
+                return collectArrayType(line, generics);
+            }
+            case "lambda" -> {
+                return collectLambdaType(line, generics);
+            }
+            case "struct" -> {
+                String name = identifier();
+                TypeRef type = typeMap.get(name);
+                return type != null ? type : new UndefinedType(name, line, fileName);
+            }
+        }
+
+        if (typeMap.containsKey(typeName)) {
+            return typeMap.get(typeName);
+        }
+
+        TypeRef builtin = BuiltinTypes.getByName(typeName);
+        if (builtin != null) {
+            return builtin;
+        }
+
+        if (currentGenericTypes.contains(typeName) || generics) {
+            return new GenericType(typeName);
+        }
+
+        return new UndefinedType(typeName, line, fileName);
+    }
+
+    private TypeRef collectPointerType(int line, boolean generics) {
+        if (!matchAndConsume(OPERATOR, "->")) return new RParserError("Expected '->' for pointer type", fileName, line).raise();
+        return new PointerType(collectType(generics));
+    }
+
+    private TypeRef collectArrayType(int line, boolean generics) {
+        if (!matchAndConsume(OPERATOR, "->")) return new RParserError("Expected '->' for array type", fileName, line).raise();
+        return new ArrayType(ArrayType.UNKNOWN_SIZE, collectType(generics));
+    }
+
+    private TypeRef collectLambdaType(int line, boolean generics) {
+        if (!matchAndConsume(DIVIDER, "("))
+            return new RParserError("Expected '(' for lambda type declaration", fileName, line).raise();
+        List<TypeRef> params = new ArrayList<>();
+        if (!matchAndConsume(DIVIDER, ")")) {
+            do {
+                params.add(collectType(generics));
+            } while (matchAndConsume(DIVIDER, ","));
+
+            if (!matchAndConsume(DIVIDER, ")"))
+                return new RParserError("Expected ')' for lambda type declaration", fileName, line).raise();
+        }
+
+        if (!matchAndConsume(OPERATOR, "->"))
+            return new RParserError("Expected \"->\" for lambda type declaration", fileName, line).raise();
+
+        TypeRef inner = collectType(generics);
+        return new LambdaType(params, inner);
+    }
+
     public void collectTypesOnly() {
         tokenIndex = 0;
 
@@ -2313,9 +2390,47 @@ public final class ASTParser {
                 continue;
             }
 
+            if (matchAndConsume(KEYWORD, "union")) {
+                collectUnionType();
+                continue;
+            }
+
             if (outOfBounds(0)) return;
             consume();
         }
+
+        resolveTypes();
+    }
+
+    private @SuppressWarnings("unchecked") void resolveTypes() {
+        final Map<String, TypeRef> resolved = new HashMap<>();
+
+        final Function<String, TypeRef>[] resolver = new Function[1];
+
+        resolver[0] = name -> {
+            TypeRef cached = resolved.get(name);
+            if (cached != null) {
+                return cached;
+            }
+
+            TypeRef type = typeMap.get(name);
+            if (type == null) {
+                return null;
+            }
+
+            resolved.put(name, type);
+
+            type.resolve(resolver[0]);
+
+            return type;
+        };
+
+        for (String name : new ArrayList<>(typeMap.keySet())) {
+            resolver[0].apply(name);
+        }
+
+        typeMap.clear();
+        typeMap.putAll(resolved);
     }
 
     private void collectStructType(boolean generic) {
@@ -2362,7 +2477,7 @@ public final class ASTParser {
                 continue;
             }
 
-            TypeRef fieldType = parseType(generic);
+            TypeRef fieldType = collectType(generic);
             fieldTypes.add(fieldType);
 
             if (match(OPERATOR, "=")) {
@@ -2508,7 +2623,7 @@ public final class ASTParser {
             List<FunctionParameter> params = parseParamsDeclare(false);
 
             TypeRef returnType = matchAndConsume(OPERATOR, "->")
-                    ? parseType(false)
+                    ? collectType(false)
                     : BuiltinTypes.NONE.getType();
 
             functions.putIfAbsent(fname, new TraitFunction(fname, params, returnType));
@@ -2523,5 +2638,47 @@ public final class ASTParser {
         }
 
         addType(name, new TraitType(name, functions));
+    }
+
+    private void collectUnionType() {
+        if (!match(IDENTIFIER)) {
+            return;
+        }
+
+        String name = consume().value();
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return;
+        }
+
+        removeNewlines();
+
+        if (!match(INDENT)) {
+            return;
+        }
+        consume();
+
+        List<TypeRef> variants = new ArrayList<>();
+
+        while (!match(DEDENT) && !match(EOF)) {
+            removeNewlines();
+
+            if (match(DEDENT) || match(EOF)) {
+                break;
+            }
+
+            TypeRef type = collectType(false);
+            variants.add(type);
+
+            while (!match(NEWLINE) && !match(DEDENT) && !match(EOF)) {
+                consume();
+            }
+        }
+
+        if (match(DEDENT)) {
+            consume();
+        }
+
+        addType(name, new UnionType(name, variants));
     }
 }

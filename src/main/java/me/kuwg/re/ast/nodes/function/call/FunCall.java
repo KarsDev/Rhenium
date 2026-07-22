@@ -49,17 +49,17 @@ public abstract class FunCall extends ValueNode {
             }
             return resolved;
         } else if (type instanceof PointerType ptr) {
-            return new PointerType(substituteConcrete(ptr.inner(), map));
+            return new PointerType(substituteConcrete(ptr.getInner(), map));
         } else if (type instanceof ArrayType arr) {
-            return new ArrayType(arr.size(), substituteConcrete(arr.inner(), map));
+            return new ArrayType(arr.size(), substituteConcrete(arr.getInner(), map));
         }
         return type;
     }
 
     boolean containsGeneric(TypeRef type) {
         if (type instanceof GenericType) return true;
-        if (type instanceof ArrayType arr) return containsGeneric(arr.inner());
-        if (type instanceof PointerType ptr) return containsGeneric(ptr.inner());
+        if (type instanceof ArrayType arr) return containsGeneric(arr.getInner());
+        if (type instanceof PointerType ptr) return containsGeneric(ptr.getInner());
         return false;
     }
 

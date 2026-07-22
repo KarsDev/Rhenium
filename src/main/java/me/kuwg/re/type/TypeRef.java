@@ -19,7 +19,7 @@ public interface TypeRef {
 
     String getMangledName();
 
-    boolean equals(TypeRef other);
+    @Override boolean equals(Object other);
 
     String getZeroValue();
 

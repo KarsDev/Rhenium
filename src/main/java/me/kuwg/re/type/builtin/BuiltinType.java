@@ -21,7 +21,7 @@ abstract class BuiltinType implements TypeRef {
     }
 
     @Override
-    public boolean equals(final TypeRef other) {
+    public boolean equals(final Object other) {
         return this.getClass().equals(other.getClass());
     }
 

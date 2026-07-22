@@ -112,8 +112,8 @@ public class VariableDeclarationNode extends ValueNode {
         TypeRef varType = evalType(type == null || type instanceof TraitType ? valueType : type, cctx, fileName, line);
 
         if (valueType instanceof ArrayType arrType) {
-            varType = new ArrayType(arrType.size(), arrType.inner());
-            if (arrType.inner() instanceof NoneBuiltinType) {
+            varType = new ArrayType(arrType.size(), arrType.getInner());
+            if (arrType.getInner() instanceof NoneBuiltinType) {
                 return new RArrayTypeIsNoneError(fileName, line).raise();
             }
         }
@@ -194,7 +194,7 @@ public class VariableDeclarationNode extends ValueNode {
     private void checkTraitType(TypeRef type, TraitType traitType, CompilationContext cctx) {
         Trait t = cctx.getTrait(traitType.getName());
         if (t == null) {
-            new RInheritanceError("Trait not found: " + traitType.name(), fileName, line).raise();
+            new RInheritanceError("Trait not found: " + traitType.getName(), fileName, line).raise();
             return;
         }
 

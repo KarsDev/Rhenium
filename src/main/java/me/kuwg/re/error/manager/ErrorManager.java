@@ -9,7 +9,7 @@ final class ErrorManager {
         System.err.println("An exception occurred: ");
         System.err.println("  Message: " + error.getMessage());
         System.err.println("  File: " + error.getFileName());
-        System.err.println("  At line " + error.getLine());
+        if (error.getLine() != -1) System.err.println("  At line " + error.getLine());
         System.err.println("  Internal error name: \"" + getIEN(error.getCode()) + "\"");
 
         //System.exit(error.getCode());

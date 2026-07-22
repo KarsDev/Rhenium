@@ -51,13 +51,13 @@ public class GenStructInitNode extends ValueNode {
 
         RGenStruct genStruct = (RGenStruct) struct;
 
-        if (genStruct.type().genericTypes().size() != genericTypes.size()) {
-            return new RGenStructInitError("Expected " + genStruct.type().genericTypes().size() + " generic types but got " + genericTypes.size(), fileName, line).raise();
+        if (genStruct.type().getGenericTypes().size() != genericTypes.size()) {
+            return new RGenStructInitError("Expected " + genStruct.type().getGenericTypes().size() + " generic types but got " + genericTypes.size(), fileName, line).raise();
         }
 
         Map<String, TypeRef> bindings = new HashMap<>();
 
-        var declared = genStruct.type().genericTypes();
+        var declared = genStruct.type().getGenericTypes();
 
         for (int i = 0; i < declared.size(); i++) {
             bindings.put(declared.get(i).name(), genericTypes.get(i));

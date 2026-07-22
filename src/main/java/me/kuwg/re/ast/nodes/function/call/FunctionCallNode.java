@@ -129,9 +129,9 @@ public class FunctionCallNode extends FunCall {
                 new RFunctionGenericsError("Conflicting types for " + gen.name() + ": " + existing.getName() + " vs " + callType.getName(), fileName, line).raise();
             }
         } else if (paramType instanceof ArrayType arr && callType instanceof ArrayType callArr) {
-            inferTypeBindings(arr.inner(), callArr.inner(), map);
+            inferTypeBindings(arr.getInner(), callArr.getInner(), map);
         } else if (paramType instanceof PointerType ptr && callType instanceof PointerType callPtr) {
-            inferTypeBindings(ptr.inner(), callPtr.inner(), map);
+            inferTypeBindings(ptr.getInner(), callPtr.getInner(), map);
         }
     }
 
