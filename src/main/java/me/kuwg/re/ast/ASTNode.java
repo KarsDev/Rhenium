@@ -15,9 +15,7 @@ import me.kuwg.re.type.trait.TraitType;
 import me.kuwg.re.type.union.UnionType;
 import me.kuwg.re.writer.Writeable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class ASTNode implements Compilable, Writeable, Cloneable {
     protected final String fileName;
@@ -83,32 +81,71 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends TypeRef>  T evalType(T type, CompilationContext cctx, final String fileName, final int line) {
-        if (type instanceof AppliedGenStructType ags) {
-            String structName = ags.base().getName();
-            RGenStruct struct = (RGenStruct) cctx.getStruct(structName);
-            type = (T) struct.instantiate(ags.args(), cctx, line).type();
-        } else if (type instanceof PointerType ptr) {
-            type = (T) new PointerType(evalType(ptr.getInner(), cctx, fileName, line));
-        } else if (type instanceof ArrayType arr) {
-            type = (T) new ArrayType(arr.size(), evalType(arr.getInner(), cctx, fileName, line));
-        } else if (type instanceof UnionType union) {
-            List<TypeRef> variants = new ArrayList<>(union.variants().size());
-            union.variants().forEach(v -> variants.add(evalType(v, cctx, fileName, line)));
-            type = (T) new UnionType(union.getName(), variants);
-        } else if (type instanceof StructType st) {
-            List<TypeRef> fields = new ArrayList<>(st.getFieldTypes().size());
+    public static <T extends TypeRef> T evalType(T type, CompilationContext cctx, final String fileName, final int line) {
+        TypeRef resolved = evalType(type, cctx, fileName, line, new HashSet<>());
 
-            for (TypeRef field : st.getFieldTypes()) {
-                fields.add(evalType(field, cctx, fileName, line));
-            }
-
-            type = (T) new StructType(st.getName(), fields);
-        } else if (type instanceof TraitType) {
-            return new RInheritanceError("Trait is not usable as a parameter", fileName, line).raise();
+        if (resolved instanceof AppliedGenStructType) {
+            throw new RInternalError();
         }
 
-        if (type instanceof AppliedGenStructType) throw new RInternalError();
+        return (T) resolved;
+    }
+
+    private static TypeRef evalType(TypeRef type, CompilationContext cctx, final String fileName, final int line, Set<String> expanding) {
+        if (type instanceof AppliedGenStructType ags) {
+            String key = ags.base().getName() + "<" + ags.args() + ">";
+
+            if (!expanding.add(key)) {
+                return type;
+            }
+
+            try {
+                String structName = ags.base().getName();
+                RGenStruct struct = (RGenStruct) cctx.getStruct(structName);
+                TypeRef instantiated = struct.instantiate(ags.args(), cctx, line).type();
+                return evalType(instantiated, cctx, fileName, line, expanding);
+            } finally {
+                expanding.remove(key);
+            }
+        }
+
+        if (type instanceof PointerType ptr) {
+            TypeRef inner = evalType(ptr.getInner(), cctx, fileName, line, expanding);
+            return inner == ptr.getInner() ? ptr : new PointerType(inner);
+        }
+
+        if (type instanceof ArrayType arr) {
+            TypeRef inner = evalType(arr.getInner(), cctx, fileName, line, expanding);
+            return inner == arr.getInner() ? arr : new ArrayType(arr.size(), inner);
+        }
+
+        if (type instanceof UnionType union) {
+            List<TypeRef> variants = new ArrayList<>(union.variants().size());
+            for (TypeRef v : union.variants()) {
+                variants.add(evalType(v, cctx, fileName, line, expanding));
+            }
+            return new UnionType(union.getName(), variants);
+        }
+
+        if (type instanceof StructType st) {
+            if (!expanding.add("struct:" + st.getName())) {
+                return st;
+            }
+
+            try {
+                List<TypeRef> fields = new ArrayList<>();
+                for (TypeRef field : st.getFieldTypes()) {
+                    fields.add(evalType(field, cctx, fileName, line, expanding));
+                }
+                return new StructType(st.getName(), fields);
+            } finally {
+                expanding.remove("struct:" + st.getName());
+            }
+        }
+
+        if (type instanceof TraitType) {
+            return new RInheritanceError("Trait is not usable as a parameter", fileName, line).raise();
+        }
 
         return type;
     }
