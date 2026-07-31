@@ -1,6 +1,7 @@
 package me.kuwg.re.type.union;
 
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.layout.LayoutCalculator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -8,10 +9,10 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public final class UnionType implements TypeRef {
-    private boolean resolved = false;
-
+    private static final LayoutCalculator LAYOUT = new LayoutCalculator();
     private final String name;
     private final List<TypeRef> variants;
+    private boolean resolved = false;
 
     public UnionType(final String name, final @NotNull List<TypeRef> variants) {
         this.name = name;
@@ -23,7 +24,10 @@ public final class UnionType implements TypeRef {
     }
 
     public boolean contains(final TypeRef type) {
-        return variants.stream().anyMatch(v -> v.equals(type));
+        for (final TypeRef v : variants) {
+            if (v.equals(type)) return true;
+        }
+        return false;
     }
 
     @Override
@@ -37,35 +41,17 @@ public final class UnionType implements TypeRef {
             return name.equals(u.name);
         }
 
-        return variants.stream().anyMatch(v -> v.equals(other));
+        return contains(other);
     }
 
     @Override
     public long getSize() {
-        long payloadSize = 0;
-        long payloadAlign = 4;
-
-        for (TypeRef variant : variants) {
-            payloadSize = Math.max(payloadSize, variant.getSize());
-            payloadAlign = Math.max(payloadAlign, variant.getAlignment());
-        }
-
-        long offset = 4;
-
-        long padding = (payloadAlign - (offset % payloadAlign)) % payloadAlign;
-
-        return offset + padding + payloadSize;
+        return LAYOUT.size(this);
     }
 
     @Override
     public long getAlignment() {
-        long max = 4;
-
-        for (TypeRef variant : variants) {
-            max = Math.max(max, variant.getAlignment());
-        }
-
-        return max;
+        return LAYOUT.alignment(this);
     }
 
     @Override

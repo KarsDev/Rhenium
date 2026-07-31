@@ -10,6 +10,7 @@ import me.kuwg.re.type.TypeRef;
 import java.util.Map;
 
 public class NamespaceDeclarationNode extends ASTNode implements GlobalNode, TopLevelNode {
+    private boolean loaded = false;
     private final String name;
     private final BlockNode block;
 
@@ -31,6 +32,7 @@ public class NamespaceDeclarationNode extends ASTNode implements GlobalNode, Top
 
     @Override
     public void compile(final CompilationContext cctx) {
+        load(cctx);
         cctx.declare("; Namespace declaration");
         cctx.pushNamespace(name);
         block.compile(cctx);
@@ -47,6 +49,8 @@ public class NamespaceDeclarationNode extends ASTNode implements GlobalNode, Top
 
     @Override
     public void load(final CompilationContext cctx) {
+        if (loaded) return;
+        loaded = true;
         cctx.pushNamespace(name);
         block.load(cctx);
         cctx.popNamespace();

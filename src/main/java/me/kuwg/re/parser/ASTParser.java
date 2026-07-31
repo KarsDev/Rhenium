@@ -1905,7 +1905,7 @@ public final class ASTParser {
             TypeRef type = parseType(false);
 
             if (!(type instanceof StructType))
-                return new RParserError("Unions allow only struct types", fileName, line()).raise();
+                return new RParserError("Unions allow only struct types: " + type.getName(), fileName, line()).raise();
 
             variants.add(type);
         }

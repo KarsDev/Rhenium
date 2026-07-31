@@ -10,6 +10,7 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.*;
 import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.struct.StructType;
+import me.kuwg.re.type.union.UnionType;
 
 import java.util.Objects;
 
@@ -74,6 +75,82 @@ public final class EqualsBO extends BinaryOperator {
             c.cctx().emit(
                     resReg + " = icmp eq ptr null, " + c.rightReg()
             );
+            return res(resReg, BuiltinTypes.BOOL.getType());
+        }
+
+        if (leftType instanceof UnionType lt && rightType instanceof UnionType rt) {
+            if (!lt.getName().equals(rt.getName())) {
+                return res("false", BuiltinTypes.BOOL.getType());
+            }
+
+            var unionDef = c.cctx().getUnion(lt.getName());
+            if (unionDef == null) {
+                return new RUnsupportedBinaryExpressionError(
+                        leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
+                ).raise();
+            }
+
+            // Tag is stored in slot 0.
+            String leftTag = c.cctx().nextRegister();
+            String rightTag = c.cctx().nextRegister();
+
+            c.cctx().emit(leftTag + " = extractvalue " + lt.getLLVMName() + " " + c.leftReg() + ", 0");
+            c.cctx().emit(rightTag + " = extractvalue " + rt.getLLVMName() + " " + c.rightReg() + ", 0");
+
+            String tagEq = c.cctx().nextRegister();
+            c.cctx().emit(tagEq + " = icmp eq i32 " + leftTag + ", " + rightTag);
+
+            String payloadEq = null;
+
+            for (int i = 0; i < unionDef.variants().size(); i++) {
+                TypeRef fieldType = unionDef.variants().get(i);
+
+                String leftVal = c.cctx().nextRegister();
+                String rightVal = c.cctx().nextRegister();
+
+                c.cctx().emit(leftVal + " = extractvalue "
+                        + lt.getLLVMName() + " "
+                        + c.leftReg() + ", " + (i + 1));
+
+                c.cctx().emit(rightVal + " = extractvalue "
+                        + rt.getLLVMName() + " "
+                        + c.rightReg() + ", " + (i + 1));
+
+                String fieldEq = c.cctx().nextRegister();
+
+                if (fieldType instanceof StrBuiltinType) {
+                    c.cctx().emit(fieldEq + " = call i1 @strEquals(i8* " + leftVal + ", i8* " + rightVal + ")");
+                } else if (fieldType instanceof FloatBuiltinType || fieldType instanceof DoubleBuiltinType) {
+                    c.cctx().emit(fieldEq + " = fcmp oeq "
+                            + fieldType.getLLVMName() + " " + leftVal + ", " + rightVal);
+                } else {
+                    c.cctx().emit(fieldEq + " = icmp eq "
+                            + fieldType.getLLVMName() + " " + leftVal + ", " + rightVal);
+                }
+
+                String leftActive = c.cctx().nextRegister();
+                String rightActive = c.cctx().nextRegister();
+                c.cctx().emit(leftActive + " = icmp eq i32 " + leftTag + ", " + i);
+                c.cctx().emit(rightActive + " = icmp eq i32 " + rightTag + ", " + i);
+
+                String activeBoth = c.cctx().nextRegister();
+                c.cctx().emit(activeBoth + " = and i1 " + leftActive + ", " + rightActive);
+
+                String caseEq = c.cctx().nextRegister();
+                c.cctx().emit(caseEq + " = and i1 " + activeBoth + ", " + fieldEq);
+
+                if (payloadEq == null) {
+                    payloadEq = caseEq;
+                } else {
+                    String orReg = c.cctx().nextRegister();
+                    c.cctx().emit(orReg + " = or i1 " + payloadEq + ", " + caseEq);
+                    payloadEq = orReg;
+                }
+            }
+
+            String finalPayloadEq = Objects.requireNonNullElse(payloadEq, "true");
+            String resReg = c.cctx().nextRegister();
+            c.cctx().emit(resReg + " = and i1 " + tagEq + ", " + finalPayloadEq);
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 

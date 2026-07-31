@@ -37,10 +37,15 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
 
     @Override
     public void compile(final CompilationContext cctx) {
+        String endLabel = cctx.nextLabel("if_end");
+        compile(cctx, endLabel);
+        cctx.emit(endLabel + ":");
+    }
+
+    private void compile(final CompilationContext cctx, final String endLabel) {
         cctx.emit("; If statement");
 
         String ifLabel = cctx.nextLabel("if_block");
-        String endLabel = cctx.nextLabel("if_end");
         String elseLabel = null;
 
         if (elseIfNode != null) {
@@ -59,40 +64,29 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
         cctx.emit("br i1 " + condReg + ", label %" + ifLabel + ", label %" + Objects.requireNonNullElse(elseLabel, endLabel));
 
         cctx.emit(ifLabel + ":");
-
         cctx.pushIndent();
         cctx.pushScope();
         block.compile(cctx);
         if (block.getNodes().isEmpty() || !(block.getNodes().get(block.getNodes().size() - 1) instanceof InterruptNode)) {
             cctx.emit("br label %" + endLabel);
         }
-        cctx.popIndent();
         cctx.popScope();
+        cctx.popIndent();
 
         if (elseIfNode != null) {
             cctx.emit(elseLabel + ":");
-            elseIfNode.compile(cctx);
-
-            BlockNode lastBlock = elseIfNode.getBlock();
-            if (lastBlock != null && !lastBlock.getNodes().isEmpty()) {
-                if (!(lastBlock.getNodes().get(lastBlock.getNodes().size() - 1) instanceof InterruptNode)) {
-                    cctx.emit("br label %" + endLabel);
-                }
-            }
+            elseIfNode.compile(cctx, endLabel);
         } else if (elseNode != null) {
             cctx.emit(elseLabel + ":");
             cctx.pushIndent();
             cctx.pushScope();
             elseNode.compile(cctx);
-            cctx.popIndent();
-            cctx.popScope();
-            if (!elseNode.getNodes().isEmpty()
-                    && !(elseNode.getNodes().get(elseNode.getNodes().size() - 1) instanceof InterruptNode)) {
+            if (elseNode.getNodes().isEmpty() || !(elseNode.getNodes().get(elseNode.getNodes().size() - 1) instanceof InterruptNode)) {
                 cctx.emit("br label %" + endLabel);
             }
+            cctx.popScope();
+            cctx.popIndent();
         }
-
-        cctx.emit(endLabel + ":");
     }
 
     @Override

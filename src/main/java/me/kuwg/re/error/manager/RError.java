@@ -25,9 +25,8 @@ public abstract class RError {
 
     protected abstract int getCode();
 
-    public @SuppressWarnings("unchecked")
-    final <T> T raise() {
+    public final <T> T raise() {
         ErrorManager.raise(this);
-        return (T) RError.class;
+        throw new IllegalStateException();
     }
 }

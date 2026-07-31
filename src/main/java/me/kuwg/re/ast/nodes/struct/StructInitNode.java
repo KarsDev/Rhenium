@@ -81,7 +81,7 @@ public class StructInitNode extends ValueNode {
         struct.inherited().forEach(i -> {
             Trait trait = cctx.getTrait(i);
             if (trait == null) {
-                new RInheritanceError("Trait not found: " + i, fileName, line).raise();
+                new RInheritanceError("Could not find trait " + i + " while checking inheritance of struct " + struct.type().getName(), fileName, line).raise();
                 return;
             }
             checkInherited(trait, struct);

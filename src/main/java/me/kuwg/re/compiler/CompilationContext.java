@@ -35,7 +35,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "%state.addr = alloca %struct.RegexParserState_List$10RegexToken_int e";
+    private static final String ERROR_LINE = "ret %struct.EmptyNode %2169 --";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -48,7 +48,7 @@ public final class CompilationContext {
     private final Map<String, RVariable> variables = new HashMap<>();
     private final RFunctions functions = new RFunctions();
     private final Stack<LoopContext> loopStack = new Stack<>();
-    private final Stack<Map<String, RVariable>> scopeStack = new Stack<>();
+    private Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private final Map<String, RDefaultStruct> structs = new HashMap<>();
     private final Stack<String> catchScopeStack = new Stack<>();
     private final Map<String, Path> nativeCPPModules = new LinkedHashMap<>();
@@ -123,8 +123,7 @@ public final class CompilationContext {
         if (!scopeStack.isEmpty()) {
             scopeStack.peek().put(v.name(), v);
         } else {
-            pushScope();
-            addVariable(v);
+            throw new RInternalError();
         }
     }
 
@@ -155,6 +154,16 @@ public final class CompilationContext {
         }
 
         return null;
+    }
+
+    public Stack<Map<String, RVariable>> detachScopes() {
+        Stack<Map<String, RVariable>> old = scopeStack;
+        scopeStack = new Stack<>();
+        return old;
+    }
+
+    public void restoreScopes(Stack<Map<String, RVariable>> old) {
+        scopeStack = old;
     }
 
     public void addFunction(RFunction f) {

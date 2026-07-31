@@ -23,6 +23,7 @@ import me.kuwg.re.type.iterable.range.RangeType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlockContainer, TopLevelNode {
     private final boolean isGeneric;
@@ -121,36 +122,52 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         func.append(") ");
         if (inline) {
-            cctx.declare("attributes #0 = { alwaysinline }");
+            cctx.declareOnce("attributes #0 = { alwaysinline }");
             func.append("#0 ");
         }
         func.append("{\n");
         func.append("entry:\n");
 
-        cctx.pushIndent();
-        cctx.pushScope();
-        cctx.pushFunctionBody();
+        Stack<Map<String, RVariable>> oldScopes = cctx.detachScopes();
+        String ns;
 
-        for (int i = 0, parametersSize = parameters.size(); i < parametersSize; i++) {
-            final FunctionParameter param = parameters.get(i);
+        try {
+            cctx.pushIndent();
+            cctx.pushScope();
+            cctx.pushFunctionBody();
 
-            String paramPtr = "%" + param.name() + ".addr";
+            for (int i = 0, parametersSize = parameters.size(); i < parametersSize; i++) {
+                final FunctionParameter param = parameters.get(i);
 
-            TypeRef pt = evalType(types.get(i), cctx, fileName, line);
+                String paramPtr = "%" + param.name() + ".addr";
 
-            cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
-            cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
+                TypeRef pt = evalType(types.get(i), cctx, fileName, line);
 
-            RVariable paramVar = new RVariable(param.name(), param.mutable(), true, pt, paramPtr, "%" + param.name());
-            cctx.addVariable(paramVar);
-        }
+                cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
+                cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 
-        String ns = cctx.popNamespace();
+                RVariable paramVar = new RVariable(
+                        param.name(),
+                        param.mutable(),
+                        true,
+                        pt,
+                        paramPtr,
+                        "%" + param.name()
+                );
 
-        block.compile(cctx);
+                cctx.addVariable(paramVar);
+            }
 
-        if (returnType instanceof NoneBuiltinType) {
-            cctx.emit("ret void");
+            ns = cctx.popNamespace();
+            block.compile(cctx);
+
+            if (returnType instanceof NoneBuiltinType) {
+                cctx.emit("ret void");
+            }
+        } finally {
+            cctx.popScope();
+            cctx.popIndent();
+            cctx.restoreScopes(oldScopes);
         }
 
         if (!main) {
@@ -167,9 +184,6 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         if (main && appendMainReturn(bodySB)) {
             bodySB.append(TAB).append("ret ").append(returnType.getLLVMName()).append(" 0\n");
         }
-
-        cctx.popScope();
-        cctx.popIndent();
 
         func.append(bodySB);
         func.append("}\n\n");
