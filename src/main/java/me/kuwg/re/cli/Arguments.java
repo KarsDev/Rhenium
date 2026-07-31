@@ -23,6 +23,7 @@ public final class Arguments {
     private final boolean dumpAST;
 
     private final List<String> clangArgs;
+    private final boolean noDefaults;
 
     private Arguments(Builder b) {
         this.inputFile = b.inputFile;
@@ -32,6 +33,7 @@ public final class Arguments {
         this.keepLLVM = b.keepLLVM;
         this.dumpAST = b.dumpAST;
         this.clangArgs = List.copyOf(b.clangArgs);
+        this.noDefaults = b.noDefaults;
     }
 
     public File inputFile() {
@@ -62,6 +64,10 @@ public final class Arguments {
         return clangArgs;
     }
 
+    public boolean noDefaults() {
+        return noDefaults;
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public static final class Builder {
         File inputFile;
@@ -71,6 +77,7 @@ public final class Arguments {
         boolean keepLLVM = false;
         boolean dumpAST = false;
         List<String> clangArgs = List.of();
+        boolean noDefaults = false;
 
         public Builder inputFile(File f) {
             inputFile = f;
@@ -104,6 +111,11 @@ public final class Arguments {
 
         public Builder clangArgs(List<String> v) {
             clangArgs = v;
+            return this;
+        }
+
+        public Builder noDefaults(boolean v) {
+            noDefaults = v;
             return this;
         }
 

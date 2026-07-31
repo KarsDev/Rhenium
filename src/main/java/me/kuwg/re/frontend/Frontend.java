@@ -18,11 +18,11 @@ public final class Frontend {
         this.input = input;
     }
 
-    public AST parse(ModuleLoadingHelper loader) throws Exception {
+    public AST parse(ModuleLoadingHelper loader, boolean noDefaults) throws Exception {
         String source = Files.readString(input.toPath());
         var tokens = Tokenizer.tokenize(source);
 
-        ASTParser parser = new ASTParser(input.getPath(), tokens, loader);
+        ASTParser parser = new ASTParser(input.getPath(), tokens, loader, noDefaults);
 
         typeMap = parser.typeMap;
 

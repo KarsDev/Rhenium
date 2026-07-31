@@ -14,7 +14,8 @@ public final class ArgumentParser {
             opt("-no-run", false, (b, ignore) -> b.runOutput(false)),
             opt("-keep-llvm", false, (b, ignore) -> b.keepLLVM(true)),
             opt("-dump-ast", false, (b, ignore) -> b.dumpAST(true)),
-            opt("-clang-args", true, (b, v) -> b.clangArgs(Arrays.asList(v.split(","))))
+            opt("-clang-args", true, (b, v) -> b.clangArgs(Arrays.asList(v.split(",")))),
+            opt("-no-defaults", false, (b, ignore) -> b.noDefaults(true))
 
     );
 
@@ -75,6 +76,7 @@ public final class ArgumentParser {
                   -dump-ast             Print AST
                   -clang-args a,b,c     Extra clang arguments
                   -no-run               Do not run executable
+                  -no-defaults          Does not include the default modules
                 """);
     }
 }

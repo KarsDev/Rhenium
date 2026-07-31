@@ -25,7 +25,7 @@ public final class CompilerPipeline {
             Frontend frontend = new Frontend(args.inputFile());
             ModuleLoadingHelper loader = new ModuleLoadingHelper();
 
-            var ast = frontend.parse(loader);
+            var ast = frontend.parse(loader, args.noDefaults());
 
             CompilationContext cctx = new CompilationContext(args.inputFile().getName(), frontend.typeMap, loader);
             ast.compile(cctx);

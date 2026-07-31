@@ -100,15 +100,17 @@ public final class ASTParser {
     private final String fileName;
     private final Token[] tokens;
     private final boolean initial;
+    private final boolean noDefaults;
     private final ModuleLoadingHelper loader;
     private List<String> currentGenericTypes = new ArrayList<>();
     private int tokenIndex;
 
-    public ASTParser(final String fileName, final Token[] tokens, final ModuleLoadingHelper loader) {
+    public ASTParser(final String fileName, final Token[] tokens, final ModuleLoadingHelper loader, final boolean noDefaults) {
         this.fileName = fileName;
         this.tokens = tokens;
         this.loader = loader;
         this.initial = true;
+        this.noDefaults = noDefaults;
         this.typeMap = new HashMap<>();
     }
 
@@ -116,10 +118,9 @@ public final class ASTParser {
         this.fileName = fileName;
         this.tokens = tokens;
         this.loader = loader;
-        this.initial = true;
+        this.initial = false;
+        this.noDefaults = false;
         this.typeMap = typeMap;
-        // The 'default' module can be ignored
-        // if (typeMap.isEmpty() && !fileName.contains("default")) throw new RInternalError("name=" + fileName);
     }
 
     private void includeInitialModules(AST ast) {
@@ -130,7 +131,7 @@ public final class ASTParser {
     public AST parse() {
         AST ast = new AST(fileName);
 
-        if (initial) {
+        if (initial && !noDefaults) {
             includeInitialModules(ast);
         }
 
