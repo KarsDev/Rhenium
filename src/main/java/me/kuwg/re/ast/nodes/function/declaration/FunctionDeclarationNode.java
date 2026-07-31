@@ -14,11 +14,12 @@ import me.kuwg.re.error.errors.function.RMainFunctionError;
 import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+import me.kuwg.re.type.builtin.IntBuiltinType;
 import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
-import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
+import me.kuwg.re.type.ptr.PointerType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -268,8 +269,8 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     public boolean isMain() {
         if (!name.equals("main")) return false;
         if (parameters.isEmpty()) return true;
-        if (parameters.size() != 1) return false;
-        return parameters.get(0).type() instanceof ArrayType arr && arr.getInner() instanceof StrBuiltinType;
+        if (parameters.size() != 2) return false;
+        return parameters.get(0).type() instanceof IntBuiltinType && parameters.get(1).type() instanceof PointerType arr && arr.getInner() instanceof StrBuiltinType;
     }
 
     public String getName() {

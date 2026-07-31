@@ -671,3 +671,11 @@ func test() -> int:
 func main() -> int:
     println("RE language reference executed successfully")
     return 0
+
+// Entry point overload that receives command-line arguments
+func main(argc: int, args: ptr -> str) -> int:
+    println("Specified " + argc + " args:")
+    for (i in range(argc)):
+        println("   - " + args[i])
+    
+    return 0

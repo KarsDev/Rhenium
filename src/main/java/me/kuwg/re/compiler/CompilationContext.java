@@ -323,6 +323,9 @@ public final class CompilationContext {
 
     public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs) throws IOException {
         var main = getFunction("main", List.of());
+        if (main == null) {
+            main = getFunction("main", List.of(new ArrayType(ArrayType.UNKNOWN_SIZE, BuiltinTypes.STR.getType()), BuiltinTypes.INT.getType()));
+        }
 
         if (main == null) {
             noMain(llvmFile);
