@@ -49,12 +49,6 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode, TopLev
             TypeRef fieldType = resolveFieldType(field.type(), cctx);
             fieldType = evalType(fieldType, cctx, fileName, line);
 
-            if (fieldType instanceof AppliedGenStructType applied) {
-                throw new IllegalStateException(
-                        "Unresolved applied generic struct field: " + applied.getName() + " in struct " + name
-                );
-            }
-
             resolvedFields.add(fieldType);
         }
 

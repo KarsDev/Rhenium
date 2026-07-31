@@ -5,6 +5,10 @@ public class RInternalError extends RuntimeException {
         super(message);
     }
 
+    public RInternalError(Throwable t) {
+        super(t);
+    }
+
     public RInternalError() {
     }
 }

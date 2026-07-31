@@ -7,6 +7,7 @@ import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
@@ -68,7 +69,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
 
                             @Override
                             public void compile(final CompilationContext cctx) {
-                                throw new RuntimeException("Should be compiled via compileAndGet");
+                                throw new RInternalError("Should be compiled via compileAndGet");
                             }
 
                             @Override

@@ -141,7 +141,7 @@ public class ArrayAccessNode extends VariableReference {
             return BuiltinTypes.CHAR.getType();
         }
 
-        throw new IllegalStateException("Invalid array access type");
+        return new RVariableTypeError(arrayType.getName(), "arr", fileName, line).raise();
     }
 
     @Override

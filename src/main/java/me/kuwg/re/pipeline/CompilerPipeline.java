@@ -3,6 +3,7 @@ package me.kuwg.re.pipeline;
 import me.kuwg.re.ast.AST;
 import me.kuwg.re.cli.Arguments;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.frontend.Frontend;
 import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.runner.CommandRunner;
@@ -47,7 +48,7 @@ public final class CompilerPipeline {
         try (FileWriter w = new FileWriter(dmp)) {
             w.write(ast.toString());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RInternalError(e);
         }
     }
 }

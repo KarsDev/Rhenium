@@ -56,4 +56,6 @@ public final class ErrorCodes {
     public static final int ZERO_INITIALIZER_OUT_OF_SCOPE_ERROR = 52;
     public static final int TYPE_NOT_RESOLVED_ERROR = 53;
     public static final int UNION_ERROR = 54;
+    public static final int STRUCT_IMPLEMENTATION_ERRROR = 55;
+    public static final int TERNARY_OPERATOR_ERROR = 56;
 }

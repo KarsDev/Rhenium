@@ -88,7 +88,7 @@ public final class CompilationContext {
     }
 
     public void emit(String s) {
-        if (s.contains(ERROR_LINE)) throw new RuntimeException();
+        if (s.contains(ERROR_LINE)) throw new RInternalError();
         if (s.contains(" ptr*")) {
             System.err.println("WARNING: emitted invalid LLVM opaque pointer syntax:");
             System.err.println(s);
@@ -225,7 +225,7 @@ public final class CompilationContext {
     }
 
     public void declare(String declaration) {
-        if (declaration.contains(ERROR_LINE)) throw new RuntimeException();
+        if (declaration.contains(ERROR_LINE)) throw new RInternalError();
         declarations.append(declaration).append('\n');
     }
 

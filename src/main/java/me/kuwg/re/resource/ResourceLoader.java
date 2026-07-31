@@ -1,5 +1,7 @@
 package me.kuwg.re.resource;
 
+import me.kuwg.re.error.errors.RInternalError;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -39,7 +41,7 @@ public final class ResourceLoader {
 
             return temp;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RInternalError(e);
         }
     }
 }

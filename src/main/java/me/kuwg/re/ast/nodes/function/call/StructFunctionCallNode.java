@@ -7,6 +7,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
+import me.kuwg.re.error.errors.struct.RStructImplementationError;
 import me.kuwg.re.error.errors.union.RUnionError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
@@ -311,7 +312,8 @@ public class StructFunctionCallNode extends VariableReference {
             RFunction fn = cctx.getFunction(mangled, params);
 
             if (fn == null) {
-                throw new IllegalStateException("Missing implementation for " + structType.getName());
+                new RStructImplementationError("Missing implementation for " + structType.getName(), fileName, line).raise();
+                return;
             }
 
             result.put(structType, fn);

@@ -27,8 +27,8 @@ public final class LayoutCalculator {
 
         if (type instanceof StructType st) {
             if (!sizing.add(st)) {
-                throw new IllegalStateException(
-                        "Recursive struct '" + st.getName() + "' has infinite size.");
+                return new RUnionError(
+                        "Recursive struct '" + st.getName() + "' has infinite size.", "Unknown in context", -1).raise();
             }
 
             try {
@@ -51,8 +51,8 @@ public final class LayoutCalculator {
 
         if (type instanceof UnionType ut) {
             if (!sizing.add(ut)) {
-                throw new IllegalStateException(
-                        "Recursive union '" + ut.getName() + "' has infinite size.");
+                return new RUnionError(
+                        "Recursive union '" + ut.getName() + "' has infinite size.", "Unknown in context", -1).raise();
             }
 
             try {

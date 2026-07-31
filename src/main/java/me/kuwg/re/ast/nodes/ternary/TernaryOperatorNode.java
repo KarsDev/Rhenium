@@ -3,6 +3,7 @@ package me.kuwg.re.ast.nodes.ternary;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.condition.RInvalidConditionError;
+import me.kuwg.re.error.errors.ternary.RTernaryOperatorError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
@@ -80,10 +81,10 @@ public class TernaryOperatorNode extends ValueNode {
         cctx.emit(mergeLabel + ":");
 
         if (!thenType.equals(elseType)) {
-            throw new RuntimeException(
+            return new RTernaryOperatorError(
                     "Ternary branches must have the same type (got "
-                            + thenType.getName() + " and " + elseType.getName() + ")"
-            );
+                            + thenType.getName() + " and " + elseType.getName() + ")",
+                    fileName, line).raise();
         }
 
         String resultReg = cctx.nextRegister();

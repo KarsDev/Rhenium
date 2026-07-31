@@ -37,7 +37,7 @@ public record AppliedGenStructType(GenStructType base, List<TypeRef> args) imple
 
     @Override
     public String getLLVMName() {
-        throw new RuntimeException();
+        throw new RInternalError();
     }
 
     @Override

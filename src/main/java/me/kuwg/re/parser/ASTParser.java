@@ -118,7 +118,8 @@ public final class ASTParser {
         this.loader = loader;
         this.initial = true;
         this.typeMap = typeMap;
-        if (typeMap.isEmpty() && !fileName.contains("default")) throw new RuntimeException("name=" + fileName);
+        // The 'default' module can be ignored
+        // if (typeMap.isEmpty() && !fileName.contains("default")) throw new RInternalError("name=" + fileName);
     }
 
     private void includeInitialModules(AST ast) {

@@ -9,6 +9,8 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.generic.TypeParameter;
 import me.kuwg.re.compiler.variable.RStructField;
+import me.kuwg.re.error.errors.RInternalError;
+import me.kuwg.re.error.errors.struct.RGenStructInitError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.ptr.PointerType;
@@ -36,9 +38,10 @@ public final class RGenStruct extends RDefaultStruct {
 
     public RStruct instantiate(List<TypeRef> rawTypes, CompilationContext cctx, final int line) {
         if (rawTypes.size() != type().getGenericTypes().size()) {
-            throw new RuntimeException(
-                    "Expected " + type().getGenericTypes().size() + " generic arguments, got " + rawTypes.size()
-            );
+            return new RGenStructInitError(
+                    "Expected " + type().getGenericTypes().size() + " generic arguments, got " + rawTypes.size(),
+                    fileName, line
+            ).raise();
         }
 
         List<TypeRef> types = rawTypes.stream().map(t -> ASTNode.evalType(t, cctx, fileName, line)).collect(Collectors.toList());
@@ -47,7 +50,7 @@ public final class RGenStruct extends RDefaultStruct {
             return cache.get(types);
         }
 
-        validateGenericConstraints(cctx, types);
+        validateGenericConstraints(cctx, types, line);
 
         Map<String, TypeRef> mapping = new HashMap<>();
         for (int i = 0; i < type().getGenericTypes().size(); i++) {
@@ -132,7 +135,8 @@ public final class RGenStruct extends RDefaultStruct {
             Map<String, TypeRef> combined = new HashMap<>(mapping);
             for (TypeParameter gen : impl.generics) {
                 if (!combined.containsKey(gen.name())) {
-                    throw new RuntimeException("Unresolved impl generic: " + gen.name());
+                    new RGenStructInitError("Unresolved impl generic: " + gen.name(), fileName, line).raise();
+                    return;
                 }
             }
 
@@ -201,7 +205,7 @@ public final class RGenStruct extends RDefaultStruct {
 
                     compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
                 } else {
-                    throw new RuntimeException("Invalid function node in impl");
+                    throw new RInternalError("Invalid function node in impl");
                 }
 
                 struct.functions().add(compiled);
@@ -231,7 +235,7 @@ public final class RGenStruct extends RDefaultStruct {
         impls.add(new ImplTemplate(generics, constructors, functions));
     }
 
-    private void validateGenericConstraints(CompilationContext cctx, List<TypeRef> actualTypes) {
+    private void validateGenericConstraints(CompilationContext cctx, List<TypeRef> actualTypes, int line) {
         List<TypeParameter> params = type().getGenericTypes();
 
         for (int i = 0; i < params.size(); i++) {
@@ -241,10 +245,11 @@ public final class RGenStruct extends RDefaultStruct {
             TypeRef actual = actualTypes.get(i);
 
             if (!satisfiesConstraint(cctx, actual.getName(), tp.inherited())) {
-                throw new RuntimeException(
+                new RGenStructInitError(
                         "Type '" + actual.getName() + "' does not satisfy constraint '" + tp.inherited() +
-                                "' for generic '" + tp.name() + "'"
-                );
+                                "' for generic '" + tp.name() + "'",
+                        fileName, line
+                ).raise();
             }
         }
     }

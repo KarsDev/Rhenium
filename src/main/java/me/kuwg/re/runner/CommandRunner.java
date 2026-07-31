@@ -1,5 +1,7 @@
 package me.kuwg.re.runner;
 
+import me.kuwg.re.error.errors.RInternalError;
+
 import static me.kuwg.re.constants.Constants.Lang.WIN;
 
 public final class CommandRunner {
@@ -22,7 +24,7 @@ public final class CommandRunner {
         System.out.println("Compiler exited with code: " + exitCode);
 
         if (exitCode != 0) {
-            throw new RuntimeException("Execution failed with code " + exitCode);
+            throw new RInternalError("Execution failed with code " + exitCode);
         }
     }
 }

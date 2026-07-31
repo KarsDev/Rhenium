@@ -4,6 +4,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 
 import java.util.Map;
@@ -59,7 +60,7 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
 
     @Override
     public BlockNode getBlock() {
-        throw new RuntimeException();
+        throw new RInternalError();
     }
 
     public BlockNode getTryBlock() {

@@ -1,6 +1,7 @@
 package me.kuwg.re.error.manager;
 
 import me.kuwg.re.error.codes.ErrorCodes;
+import me.kuwg.re.error.errors.RInternalError;
 
 import java.lang.reflect.Field;
 
@@ -13,7 +14,7 @@ final class ErrorManager {
         System.err.println("  Internal error name: \"" + getIEN(error.getCode()) + "\"");
 
         //System.exit(error.getCode());
-        throw new RuntimeException();
+        throw new RInternalError();
     }
 
     private static String getIEN(int code) {
@@ -25,7 +26,7 @@ final class ErrorManager {
                 return name.substring(0, name.length() - 6);
             }
         } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw new RInternalError(e);
         }
 
         return "Unknown";

@@ -11,6 +11,7 @@ import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.types.load.TopLevelNode;
 import me.kuwg.re.compiler.Compilable;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.block.RBlockSyntaxError;
 import me.kuwg.re.error.errors.function.RFunctionReturnTypeMismatchError;
 import me.kuwg.re.type.TypeRef;
@@ -139,7 +140,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
         try {
             cloned = (BlockNode) super.clone();
         } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
+            throw new RInternalError(e);
         }
 
         List<ASTNode> clonedNodes = new ArrayList<>(nodes.size());
