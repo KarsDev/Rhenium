@@ -36,7 +36,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
         cctx.emit("; Raise");
         if (catchLabel == null) {
             if (value == null) {
-                String message = generateLog(line);
+                String message = generateLog(line, cctx.writeExceptionLines);
 
                 new FunctionCallNode(
                         fileName, line,
@@ -51,7 +51,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
                     return;
                 }
 
-                String message = generateLog(line);
+                String message = generateLog(line, cctx.writeExceptionLines);
 
                 new FunctionCallNode(
                         fileName, line,
@@ -96,7 +96,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
 
             new FunctionCallNode(
                     fileName, line,
-                    "exit",
+                    "System$$exit",
                     List.of(new NumberNode(fileName, line, "1"))
             ).compile(cctx);
 
@@ -119,7 +119,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
         return new RaiseNode(fileName, line, value.clone());
     }
 
-    private static String generateLog(int line) {
-        return "An error occurred at line " + line + ".\n";
+    private static String generateLog(int line, boolean lines) {
+        return (!lines ? "An error occurred" : "An error occurred at line " + line) + ".\n";
     }
 }

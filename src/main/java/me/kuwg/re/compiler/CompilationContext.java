@@ -40,6 +40,8 @@ public final class CompilationContext {
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
     private final ModuleLoadingHelper loader;
+    public final boolean writeExceptionLines;
+
 
     private final List<String> irCode = new ArrayList<>();
     private final StringBuilder declarations = new StringBuilder();
@@ -66,10 +68,12 @@ public final class CompilationContext {
     private int indentLevel = 1;
     private int labelCounter = 0;
 
-    public CompilationContext(final String fileName, Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader) {
+    public CompilationContext(final String fileName, Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader,
+                              final boolean writeExceptionLines) {
         this.fileName = fileName;
         this.typeMap = typeMap;
         this.loader = loader;
+        this.writeExceptionLines = writeExceptionLines;
 
         irCode.add("; Generated LLVM IR\n\n");
         codeStack.push(globalCode);

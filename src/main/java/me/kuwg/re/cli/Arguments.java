@@ -24,6 +24,7 @@ public final class Arguments {
 
     private final List<String> clangArgs;
     private final boolean noDefaults;
+    private final boolean writeExceptionLines;
 
     private Arguments(Builder b) {
         this.inputFile = b.inputFile;
@@ -34,6 +35,7 @@ public final class Arguments {
         this.dumpAST = b.dumpAST;
         this.clangArgs = List.copyOf(b.clangArgs);
         this.noDefaults = b.noDefaults;
+        this.writeExceptionLines = b.writeExceptionLines;
     }
 
     public File inputFile() {
@@ -68,6 +70,10 @@ public final class Arguments {
         return noDefaults;
     }
 
+    public boolean writeExceptionLines() {
+        return writeExceptionLines;
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     public static final class Builder {
         File inputFile;
@@ -78,6 +84,7 @@ public final class Arguments {
         boolean dumpAST = false;
         List<String> clangArgs = List.of();
         boolean noDefaults = false;
+        boolean writeExceptionLines = false;
 
         public Builder inputFile(File f) {
             inputFile = f;
@@ -116,6 +123,11 @@ public final class Arguments {
 
         public Builder noDefaults(boolean v) {
             noDefaults = v;
+            return this;
+        }
+
+        public Builder writeExceptionLines(boolean v) {
+            writeExceptionLines = v;
             return this;
         }
 
