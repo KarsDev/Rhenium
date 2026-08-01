@@ -23,8 +23,8 @@ public class CopyNode extends ValueNode {
     public String compileAndGet(final CompilationContext cctx) {
         cctx.emit("; copy");
 
-        String valueReg = value.compileAndGet(cctx);
-        TypeRef type = value.getType();
+        final String valueReg = value.compileAndGet(cctx);
+        final TypeRef type = value.getType();
         setType(type);
 
         if (type.isPrimitive()) {
@@ -33,19 +33,19 @@ public class CopyNode extends ValueNode {
 
         cctx.ensureCopyFunction(type, fileName, line);
 
-        String src = cctx.nextRegister();
+        final String src = cctx.nextRegister();
         cctx.emit(src + " = alloca " + type.getLLVMName());
         cctx.emit("store " + type.getLLVMName() + " " + valueReg +
                 ", " + type.getLLVMName() + "* " + src);
 
-        String dst = cctx.nextRegister();
+        final String dst = cctx.nextRegister();
         cctx.emit(dst + " = alloca " + type.getLLVMName());
 
         cctx.emit("call void @__copy_" + type.getMangledName() +
                 "(" + type.getLLVMName() + "* " + dst +
                 ", " + type.getLLVMName() + "* " + src + ")");
 
-        String result = cctx.nextRegister();
+        final String result = cctx.nextRegister();
         cctx.emit(result + " = load " + type.getLLVMName() +
                 ", " + type.getLLVMName() + "* " + dst);
 
