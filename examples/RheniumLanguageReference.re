@@ -607,8 +607,6 @@ extern func write():
 // is automatically called when it falls out of scope.
 
 using memory
-using string
-
 struct CharBuf:
     inner: ptr -> char
     length: int
