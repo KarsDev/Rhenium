@@ -14,12 +14,12 @@ public final class Arguments {
     private final File executableFile;
 
     @IncompatibleWith({"dumpAST"})
-    private final boolean runOutput;
+    private final boolean runCommand;
 
     @IncompatibleWith({"dumpAST"})
     private final boolean keepLLVM;
 
-    @IncompatibleWith({"runOutput"})
+    @IncompatibleWith({"runCommand"})
     private final boolean dumpAST;
 
     private final List<String> clangArgs;
@@ -30,7 +30,7 @@ public final class Arguments {
         this.inputFile = b.inputFile;
         this.llvmFile = b.llvmFile;
         this.executableFile = b.executableFile;
-        this.runOutput = b.runOutput;
+        this.runCommand = b.runCommand;
         this.keepLLVM = b.keepLLVM;
         this.dumpAST = b.dumpAST;
         this.clangArgs = List.copyOf(b.clangArgs);
@@ -50,8 +50,8 @@ public final class Arguments {
         return executableFile;
     }
 
-    public boolean runOutput() {
-        return runOutput;
+    public boolean runCommand() {
+        return runCommand;
     }
 
     public boolean keepLLVM() {
@@ -79,7 +79,7 @@ public final class Arguments {
         File inputFile;
         File llvmFile;
         File executableFile;
-        boolean runOutput = true;
+        boolean runCommand = true;
         boolean keepLLVM = false;
         boolean dumpAST = false;
         List<String> clangArgs = List.of();
@@ -101,8 +101,8 @@ public final class Arguments {
             return this;
         }
 
-        public Builder runOutput(boolean v) {
-            runOutput = v;
+        public Builder runCommand(boolean v) {
+            runCommand = v;
             return this;
         }
 

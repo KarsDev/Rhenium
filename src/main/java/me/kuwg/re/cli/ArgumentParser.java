@@ -11,7 +11,7 @@ public final class ArgumentParser {
     private static final Map<String, Option> OPTIONS = Map.ofEntries(
             opt("-out", true, (b, v) -> b.executableFile(new File(v))),
             opt("-llvm-out", true, (b, v) -> b.llvmFile(new File(v))),
-            opt("-no-run", false, (b, ignore) -> b.runOutput(false)),
+            opt("-no-run", false, (b, ignore) -> b.runCommand(false)),
             opt("-keep-llvm", false, (b, ignore) -> b.keepLLVM(true)),
             opt("-dump-ast", false, (b, ignore) -> b.dumpAST(true)),
             opt("-clang-args", true, (b, v) -> b.clangArgs(Arrays.asList(v.split(",")))),
@@ -80,7 +80,7 @@ public final class ArgumentParser {
                   -keep-llvm            Keep LLVM IR after compilation
                   -dump-ast             Print AST
                   -clang-args a,b,c     Extra clang arguments
-                  -no-run               Do not run executable
+                  -no-run               Do not run the clang compiler
                   -no-defaults          Does not include the default modules
                   -write-elines         Prints line during exception raise
                 """);
