@@ -60,6 +60,9 @@ public class SizeofNode extends ConstantNode {
     @Override
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     public SizeofNode clone() {
-        return new SizeofNode(fileName, line, value.clone());
+        if (type == null) {
+            return new SizeofNode(fileName, line, value.clone());
+        }
+        return new SizeofNode(fileName, line, type);
     }
 }
