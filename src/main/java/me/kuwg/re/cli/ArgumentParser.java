@@ -22,13 +22,17 @@ public final class ArgumentParser {
 
     public static Arguments parse(String[] args) {
         if (args.length == 0) {
-            return RThrower.throwError("Missing input file");
+            return RThrower.throwError("Missing input file. Use \"help\" for help.");
         }
 
         Arguments.Builder builder = new Arguments.Builder();
 
         File input = new File(args[0]);
         if (!input.exists()) {
+            if (args[0].equalsIgnoreCase("help") || args[0].equalsIgnoreCase("-help")) {
+                printUsage();
+                System.exit(0);
+            }
             return RThrower.throwError("File not found: " + input);
         }
 
