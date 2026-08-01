@@ -62,6 +62,9 @@ impl Thread:
         this.destroy()
         return res
 
+    delete:
+        this.destroy()
+
 // Utility namespace
 namespace Thread:
 
