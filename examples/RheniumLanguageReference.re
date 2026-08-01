@@ -185,6 +185,13 @@ Syntax:
 max = a if (a > b) else b
 
 /*
+ Prefix and postfix increment/decrement are also supported
+*/
+x = 12
+y = x++ // y=12, x=13
+z = --x // z=12, x=12
+
+/*
 <=------------------------=>|<=>|<=-----------------------=>
   FUNCTIONS
 <=------------------------=>|<=>|<=-----------------------=>
