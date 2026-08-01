@@ -46,7 +46,12 @@ public abstract class BinaryOperator {
         if (a instanceof CharBuiltinType || b instanceof CharBuiltinType) return BuiltinTypes.BYTE.getType();
         if (a instanceof BoolBuiltinType && b instanceof BoolBuiltinType) return BuiltinTypes.BOOL.getType();
 
+
         return null;
+    }
+
+    public static boolean isNumeric(TypeRef t) {
+        return isInteger(t) || isFloat(t) || t instanceof CharBuiltinType || t instanceof BoolBuiltinType;
     }
 
     public static String convertToType(String reg, TypeRef from, TypeRef to, BinaryOperatorContext c) {
