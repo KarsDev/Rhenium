@@ -17,6 +17,7 @@ import me.kuwg.re.ast.nodes.destructor.DestructorNode;
 import me.kuwg.re.ast.nodes.enumeration.EnumDeclarationNode;
 import me.kuwg.re.ast.nodes.expression.BinaryExpressionNode;
 import me.kuwg.re.ast.nodes.expression.BitwiseNotNode;
+import me.kuwg.re.ast.nodes.expression.IncDecExpressionNode;
 import me.kuwg.re.ast.nodes.extern.NativeCPPNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.nodes.function.call.GenericFunctionCallNode;
@@ -231,6 +232,8 @@ public final class ASTParser {
             case OPERATOR -> {
                 if (matchAndConsume(OPERATOR, "@")) yield parseDereferenceOperator();
                 else if (matchAndConsume(OPERATOR, "~")) yield parseBitwiseNotOperator();
+                else if (matchAndConsume(OPERATOR, "++")) yield parsePreIncrementOperator();
+                else if (matchAndConsume(OPERATOR, "--")) yield parsePreDecrementOperator();
                 else
                     yield new RParserError("Unexpected operator in statement: " + current().value(), fileName, line).raise();
             }
@@ -285,6 +288,14 @@ public final class ASTParser {
                     case "not" -> {
                         consume();
                         node = new BinaryExpressionNode(line(), fileName, parseValue(), EqualsBO.INSTANCE, new BooleanNode(fileName, line(), false));
+                    }
+                    case "++" -> {
+                        consume();
+                        node = parsePreIncrementOperator();
+                    }
+                    case "--" -> {
+                        consume();
+                        node = parsePreDecrementOperator();
                     }
                     default -> {
                         return new RParserError("Unexpected operator: " + token.value(), fileName, line()).raise();
@@ -1069,6 +1080,28 @@ public final class ASTParser {
         return new BitwiseNotNode(fileName, line, value);
     }
 
+    private @SubFunc ValueNode parsePreIncrementOperator() {
+        int line = line();
+        ValueNode value = parseValue();
+
+        if (!(value instanceof VariableReference r)) {
+            return new RParserError("Expected variable reference for pre increment operator", fileName, line).raise();
+        }
+
+        return new IncDecExpressionNode(fileName, line, IncDecExpressionNode.IncDecOperator.INCREMENT, IncDecExpressionNode.IncDecPosition.PREFIX, r);
+    }
+
+    private @SubFunc ValueNode parsePreDecrementOperator() {
+        int line = line();
+        ValueNode value = parseValue();
+
+        if (!(value instanceof VariableReference r)) {
+            return new RParserError("Expected variable reference for pre decrement operator", fileName, line).raise();
+        }
+
+        return new IncDecExpressionNode(fileName, line, IncDecExpressionNode.IncDecOperator.DECREMENT, IncDecExpressionNode.IncDecPosition.PREFIX, r);
+    }
+
     private @SubFunc ASTNode parseDivider() {
         int line = line();
 
@@ -1258,6 +1291,20 @@ public final class ASTParser {
 
             if (BinaryOperators.getBySymbol(opSymbol) != null || (opSymbol.length() > 2 && opSymbol.endsWith("=")))
                 return node;
+
+            if (opSymbol.equals("++")) {
+                consume();
+                if (!(node instanceof VariableReference r)) {
+                    return new RParserError("Expected variable reference for post increment operator", fileName, line).raise();
+                }
+                return new IncDecExpressionNode(fileName, line, IncDecExpressionNode.IncDecOperator.INCREMENT, IncDecExpressionNode.IncDecPosition.POSTFIX, r);
+            } else if (opSymbol.equals("--")) {
+                consume();
+                if (!(node instanceof VariableReference r)) {
+                    return new RParserError("Expected variable reference for post decrement operator", fileName, line).raise();
+                }
+                return new IncDecExpressionNode(fileName, line, IncDecExpressionNode.IncDecOperator.DECREMENT, IncDecExpressionNode.IncDecPosition.POSTFIX, r);
+            }
 
             String opAssignSymbol = opSymbol.substring(0, opSymbol.length() - 1);
 
