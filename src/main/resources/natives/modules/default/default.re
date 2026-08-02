@@ -1,5 +1,8 @@
 // Includes the default modules in the native library
 
+// String utilities
+using default.string
+
 // Input/Output defaults
 using default.io
 
@@ -8,6 +11,3 @@ using default.system
 
 // Thread, used for async blocks and concurrency
 using default.thread
-
-// String utilities
-using default.string
