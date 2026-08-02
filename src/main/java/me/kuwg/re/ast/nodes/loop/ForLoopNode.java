@@ -3,6 +3,7 @@ package me.kuwg.re.ast.nodes.loop;
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
+import me.kuwg.re.ast.nodes.range.RangeNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
@@ -51,6 +52,11 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
     public void compile(final CompilationContext cctx) {
         cctx.emit("; For loop");
 
+        if (collection instanceof RangeNode) {
+            compileRange(cctx, (RangeType) collection.getType());
+            return;
+        }
+
         String reg = collection.compileAndGet(cctx);
 
         if (collection.getType() instanceof ArrayType) {
@@ -76,11 +82,6 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
         if (cctx.getVariable(variable) != null) {
             new RVariableAlreadyExistsError(variable, line, fileName).raise();
-            return;
-        }
-
-        if (type instanceof RangeType range) {
-            compileRange(cctx, range);
             return;
         }
 
