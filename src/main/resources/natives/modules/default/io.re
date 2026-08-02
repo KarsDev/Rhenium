@@ -98,7 +98,7 @@ func print(d: double) -> none:
 // - Stops before overflowing the buffer
 // - Null-terminates the resulting string
 // - Returns the allocated buffer
-_Builtin func inputLocal() -> str = """
+_Builtin func input() -> str = """
 entry:
     ; Maximum number of bytes to read, including the final null terminator.
     %cap = alloca i32
@@ -162,4 +162,4 @@ finish:
 // print a prompt, then read one line of input
 func input(s: str) -> str:
     print(s)
-    return inputLocal()
+    return input()
