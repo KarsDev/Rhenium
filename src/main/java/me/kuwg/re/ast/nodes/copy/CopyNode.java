@@ -21,11 +21,11 @@ public class CopyNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        cctx.emit("; copy");
-
         final String valueReg = value.compileAndGet(cctx);
         final TypeRef type = value.getType();
         setType(type);
+
+        cctx.emit("; copy " + type.getName());
 
         if (type.isPrimitive()) {
             return valueReg;
