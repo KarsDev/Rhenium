@@ -1075,14 +1075,14 @@ public final class ASTParser {
 
     private @SubFunc ValueNode parseBitwiseNotOperator() {
         int line = line();
-        ValueNode value = parseValue();
+        ValueNode value = parsePrimary();
 
         return new BitwiseNotNode(fileName, line, value);
     }
 
     private @SubFunc ValueNode parsePreIncrementOperator() {
         int line = line();
-        ValueNode value = parseValue();
+        ValueNode value = parsePrimary();
 
         if (!(value instanceof VariableReference r)) {
             return new RParserError("Expected variable reference for pre increment operator", fileName, line).raise();
@@ -1093,7 +1093,7 @@ public final class ASTParser {
 
     private @SubFunc ValueNode parsePreDecrementOperator() {
         int line = line();
-        ValueNode value = parseValue();
+        ValueNode value = parsePrimary();
 
         if (!(value instanceof VariableReference r)) {
             return new RParserError("Expected variable reference for pre decrement operator", fileName, line).raise();
