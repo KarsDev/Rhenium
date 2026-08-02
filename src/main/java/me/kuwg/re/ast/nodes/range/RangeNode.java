@@ -24,7 +24,7 @@ public class RangeNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        return "COMPILING RANGE NODE";
+        throw new RInternalError("Compiling range node");
     }
 
     @Override
