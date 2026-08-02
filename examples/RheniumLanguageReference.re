@@ -396,7 +396,7 @@ impl Vec2:
 Method calls
 */
 
-len2 = v.length()
+len2 = len(v) // v.length()
 v.scale(2)
 
 /*
