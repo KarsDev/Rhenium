@@ -1,13 +1,17 @@
 package me.kuwg.re.ast.nodes.len;
 
+import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.len.RInvalidLenError;
+import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
+import me.kuwg.re.type.struct.StructType;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 public class LenNode extends ValueNode {
@@ -25,7 +29,6 @@ public class LenNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-
         String valReg = value.compileAndGet(cctx);
         TypeRef valueType = value.getType();
         String longReg = cctx.nextRegister();
@@ -42,6 +45,15 @@ public class LenNode extends ValueNode {
             } else {
                 cctx.emit(longReg + " = add i64 0, " + size + " ; array length");
             }
+        } else if (valueType instanceof StructType) {
+            StructFunctionCallNode call = new StructFunctionCallNode(fileName, line, value, "length", new ArrayList<>());
+
+            String result = call.compileAndGet(cctx);
+            if (!call.getType().isCompatibleWith(BuiltinTypes.INT.getType())) {
+                return new RVariableTypeError("Expected 'int' type for len function", fileName, line).raise();
+            }
+
+            return result;
         } else {
             return new RInvalidLenError(valueType.getName(), fileName, line).raise();
         }

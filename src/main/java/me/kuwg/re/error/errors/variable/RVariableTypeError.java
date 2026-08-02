@@ -8,6 +8,10 @@ public class RVariableTypeError extends RError {
         super(String.format("Variable value type (%s) is not compatible with declared type (%s)", valueType, declaredType), fileName, line);
     }
 
+    public RVariableTypeError(final String message, final String fileName, final int line) {
+        super(message, fileName, line);
+    }
+
     @Override
     protected int getCode() {
         return ErrorCodes.VARIABLE_TYPE_ERROR;
