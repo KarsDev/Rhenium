@@ -26,8 +26,8 @@ Syntax:
 - `self` refers to the input file package
 */
 
-using io
 using math
+using list
 using utils.helpers in "my_package"
 using localModule in self
 
