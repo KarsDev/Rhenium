@@ -31,6 +31,30 @@ entry:
     ret void
 """
 
+// Prints a byte followed by a newline
+func println(b: byte) -> none:
+    println(byteToStr(b))
+
+// Prints a short followed by a newline
+func println(s: short) -> none:
+    println(shortToStr(s))
+
+// Prints a int followed by a newline
+func println(i: int) -> none:
+    println(intToStr(i))
+
+// Prints a long followed by a newline
+func println(l: long) -> none:
+    println(longToStr(l))
+
+// Prints a float followed by a newline
+func println(f: float) -> none:
+    println(floatToStr(f))
+
+// Prints a double followed by a newline
+func println(d: double) -> none:
+    println(doubleToStr(d))
+
 // Print a string without adding a newline
 _Builtin func print(s: str) -> none = """
 entry:
@@ -42,6 +66,30 @@ entry:
 
     ret void
 """
+
+// Prints a byte without adding a newline
+func print(b: byte) -> none:
+    print(byteToStr(b))
+
+// Prints a short without adding a newline
+func print(s: short) -> none:
+    print(shortToStr(s))
+
+// Prints a int without adding a newline
+func print(i: int) -> none:
+    print(intToStr(i))
+
+// Prints a long without adding a newline
+func print(l: long) -> none:
+    print(longToStr(l))
+
+// Prints a float without adding a newline
+func print(f: float) -> none:
+    print(floatToStr(f))
+
+// Prints a double without adding a newline
+func print(d: double) -> none:
+    print(doubleToStr(d))
 
 // Read a line of input from stdin into a heap-allocated buffer
 //
