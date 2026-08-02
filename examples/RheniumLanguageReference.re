@@ -323,6 +323,15 @@ nums[1] = 42 // sets the nums array index 1 ( nums[1] = 2 ) to 42
 
 size = len(nums) // returns 3
 
+/*
+ The 'len' keyword can also be used to call the 'length' function in struct implementations
+*/
+
+lst = init List<int>()
+for (i in range(5)):
+  lst.add(i)
+
+length = len(lst) // same as lst.length()
 
 // Arrays can also be dynamic, their memory must be handled using the 'delete' keyword
 
