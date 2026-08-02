@@ -1,15 +1,12 @@
 package me.kuwg.re.error.thrower;
 
 import me.kuwg.re.cli.ArgumentParser;
-import me.kuwg.re.error.errors.RInternalError;
+import me.kuwg.re.error.errors.compiler.RPreCompilationError;
 
 public final class RThrower {
     public static <T> T throwError(String e) {
-        System.err.println(e);
-        System.exit(Integer.MIN_VALUE);
-
         ArgumentParser.printUsage();
 
-        throw new RInternalError();
+        return new RPreCompilationError(e).raise();
     }
 }

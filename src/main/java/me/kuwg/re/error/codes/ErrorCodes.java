@@ -58,4 +58,5 @@ public final class ErrorCodes {
     public static final int UNION_ERROR = 54;
     public static final int STRUCT_IMPLEMENTATION_ERRROR = 55;
     public static final int TERNARY_OPERATOR_ERROR = 56;
+    public static final int PRE_COMPILATION_ERROR = 57;
 }
