@@ -4,6 +4,7 @@ import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.enums.REnum;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.loop.LoopContext;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
 import me.kuwg.re.compiler.struct.RPendingDestructor;

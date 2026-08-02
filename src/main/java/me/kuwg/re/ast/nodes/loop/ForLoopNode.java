@@ -6,7 +6,7 @@ import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.compiler.LoopContext;
+import me.kuwg.re.compiler.loop.LoopContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.loop.RLoopError;
 import me.kuwg.re.error.errors.loop.RValueIsNotIterableError;
