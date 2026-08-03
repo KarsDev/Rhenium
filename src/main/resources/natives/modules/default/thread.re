@@ -39,7 +39,7 @@ impl Thread:
         ret i8* %result
     """
 
-    // Destroyes the thread, call this to not have code leaks
+    // Destroys the thread, call this to not have code leaks
     _Builtin func destroy() -> none = """
         ; 1. Load the 'handle' field.
         %handle_ptr = getelementptr %struct.Thread, %struct.Thread* %self, i32 0, i32 0
