@@ -123,7 +123,7 @@ impl List<T>:
     func isEmpty() -> bool:
         return this.size == 0
 
-    // Gives the length (or size) of the list
+    // Gives the length (or size) of the list. This can also be called using len(<List object>)
     func length() -> int:
         return this.size
 
