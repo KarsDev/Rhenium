@@ -1,2 +1,2 @@
 *.re linguist-language=Python
-*.ll linguist-language=llvm
+*.ll linguist-language=LLVM linguist-generated=true
