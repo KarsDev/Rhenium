@@ -33,7 +33,7 @@ public final class CastManager {
                                      final TypeRef sourceType,
                                      final TypeRef targetType,
                                      final CompilationContext cctx) {
-        if (sourceType == targetType) {
+        if (sourceType.equals(targetType)) {
             return valueRegister;
         }
 
