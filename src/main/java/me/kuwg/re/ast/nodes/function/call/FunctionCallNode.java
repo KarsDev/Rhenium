@@ -11,7 +11,7 @@ import me.kuwg.re.compiler.function.RGenFunction;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.function.RFunctionGenericsError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.lambda.LambdaType;
@@ -142,7 +142,7 @@ public class FunctionCallNode extends FunCall {
             return throwNotFound(callTypes);
         }
 
-        if (lambda.returnType() instanceof NoneBuiltinType && getting) {
+        if (lambda.returnType() == BuiltinTypes.NONE.getType() && getting) {
             throwVoid(new RDefFunction(lambda.getLLVMName(), name, lambda.returnType(), List.of()), callTypes);
         }
 
@@ -166,7 +166,7 @@ public class FunctionCallNode extends FunCall {
         StringBuilder sb = new StringBuilder();
         String result = null;
 
-        if (!(lambda.returnType() instanceof NoneBuiltinType)) {
+        if (!(lambda.returnType() == BuiltinTypes.NONE.getType())) {
             result = cctx.nextRegister();
             sb.append(result).append(" = ");
         }
@@ -188,7 +188,7 @@ public class FunctionCallNode extends FunCall {
 
         setType(lambda.returnType());
 
-        return lambda.returnType() instanceof NoneBuiltinType ? "%void_" + cctx.nextRegister() : result;
+        return lambda.returnType() == BuiltinTypes.NONE.getType() ? "%void_" + cctx.nextRegister() : result;
     }
 
     @Override

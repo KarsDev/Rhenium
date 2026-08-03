@@ -2,7 +2,7 @@ package me.kuwg.re.type.builtin;
 
 import me.kuwg.re.type.TypeRef;
 
-public final class FloatBuiltinType extends BuiltinType {
+final class FloatBuiltinType extends BuiltinType {
     static final BuiltinType INSTANCE = new FloatBuiltinType();
 
     private FloatBuiltinType() {

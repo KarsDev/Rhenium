@@ -7,7 +7,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class ModBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new ModBO();
@@ -29,19 +29,19 @@ public final class ModBO extends BinaryOperator {
         String leftReg = c.leftReg();
         String rightReg = c.rightReg();
 
-        if (leftType instanceof ByteBuiltinType && rightType instanceof ByteBuiltinType) {
+        if (leftType == BuiltinTypes.BYTE.getType() && rightType == BuiltinTypes.BYTE.getType()) {
             llvmType = "i8";
             resultType = leftType;
-        } else if (leftType instanceof ShortBuiltinType && rightType instanceof ShortBuiltinType) {
+        } else if (leftType == BuiltinTypes.SHORT.getType() && rightType == BuiltinTypes.SHORT.getType()) {
             llvmType = "i16";
             resultType = leftType;
-        } else if (leftType instanceof IntBuiltinType && rightType instanceof IntBuiltinType) {
+        } else if (leftType == BuiltinTypes.INT.getType() && rightType == BuiltinTypes.INT.getType()) {
             llvmType = "i32";
             resultType = leftType;
-        } else if (leftType instanceof LongBuiltinType && rightType instanceof LongBuiltinType) {
+        } else if (leftType == BuiltinTypes.LONG.getType() && rightType == BuiltinTypes.LONG.getType()) {
             llvmType = "i64";
             resultType = leftType;
-        } else if (leftType instanceof LongBuiltinType && rightType instanceof IntBuiltinType) {
+        } else if (leftType == BuiltinTypes.LONG.getType() && rightType == BuiltinTypes.INT.getType()) {
             llvmType = "i64";
             resultType = leftType;
 
@@ -50,7 +50,7 @@ public final class ModBO extends BinaryOperator {
                 c.cctx().emit(castedReg + " = sext i32 " + rightReg + " to i64");
                 rightReg = castedReg;
             }
-        } else if (leftType instanceof IntBuiltinType && rightType instanceof LongBuiltinType) {
+        } else if (leftType == BuiltinTypes.INT.getType() && rightType == BuiltinTypes.LONG.getType()) {
             llvmType = "i64";
             resultType = rightType;
 
@@ -59,11 +59,11 @@ public final class ModBO extends BinaryOperator {
                 c.cctx().emit(castedReg + " = sext i32 " + leftReg + " to i64");
                 leftReg = castedReg;
             }
-        } else if (leftType instanceof FloatBuiltinType && rightType instanceof FloatBuiltinType) {
+        } else if (leftType == BuiltinTypes.FLOAT.getType() && rightType == BuiltinTypes.FLOAT.getType()) {
             llvmType = "float";
             isFloating = true;
             resultType = leftType;
-        } else if (leftType instanceof DoubleBuiltinType && rightType instanceof DoubleBuiltinType) {
+        } else if (leftType == BuiltinTypes.DOUBLE.getType() && rightType == BuiltinTypes.DOUBLE.getType()) {
             llvmType = "double";
             isFloating = true;
             resultType = leftType;
@@ -100,7 +100,7 @@ public final class ModBO extends BinaryOperator {
         final TypeRef rightType = right.getType();
 
         try {
-            if (leftType instanceof ByteBuiltinType && rightType instanceof ByteBuiltinType) {
+            if (leftType == BuiltinTypes.BYTE.getType() && rightType == BuiltinTypes.BYTE.getType()) {
                 final byte l = Byte.parseByte(left.compileToConstant(cctx));
                 final byte r = Byte.parseByte(right.compileToConstant(cctx));
 
@@ -109,7 +109,7 @@ public final class ModBO extends BinaryOperator {
                 return Byte.toString((byte) (l % r));
             }
 
-            if (leftType instanceof ShortBuiltinType && rightType instanceof ShortBuiltinType) {
+            if (leftType == BuiltinTypes.SHORT.getType() && rightType == BuiltinTypes.SHORT.getType()) {
                 final short l = Short.parseShort(left.compileToConstant(cctx));
                 final short r = Short.parseShort(right.compileToConstant(cctx));
 
@@ -118,7 +118,7 @@ public final class ModBO extends BinaryOperator {
                 return Short.toString((short) (l % r));
             }
 
-            if (leftType instanceof IntBuiltinType && rightType instanceof IntBuiltinType) {
+            if (leftType == BuiltinTypes.INT.getType() && rightType == BuiltinTypes.INT.getType()) {
                 final int l = Integer.parseInt(left.compileToConstant(cctx));
                 final int r = Integer.parseInt(right.compileToConstant(cctx));
 
@@ -127,7 +127,7 @@ public final class ModBO extends BinaryOperator {
                 return Integer.toString(l % r);
             }
 
-            if (leftType instanceof LongBuiltinType && rightType instanceof LongBuiltinType) {
+            if (leftType == BuiltinTypes.LONG.getType() && rightType == BuiltinTypes.LONG.getType()) {
                 final long l = Long.parseLong(left.compileToConstant(cctx));
                 final long r = Long.parseLong(right.compileToConstant(cctx));
 
@@ -136,7 +136,7 @@ public final class ModBO extends BinaryOperator {
                 return Long.toString(l % r);
             }
 
-            if (leftType instanceof LongBuiltinType && rightType instanceof IntBuiltinType) {
+            if (leftType == BuiltinTypes.LONG.getType() && rightType == BuiltinTypes.INT.getType()) {
                 final long l = Long.parseLong(left.compileToConstant(cctx));
                 final int r = Integer.parseInt(right.compileToConstant(cctx));
 
@@ -145,7 +145,7 @@ public final class ModBO extends BinaryOperator {
                 return Long.toString(l % r);
             }
 
-            if (leftType instanceof IntBuiltinType && rightType instanceof LongBuiltinType) {
+            if (leftType == BuiltinTypes.INT.getType() && rightType == BuiltinTypes.LONG.getType()) {
                 final int l = Integer.parseInt(left.compileToConstant(cctx));
                 final long r = Long.parseLong(right.compileToConstant(cctx));
 
@@ -154,14 +154,14 @@ public final class ModBO extends BinaryOperator {
                 return Long.toString(l % r);
             }
 
-            if (leftType instanceof FloatBuiltinType && rightType instanceof FloatBuiltinType) {
+            if (leftType == BuiltinTypes.FLOAT.getType() && rightType == BuiltinTypes.FLOAT.getType()) {
                 final float l = Float.parseFloat(left.compileToConstant(cctx));
                 final float r = Float.parseFloat(right.compileToConstant(cctx));
 
                 return Float.toString(l % r);
             }
 
-            if (leftType instanceof DoubleBuiltinType && rightType instanceof DoubleBuiltinType) {
+            if (leftType == BuiltinTypes.DOUBLE.getType() && rightType == BuiltinTypes.DOUBLE.getType()) {
                 final double l = Double.parseDouble(left.compileToConstant(cctx));
                 final double r = Double.parseDouble(right.compileToConstant(cctx));
 

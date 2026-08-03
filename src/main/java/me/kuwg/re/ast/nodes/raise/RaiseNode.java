@@ -11,7 +11,6 @@ import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.StrBuiltinType;
 
 import java.util.List;
 import java.util.Map;
@@ -46,7 +45,7 @@ public class RaiseNode extends ASTNode implements InterruptNode {
             } else {
                 String valueReg = value.compileAndGet(cctx);
 
-                if (!(value.getType() instanceof StrBuiltinType)) {
+                if (!(value.getType() == BuiltinTypes.STR.getType())) {
                     new RVariableTypeError("str", value.getType().getName(), fileName, line).raise();
                     return;
                 }

@@ -8,7 +8,7 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.lambda.LambdaType;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class LambdaDeclarationNode extends ValueNode {
 
         String lambdaName = "__lambda_" + System.identityHashCode(this);
 
-        BlockNode block = new BlockNode(fileName, List.of(returnType instanceof NoneBuiltinType ? func : new ReturnNode(fileName, line, func)));
+        BlockNode block = new BlockNode(fileName, List.of(returnType == BuiltinTypes.NONE.getType() ? func : new ReturnNode(fileName, line, func)));
 
         FunctionDeclarationNode fn = new FunctionDeclarationNode(fileName, line, false, lambdaName, params, returnType, block);
 

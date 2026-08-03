@@ -16,7 +16,6 @@ import me.kuwg.re.error.errors.block.RBlockSyntaxError;
 import me.kuwg.re.error.errors.function.RFunctionReturnTypeMismatchError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.writer.Writeable;
 
 import java.util.ArrayList;
@@ -124,7 +123,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
             }
         }
 
-        if (!hasReturn && !(returnType instanceof NoneBuiltinType) && mustReturn) {
+        if (!hasReturn && !(returnType == BuiltinTypes.NONE.getType()) && mustReturn) {
             new RFunctionReturnTypeMismatchError(
                     returnType,
                     BuiltinTypes.NONE.getType(),

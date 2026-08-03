@@ -6,7 +6,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.array.RArrayTypeIsNoneError;
 import me.kuwg.re.error.errors.array.RArrayTypesMismatchError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class ArrayNode extends PointerValueNode {
 
         var arr = new ArrayType(values.size(), values.get(0).getType());
 
-        if (arr.getInner() instanceof NoneBuiltinType) {
+        if (arr.getInner() == BuiltinTypes.NONE.getType()) {
             return new RArrayTypeIsNoneError(fileName, line).raise();
         }
 

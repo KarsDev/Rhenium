@@ -78,7 +78,6 @@ import me.kuwg.re.token.Token;
 import me.kuwg.re.token.TokenType;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
@@ -463,7 +462,7 @@ public final class ASTParser {
                 if (!match(OPERATOR, "=")) type = parseType(false);
                 else type = null;
 
-                if (type instanceof NoneBuiltinType) {
+                if (type == BuiltinTypes.NONE.getType()) {
                     yield new RParserError("Variables cannot be declared with type 'none'", fileName, line).raise();
                 }
 
@@ -2127,7 +2126,7 @@ public final class ASTParser {
             return new RParserError("Expected \"->\" for pointer type declaration", fileName, line).raise();
 
         TypeRef inner = parseType(generics);
-        if (inner instanceof NoneBuiltinType)
+        if (inner == BuiltinTypes.NONE.getType())
             return new RParserError("You can't declare a void pointer, please use 'anyptr' instead", fileName, line).raise();
         return new PointerType(inner);
     }
@@ -2139,7 +2138,7 @@ public final class ASTParser {
 
         TypeRef inner = parseType(generics);
 
-        if (inner instanceof NoneBuiltinType) {
+        if (inner == BuiltinTypes.NONE.getType()) {
             return new RArrayTypeIsNoneError(fileName, line).raise();
         }
 

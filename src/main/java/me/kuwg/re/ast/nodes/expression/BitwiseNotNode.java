@@ -4,10 +4,7 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.expr.RUnsupportedUnaryExpressionError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.ByteBuiltinType;
-import me.kuwg.re.type.builtin.IntBuiltinType;
-import me.kuwg.re.type.builtin.LongBuiltinType;
-import me.kuwg.re.type.builtin.ShortBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 import java.util.Map;
 
@@ -29,18 +26,18 @@ public class BitwiseNotNode extends ValueNode {
         String valueReg = value.compileAndGet(cctx);
         TypeRef type = value.getType();
 
-        if (!(type instanceof ByteBuiltinType
-                || type instanceof ShortBuiltinType
-                || type instanceof IntBuiltinType
-                || type instanceof LongBuiltinType)) {
+        if (!(type == BuiltinTypes.BYTE.getType()
+                || type == BuiltinTypes.SHORT.getType()
+                || type == BuiltinTypes.INT.getType()
+                || type == BuiltinTypes.LONG.getType())) {
             return new RUnsupportedUnaryExpressionError("~", type, fileName, line).raise();
         }
 
         String mask;
-        if (type instanceof ByteBuiltinType) mask = "255";            // 0xFF
-        else if (type instanceof ShortBuiltinType) mask = "65535";    // 0xFFFF
-        else if (type instanceof IntBuiltinType) mask = "4294967295"; // 0xFFFFFFFF
-        else mask = "18446744073709551615";                           // 0xFFFFFFFFFFFFFFFF for long
+        if (type == BuiltinTypes.BYTE.getType()) mask = "255";            // 0xFF
+        else if (type == BuiltinTypes.SHORT.getType()) mask = "65535";    // 0xFFFF
+        else if (type == BuiltinTypes.INT.getType()) mask = "4294967295"; // 0xFFFFFFFF
+        else mask = "18446744073709551615";                               // 0xFFFFFFFFFFFFFFFF for long
 
         String resReg = cctx.nextRegister();
         cctx.emit("; Bitwise not");
@@ -75,25 +72,25 @@ public class BitwiseNotNode extends ValueNode {
     public String compileToConstant(final CompilationContext cctx) {
         final TypeRef type = value.getType();
 
-        if (!(type instanceof ByteBuiltinType
-                || type instanceof ShortBuiltinType
-                || type instanceof IntBuiltinType
-                || type instanceof LongBuiltinType)) {
+        if (!(type == BuiltinTypes.BYTE.getType()
+                || type == BuiltinTypes.SHORT.getType()
+                || type == BuiltinTypes.INT.getType()
+                || type == BuiltinTypes.LONG.getType())) {
             return new RUnsupportedUnaryExpressionError("~", type, fileName, line).raise();
         }
 
         final String constant = value.compileToConstant(cctx);
 
         try {
-            if (type instanceof ByteBuiltinType) {
+            if (type == BuiltinTypes.BYTE.getType()) {
                 return Byte.toString((byte) ~Byte.parseByte(constant));
             }
 
-            if (type instanceof ShortBuiltinType) {
+            if (type == BuiltinTypes.SHORT.getType()) {
                 return Short.toString((short) ~Short.parseShort(constant));
             }
 
-            if (type instanceof IntBuiltinType) {
+            if (type == BuiltinTypes.INT.getType()) {
                 return Integer.toString(~Integer.parseInt(constant));
             }
 

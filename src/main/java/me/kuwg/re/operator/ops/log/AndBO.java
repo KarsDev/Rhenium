@@ -7,7 +7,6 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.BoolBuiltinType;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class AndBO extends BinaryOperator {
@@ -22,7 +21,7 @@ public final class AndBO extends BinaryOperator {
         TypeRef leftType = c.leftType();
         TypeRef rightType = c.rightType();
 
-        if (!(leftType instanceof BoolBuiltinType) || !(rightType instanceof BoolBuiltinType)) {
+        if (!(leftType == BuiltinTypes.BOOL.getType()) || !(rightType == BuiltinTypes.BOOL.getType())) {
             return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
@@ -40,7 +39,7 @@ public final class AndBO extends BinaryOperator {
         final TypeRef leftType = left.getType();
         final TypeRef rightType = right.getType();
 
-        if (!(leftType instanceof BoolBuiltinType) || !(rightType instanceof BoolBuiltinType)) {
+        if (!(leftType == BuiltinTypes.BOOL.getType()) || !(rightType == BuiltinTypes.BOOL.getType())) {
             return unsupported(leftType, rightType, left).raise();
         }
 

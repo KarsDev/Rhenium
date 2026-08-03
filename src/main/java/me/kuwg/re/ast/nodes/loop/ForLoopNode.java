@@ -15,7 +15,6 @@ import me.kuwg.re.error.errors.variable.RVariableAlreadyExistsError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.iterable.IterableTypeRef;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
@@ -90,7 +89,7 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
             return;
         }
 
-        if (type instanceof StrBuiltinType) {
+        if (type == BuiltinTypes.STR.getType()) {
             compileStr(cctx, reg);
             return;
         }

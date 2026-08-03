@@ -7,10 +7,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.ByteBuiltinType;
-import me.kuwg.re.type.builtin.IntBuiltinType;
-import me.kuwg.re.type.builtin.LongBuiltinType;
-import me.kuwg.re.type.builtin.ShortBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class BitwiseXorBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new BitwiseXorBO();
@@ -26,13 +23,13 @@ public final class BitwiseXorBO extends BinaryOperator {
 
         String llvmType;
 
-        if (leftType instanceof ByteBuiltinType && rightType instanceof ByteBuiltinType) {
+        if (leftType == BuiltinTypes.BYTE.getType() && rightType == BuiltinTypes.BYTE.getType()) {
             llvmType = "i8";
-        } else if (leftType instanceof ShortBuiltinType && rightType instanceof ShortBuiltinType) {
+        } else if (leftType == BuiltinTypes.SHORT.getType() && rightType == BuiltinTypes.SHORT.getType()) {
             llvmType = "i16";
-        } else if (leftType instanceof IntBuiltinType && rightType instanceof IntBuiltinType) {
+        } else if (leftType == BuiltinTypes.INT.getType() && rightType == BuiltinTypes.INT.getType()) {
             llvmType = "i32";
-        } else if (leftType instanceof LongBuiltinType && rightType instanceof LongBuiltinType) {
+        } else if (leftType == BuiltinTypes.LONG.getType() && rightType == BuiltinTypes.LONG.getType()) {
             llvmType = "i64";
         } else {
             return new RUnsupportedBinaryExpressionError(
@@ -73,25 +70,25 @@ public final class BitwiseXorBO extends BinaryOperator {
         final String rhs = right.compileToConstant(cctx);
 
         try {
-            if (leftType instanceof ByteBuiltinType) {
+            if (leftType == BuiltinTypes.BYTE.getType()) {
                 return Byte.toString(
                         (byte) (Byte.parseByte(lhs) ^ Byte.parseByte(rhs))
                 );
             }
 
-            if (leftType instanceof ShortBuiltinType) {
+            if (leftType == BuiltinTypes.SHORT.getType()) {
                 return Short.toString(
                         (short) (Short.parseShort(lhs) ^ Short.parseShort(rhs))
                 );
             }
 
-            if (leftType instanceof IntBuiltinType) {
+            if (leftType == BuiltinTypes.INT.getType()) {
                 return Integer.toString(
                         Integer.parseInt(lhs) ^ Integer.parseInt(rhs)
                 );
             }
 
-            if (leftType instanceof LongBuiltinType) {
+            if (leftType == BuiltinTypes.LONG.getType()) {
                 return Long.toString(
                         Long.parseLong(lhs) ^ Long.parseLong(rhs)
                 );

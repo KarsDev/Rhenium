@@ -17,7 +17,7 @@ import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableReassignmentTypeError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.struct.StructType;
@@ -113,7 +113,7 @@ public class VariableDeclarationNode extends ValueNode {
 
         if (valueType instanceof ArrayType arrType) {
             varType = new ArrayType(arrType.size(), arrType.getInner());
-            if (arrType.getInner() instanceof NoneBuiltinType) {
+            if (arrType.getInner() == BuiltinTypes.NONE.getType()) {
                 return new RArrayTypeIsNoneError(fileName, line).raise();
             }
         }

@@ -11,7 +11,7 @@ import me.kuwg.re.error.errors.function.RFunctionGenericsError;
 import me.kuwg.re.error.errors.function.RFunctionIsVoidError;
 import me.kuwg.re.error.errors.function.RFunctionNotFoundError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
@@ -64,7 +64,7 @@ public abstract class FunCall extends ValueNode {
     }
 
     String emitCall(CompilationContext cctx, RFunction fn, List<String> argRegs, List<TypeRef> callTypes, boolean getting) {
-        if (fn.returnType() instanceof NoneBuiltinType && getting) {
+        if (fn.returnType() == BuiltinTypes.NONE.getType() && getting) {
             throwVoid(fn, callTypes);
         }
 
@@ -97,7 +97,7 @@ public abstract class FunCall extends ValueNode {
 
         var rt = evalType(fn.returnType(), cctx, fileName, line);
 
-        if (!(rt instanceof NoneBuiltinType)) {
+        if (!(rt == BuiltinTypes.NONE.getType())) {
             result = cctx.nextRegister();
             sb.append(result).append(" = ");
         }
@@ -113,7 +113,7 @@ public abstract class FunCall extends ValueNode {
         cctx.emit(sb.toString());
 
         setType(rt);
-        return rt instanceof NoneBuiltinType ? "%void_" + cctx.nextRegister() : result;
+        return rt == BuiltinTypes.NONE.getType() ? "%void_" + cctx.nextRegister() : result;
     }
 
     <T> T throwNotFound(List<TypeRef> types) {

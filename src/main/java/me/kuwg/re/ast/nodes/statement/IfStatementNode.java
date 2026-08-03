@@ -8,7 +8,7 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.condition.RInvalidConditionError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.BoolBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 import java.util.Map;
 import java.util.Objects;
@@ -56,7 +56,7 @@ public class IfStatementNode extends ASTNode implements IBlockContainer {
 
         String condReg = condition.compileAndGet(cctx);
 
-        if (!(condition.getType() instanceof BoolBuiltinType)) {
+        if (!(condition.getType() == BuiltinTypes.BOOL.getType())) {
             new RInvalidConditionError(condition.getType(), fileName, line).raise();
             return;
         }

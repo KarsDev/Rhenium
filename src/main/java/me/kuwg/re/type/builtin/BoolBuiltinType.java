@@ -2,7 +2,7 @@ package me.kuwg.re.type.builtin;
 
 import me.kuwg.re.type.TypeRef;
 
-public final class BoolBuiltinType extends BuiltinType {
+final class BoolBuiltinType extends BuiltinType {
     static final BuiltinType INSTANCE = new BoolBuiltinType();
 
     private BoolBuiltinType(){

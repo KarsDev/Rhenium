@@ -3,7 +3,7 @@ package me.kuwg.re.type.builtin;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 
-public final class NoneBuiltinType extends BuiltinType {
+final class NoneBuiltinType extends BuiltinType {
     static final NoneBuiltinType INSTANCE = new NoneBuiltinType();
 
     private NoneBuiltinType() {

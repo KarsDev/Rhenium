@@ -6,7 +6,6 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.LongBuiltinType;
 
 import java.util.Map;
 
@@ -29,7 +28,7 @@ public class PointerCreationNode extends ValueNode {
 
         String constant;
 
-        if (type instanceof LongBuiltinType) constant = value.compileToConstant(cctx);
+        if (type == BuiltinTypes.LONG.getType()) constant = value.compileToConstant(cctx);
         else constant = new CastNode(fileName, line, BuiltinTypes.LONG.getType(), value).compileAndGet(cctx);
 
         String result = cctx.nextRegister();

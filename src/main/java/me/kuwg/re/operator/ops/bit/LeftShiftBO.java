@@ -7,10 +7,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.ByteBuiltinType;
-import me.kuwg.re.type.builtin.IntBuiltinType;
-import me.kuwg.re.type.builtin.LongBuiltinType;
-import me.kuwg.re.type.builtin.ShortBuiltinType;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class LeftShiftBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new LeftShiftBO();
@@ -31,6 +28,7 @@ public final class LeftShiftBO extends BinaryOperator {
         }
 
         TypeRef resultType = promoteNumeric(leftType, rightType);
+        assert resultType != null;
         String llvmType = resultType.getLLVMName();
 
         String leftReg = convertToType(c.leftReg(), leftType, resultType, c);
@@ -63,19 +61,19 @@ public final class LeftShiftBO extends BinaryOperator {
             final long lhs = Long.parseLong(left.compileToConstant(cctx));
             final int rhs = Integer.parseInt(right.compileToConstant(cctx));
 
-            if (resultType instanceof ByteBuiltinType) {
+            if (resultType == BuiltinTypes.BYTE.getType()) {
                 return Byte.toString((byte) (lhs << rhs));
             }
 
-            if (resultType instanceof ShortBuiltinType) {
+            if (resultType == BuiltinTypes.SHORT.getType()) {
                 return Short.toString((short) (lhs << rhs));
             }
 
-            if (resultType instanceof IntBuiltinType) {
+            if (resultType == BuiltinTypes.INT.getType()) {
                 return Integer.toString((int) lhs << rhs);
             }
 
-            if (resultType instanceof LongBuiltinType) {
+            if (resultType == BuiltinTypes.LONG.getType()) {
                 return Long.toString(lhs << rhs);
             }
         } catch (NumberFormatException ignored) {

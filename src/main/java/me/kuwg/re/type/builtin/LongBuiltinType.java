@@ -2,7 +2,7 @@ package me.kuwg.re.type.builtin;
 
 import me.kuwg.re.type.TypeRef;
 
-public final class LongBuiltinType extends BuiltinType {
+final class LongBuiltinType extends BuiltinType {
     static final BuiltinType INSTANCE = new LongBuiltinType();
 
     private LongBuiltinType() {

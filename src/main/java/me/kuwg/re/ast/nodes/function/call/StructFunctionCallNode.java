@@ -13,7 +13,6 @@ import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
 import me.kuwg.re.type.union.UnionType;
@@ -118,7 +117,7 @@ public class StructFunctionCallNode extends VariableReference {
 
             call.append(")");
 
-            if (rt instanceof NoneBuiltinType) {
+            if (rt == BuiltinTypes.NONE.getType()) {
                 cctx.emit(call.toString());
                 return "";
             }
@@ -200,7 +199,7 @@ public class StructFunctionCallNode extends VariableReference {
             }
         }
 
-        boolean returnsVoid = returnType instanceof NoneBuiltinType;
+        boolean returnsVoid = returnType == BuiltinTypes.NONE.getType();
         String resultSlot = null;
         if (!returnsVoid) {
             resultSlot = cctx.nextRegister();
@@ -266,7 +265,7 @@ public class StructFunctionCallNode extends VariableReference {
 
             call.append(")");
 
-            if (returnType instanceof NoneBuiltinType) {
+            if (returnType == BuiltinTypes.NONE.getType()) {
                 cctx.emit(call.toString());
             } else {
                 String result = cctx.nextRegister();

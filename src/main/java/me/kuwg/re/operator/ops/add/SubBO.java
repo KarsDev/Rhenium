@@ -6,7 +6,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class SubBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new SubBO();
@@ -51,27 +51,27 @@ public final class SubBO extends BinaryOperator {
         final String rhs = right.compileToConstant(cctx);
 
         try {
-            if (resultType instanceof DoubleBuiltinType) {
+            if (resultType == BuiltinTypes.DOUBLE.getType()) {
                 return Double.toString(Double.parseDouble(lhs) - Double.parseDouble(rhs));
             }
 
-            if (resultType instanceof FloatBuiltinType) {
+            if (resultType == BuiltinTypes.FLOAT.getType()) {
                 return Float.toString(Float.parseFloat(lhs) - Float.parseFloat(rhs));
             }
 
-            if (resultType instanceof LongBuiltinType) {
+            if (resultType == BuiltinTypes.LONG.getType()) {
                 return Long.toString(Long.parseLong(lhs) - Long.parseLong(rhs));
             }
 
-            if (resultType instanceof IntBuiltinType) {
+            if (resultType == BuiltinTypes.INT.getType()) {
                 return Integer.toString(Integer.parseInt(lhs) - Integer.parseInt(rhs));
             }
 
-            if (resultType instanceof ShortBuiltinType) {
+            if (resultType == BuiltinTypes.SHORT.getType()) {
                 return Short.toString((short) (Short.parseShort(lhs) - Short.parseShort(rhs)));
             }
 
-            if (resultType instanceof ByteBuiltinType) {
+            if (resultType == BuiltinTypes.BYTE.getType()) {
                 return Byte.toString((byte) (Byte.parseByte(lhs) - Byte.parseByte(rhs)));
             }
         } catch (NumberFormatException ex) {

@@ -7,7 +7,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class LessOrEqualBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new LessOrEqualBO();
@@ -21,7 +21,7 @@ public final class LessOrEqualBO extends BinaryOperator {
         TypeRef leftType = c.leftType();
         TypeRef rightType = c.rightType();
 
-        if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
+        if (leftType == BuiltinTypes.STR.getType() && rightType == BuiltinTypes.STR.getType()) {
             String lLen = c.cctx().nextRegister();
             String rLen = c.cctx().nextRegister();
 
@@ -42,7 +42,7 @@ public final class LessOrEqualBO extends BinaryOperator {
         String rightReg = convertToType(c.rightReg(), rightType, resultType, c);
         String resReg = c.cctx().nextRegister();
 
-        if (resultType instanceof FloatBuiltinType || resultType instanceof DoubleBuiltinType) {
+        if (resultType == BuiltinTypes.FLOAT.getType() || resultType == BuiltinTypes.DOUBLE.getType()) {
             c.cctx().emit(resReg + " = fcmp ole " + resultType.getLLVMName() + " " + leftReg + ", " + rightReg);
         } else {
             c.cctx().emit(resReg + " = icmp sle " + resultType.getLLVMName() + " " + leftReg + ", " + rightReg);
@@ -56,7 +56,7 @@ public final class LessOrEqualBO extends BinaryOperator {
         final TypeRef leftType = left.getType();
         final TypeRef rightType = right.getType();
 
-        if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
+        if (leftType == BuiltinTypes.STR.getType() && rightType == BuiltinTypes.STR.getType()) {
             return Boolean.toString(
                     left.compileToConstant(cctx).length() <=
                             right.compileToConstant(cctx).length()
@@ -70,42 +70,42 @@ public final class LessOrEqualBO extends BinaryOperator {
         }
 
         try {
-            if (resultType instanceof DoubleBuiltinType) {
+            if (resultType == BuiltinTypes.DOUBLE.getType()) {
                 return Boolean.toString(
                         Double.parseDouble(left.compileToConstant(cctx)) <=
                                 Double.parseDouble(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof FloatBuiltinType) {
+            if (resultType == BuiltinTypes.FLOAT.getType()) {
                 return Boolean.toString(
                         Float.parseFloat(left.compileToConstant(cctx)) <=
                                 Float.parseFloat(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof LongBuiltinType) {
+            if (resultType == BuiltinTypes.LONG.getType()) {
                 return Boolean.toString(
                         Long.parseLong(left.compileToConstant(cctx)) <=
                                 Long.parseLong(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof IntBuiltinType) {
+            if (resultType == BuiltinTypes.INT.getType()) {
                 return Boolean.toString(
                         Integer.parseInt(left.compileToConstant(cctx)) <=
                                 Integer.parseInt(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof ShortBuiltinType) {
+            if (resultType == BuiltinTypes.SHORT.getType()) {
                 return Boolean.toString(
                         Short.parseShort(left.compileToConstant(cctx)) <=
                                 Short.parseShort(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof ByteBuiltinType) {
+            if (resultType == BuiltinTypes.BYTE.getType()) {
                 return Boolean.toString(
                         Byte.parseByte(left.compileToConstant(cctx)) <=
                                 Byte.parseByte(right.compileToConstant(cctx))

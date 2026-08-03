@@ -5,7 +5,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.ptr.PointerType;
 
@@ -23,39 +23,47 @@ public abstract class BinaryOperator {
     }
 
     protected static boolean isInteger(TypeRef t) {
-        return t instanceof ByteBuiltinType || t instanceof ShortBuiltinType || t instanceof IntBuiltinType || t instanceof LongBuiltinType;
+        return t == BuiltinTypes.BYTE.getType()
+                || t == BuiltinTypes.SHORT.getType()
+                || t == BuiltinTypes.INT.getType()
+                || t == BuiltinTypes.LONG.getType();
     }
 
     public static boolean isFloat(TypeRef t) {
-        return t instanceof FloatBuiltinType || t instanceof DoubleBuiltinType;
+        return t == BuiltinTypes.FLOAT.getType()
+                || t == BuiltinTypes.DOUBLE.getType();
     }
 
     public static TypeRef promoteNumeric(TypeRef a, TypeRef b) {
-        if (a instanceof AnyPointerType || b instanceof AnyPointerType) return null;
-        if (a instanceof NullType) if (b instanceof PointerType) return b;
-        if (b instanceof NullType) if (a instanceof PointerType) return a;
+        if (a == BuiltinTypes.ANYPTR.getType() || b == BuiltinTypes.ANYPTR.getType()) return null;
+
+        if (a instanceof NullType && b instanceof PointerType) return b;
+        if (b instanceof NullType && a instanceof PointerType) return a;
 
         if (a instanceof PointerType && b instanceof PointerType) return a;
 
-        if (a instanceof DoubleBuiltinType || b instanceof DoubleBuiltinType) return BuiltinTypes.DOUBLE.getType();
-        if (a instanceof FloatBuiltinType || b instanceof FloatBuiltinType) return BuiltinTypes.FLOAT.getType();
-        if (a instanceof LongBuiltinType || b instanceof LongBuiltinType) return BuiltinTypes.LONG.getType();
-        if (a instanceof IntBuiltinType || b instanceof IntBuiltinType) return BuiltinTypes.INT.getType();
-        if (a instanceof ShortBuiltinType || b instanceof ShortBuiltinType) return BuiltinTypes.SHORT.getType();
-        if (a instanceof ByteBuiltinType || b instanceof ByteBuiltinType) return BuiltinTypes.BYTE.getType();
-        if (a instanceof CharBuiltinType || b instanceof CharBuiltinType) return BuiltinTypes.BYTE.getType();
-        if (a instanceof BoolBuiltinType && b instanceof BoolBuiltinType) return BuiltinTypes.BOOL.getType();
-
+        if (a == BuiltinTypes.DOUBLE.getType() || b == BuiltinTypes.DOUBLE.getType()) return BuiltinTypes.DOUBLE.getType();
+        if (a == BuiltinTypes.FLOAT.getType() || b == BuiltinTypes.FLOAT.getType()) return BuiltinTypes.FLOAT.getType();
+        if (a == BuiltinTypes.LONG.getType() || b == BuiltinTypes.LONG.getType()) return BuiltinTypes.LONG.getType();
+        if (a == BuiltinTypes.INT.getType() || b == BuiltinTypes.INT.getType()) return BuiltinTypes.INT.getType();
+        if (a == BuiltinTypes.SHORT.getType() || b == BuiltinTypes.SHORT.getType()) return BuiltinTypes.SHORT.getType();
+        if (a == BuiltinTypes.BYTE.getType() || b == BuiltinTypes.BYTE.getType()) return BuiltinTypes.BYTE.getType();
+        if (a == BuiltinTypes.CHAR.getType() || b == BuiltinTypes.CHAR.getType()) return BuiltinTypes.BYTE.getType();
+        if (a == BuiltinTypes.BOOL.getType() && b == BuiltinTypes.BOOL.getType()) return BuiltinTypes.BOOL.getType();
 
         return null;
     }
 
     public static boolean isNumeric(TypeRef t) {
-        return isInteger(t) || isFloat(t) || t instanceof CharBuiltinType || t instanceof BoolBuiltinType;
+        return isInteger(t)
+                || isFloat(t)
+                || t == BuiltinTypes.CHAR.getType()
+                || t == BuiltinTypes.BOOL.getType();
     }
 
     public static String convertToType(String reg, TypeRef from, TypeRef to, BinaryOperatorContext c) {
-        if (from.equals(to)) return reg;
+        if (from == to) return reg;
+
         String newReg = c.cctx().nextRegister();
 
         if (isInteger(from) && isInteger(to)) {
@@ -65,9 +73,9 @@ public abstract class BinaryOperator {
         } else if (isFloat(from) && isInteger(to)) {
             c.cctx().emit(newReg + " = fptosi " + from.getLLVMName() + " " + reg + " to " + to.getLLVMName());
         } else if (isFloat(from) && isFloat(to)) {
-            if (from instanceof FloatBuiltinType && to instanceof DoubleBuiltinType) {
+            if (from == BuiltinTypes.FLOAT.getType() && to == BuiltinTypes.DOUBLE.getType()) {
                 c.cctx().emit(newReg + " = fpext float " + reg + " to double");
-            } else if (from instanceof DoubleBuiltinType && to instanceof FloatBuiltinType) {
+            } else if (from == BuiltinTypes.DOUBLE.getType() && to == BuiltinTypes.FLOAT.getType()) {
                 c.cctx().emit(newReg + " = fptrunc double " + reg + " to float");
             } else {
                 return reg;

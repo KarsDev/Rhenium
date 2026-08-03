@@ -14,9 +14,6 @@ import me.kuwg.re.error.errors.function.RMainFunctionError;
 import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.IntBuiltinType;
-import me.kuwg.re.type.builtin.NoneBuiltinType;
-import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.ptr.PointerType;
@@ -162,7 +159,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             ns = cctx.popNamespace();
             block.compile(cctx);
 
-            if (returnType instanceof NoneBuiltinType) {
+            if (returnType == BuiltinTypes.NONE.getType()) {
                 cctx.emit("ret void");
             }
         } finally {
@@ -270,7 +267,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         if (!name.equals("main")) return false;
         if (parameters.isEmpty()) return true;
         if (parameters.size() != 2) return false;
-        return parameters.get(0).type() instanceof IntBuiltinType && parameters.get(1).type() instanceof PointerType arr && arr.getInner() instanceof StrBuiltinType;
+        return parameters.get(0).type() == BuiltinTypes.INT.getType() && parameters.get(1).type() instanceof PointerType arr && arr.getInner() == BuiltinTypes.STR.getType();
     }
 
     public String getName() {

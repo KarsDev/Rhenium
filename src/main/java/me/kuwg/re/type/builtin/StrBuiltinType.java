@@ -3,7 +3,7 @@ package me.kuwg.re.type.builtin;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.iterable.IterableTypeRef;
 
-public final class StrBuiltinType extends BuiltinType implements IterableTypeRef {
+final class StrBuiltinType extends BuiltinType implements IterableTypeRef {
     static final BuiltinType INSTANCE = new StrBuiltinType();
 
     private StrBuiltinType() {

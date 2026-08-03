@@ -7,7 +7,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class MulBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new MulBO();
@@ -52,35 +52,35 @@ public final class MulBO extends BinaryOperator {
         }
 
         try {
-            if (resultType instanceof DoubleBuiltinType) {
+            if (resultType == BuiltinTypes.DOUBLE.getType()) {
                 return Double.toString(
                         Double.parseDouble(left.compileToConstant(cctx)) *
                                 Double.parseDouble(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof FloatBuiltinType) {
+            if (resultType == BuiltinTypes.FLOAT.getType()) {
                 return Float.toString(
                         Float.parseFloat(left.compileToConstant(cctx)) *
                                 Float.parseFloat(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof LongBuiltinType) {
+            if (resultType == BuiltinTypes.LONG.getType()) {
                 return Long.toString(
                         Long.parseLong(left.compileToConstant(cctx)) *
                                 Long.parseLong(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof IntBuiltinType) {
+            if (resultType == BuiltinTypes.INT.getType()) {
                 return Integer.toString(
                         Integer.parseInt(left.compileToConstant(cctx)) *
                                 Integer.parseInt(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof ShortBuiltinType) {
+            if (resultType == BuiltinTypes.SHORT.getType()) {
                 return Short.toString(
                         (short) (
                                 Short.parseShort(left.compileToConstant(cctx)) *
@@ -89,7 +89,7 @@ public final class MulBO extends BinaryOperator {
                 );
             }
 
-            if (resultType instanceof ByteBuiltinType) {
+            if (resultType == BuiltinTypes.BYTE.getType()) {
                 return Byte.toString(
                         (byte) (
                                 Byte.parseByte(left.compileToConstant(cctx)) *

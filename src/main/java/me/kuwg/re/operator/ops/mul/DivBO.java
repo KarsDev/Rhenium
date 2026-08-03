@@ -8,7 +8,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public final class DivBO extends BinaryOperator {
     public static final BinaryOperator INSTANCE = new DivBO();
@@ -52,7 +52,7 @@ public final class DivBO extends BinaryOperator {
         }
 
         try {
-            if (resultType instanceof DoubleBuiltinType) {
+            if (resultType == BuiltinTypes.DOUBLE.getType()) {
                 final double l = Double.parseDouble(left.compileToConstant(cctx));
                 final double r = Double.parseDouble(right.compileToConstant(cctx));
 
@@ -63,7 +63,7 @@ public final class DivBO extends BinaryOperator {
                 return Double.toString(l / r);
             }
 
-            if (resultType instanceof FloatBuiltinType) {
+            if (resultType == BuiltinTypes.FLOAT.getType()) {
                 final float l = Float.parseFloat(left.compileToConstant(cctx));
                 final float r = Float.parseFloat(right.compileToConstant(cctx));
 
@@ -74,7 +74,7 @@ public final class DivBO extends BinaryOperator {
                 return Float.toString(l / r);
             }
 
-            if (resultType instanceof LongBuiltinType) {
+            if (resultType == BuiltinTypes.LONG.getType()) {
                 final long l = Long.parseLong(left.compileToConstant(cctx));
                 final long r = Long.parseLong(right.compileToConstant(cctx));
 
@@ -85,7 +85,7 @@ public final class DivBO extends BinaryOperator {
                 return Long.toString(l / r);
             }
 
-            if (resultType instanceof IntBuiltinType) {
+            if (resultType == BuiltinTypes.INT.getType()) {
                 final int l = Integer.parseInt(left.compileToConstant(cctx));
                 final int r = Integer.parseInt(right.compileToConstant(cctx));
 
@@ -96,7 +96,7 @@ public final class DivBO extends BinaryOperator {
                 return Integer.toString(l / r);
             }
 
-            if (resultType instanceof ShortBuiltinType) {
+            if (resultType == BuiltinTypes.SHORT.getType()) {
                 final short l = Short.parseShort(left.compileToConstant(cctx));
                 final short r = Short.parseShort(right.compileToConstant(cctx));
 
@@ -107,7 +107,7 @@ public final class DivBO extends BinaryOperator {
                 return Short.toString((short) (l / r));
             }
 
-            if (resultType instanceof ByteBuiltinType) {
+            if (resultType == BuiltinTypes.BYTE.getType()) {
                 final byte l = Byte.parseByte(left.compileToConstant(cctx));
                 final byte r = Byte.parseByte(right.compileToConstant(cctx));
 

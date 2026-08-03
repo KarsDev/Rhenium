@@ -2,7 +2,7 @@ package me.kuwg.re.type.builtin;
 
 import me.kuwg.re.type.TypeRef;
 
-public final class AnyPointerType extends BuiltinType {
+final class AnyPointerType extends BuiltinType {
     static final BuiltinType INSTANCE = new AnyPointerType();
 
     private AnyPointerType() {
@@ -35,6 +35,6 @@ public final class AnyPointerType extends BuiltinType {
 
     @Override
     public boolean equals(final Object other) {
-        return other instanceof AnyPointerType;
+        return other instanceof AnyPointerType && other == BuiltinTypes.ANYPTR.getType();
     }
 }

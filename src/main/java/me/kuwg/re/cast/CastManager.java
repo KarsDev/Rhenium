@@ -4,7 +4,7 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.cast.RIncompatibleCastError;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.ptr.PointerType;
@@ -33,38 +33,38 @@ public final class CastManager {
                                      final TypeRef sourceType,
                                      final TypeRef targetType,
                                      final CompilationContext cctx) {
-        if (sourceType.equals(targetType)) {
+        if (sourceType == targetType) {
             return valueRegister;
         }
 
         if (sourceType instanceof NullType) {
             return fromNull(fileName, line, targetType, cctx);
         }
-        if (sourceType instanceof LongBuiltinType) {
+        if (sourceType == BuiltinTypes.LONG.getType()) {
             return fromLong(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof IntBuiltinType) {
+        if (sourceType == BuiltinTypes.INT.getType()) {
             return fromInt(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof ShortBuiltinType) {
+        if (sourceType == BuiltinTypes.SHORT.getType()) {
             return fromShort(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof ByteBuiltinType) {
+        if (sourceType == BuiltinTypes.BYTE.getType()) {
             return fromByte(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof FloatBuiltinType) {
+        if (sourceType == BuiltinTypes.FLOAT.getType()) {
             return fromFloat(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof DoubleBuiltinType) {
+        if (sourceType == BuiltinTypes.DOUBLE.getType()) {
             return fromDouble(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof BoolBuiltinType) {
+        if (sourceType == BuiltinTypes.BOOL.getType()) {
             return fromBool(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof CharBuiltinType) {
+        if (sourceType == BuiltinTypes.CHAR.getType()) {
             return fromChar(fileName, line, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof AnyPointerType) {
+        if (sourceType == BuiltinTypes.ANYPTR.getType()) {
             return fromAnyPointer(fileName, line, valueRegister, targetType, cctx);
         }
         if (sourceType instanceof PointerType pointerType) {
@@ -73,7 +73,7 @@ public final class CastManager {
         if (sourceType instanceof ArrayType arrayType) {
             return fromArray(fileName, line, arrayType, valueRegister, targetType, cctx);
         }
-        if (sourceType instanceof StrBuiltinType) {
+        if (sourceType == BuiltinTypes.STR.getType()) {
             return fromStr(fileName, line, valueRegister, targetType, cctx);
         }
         if (sourceType instanceof UnionType unionType) {
@@ -104,7 +104,7 @@ public final class CastManager {
     }
 
     private static String fromNull(final String fileName, final int line, final TypeRef targetType, final CompilationContext cctx) {
-        if (!(targetType instanceof PointerType || targetType instanceof AnyPointerType || targetType instanceof StrBuiltinType)) {
+        if (!(targetType instanceof PointerType || targetType  == BuiltinTypes.ANYPTR.getType() || targetType == BuiltinTypes.STR.getType())) {
             return incompatible(fileName, line, NullType.INSTANCE, targetType);
         }
 
@@ -118,15 +118,18 @@ public final class CastManager {
                                    final String valueRegister,
                                    final TypeRef targetType,
                                    final CompilationContext cctx) {
-        if (targetType instanceof LongBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.LONG.getType()) return valueRegister;
 
-        if (targetType instanceof IntBuiltinType || targetType instanceof ShortBuiltinType || targetType instanceof ByteBuiltinType) {
+        if (targetType == BuiltinTypes.INT.getType()
+                || targetType == BuiltinTypes.SHORT.getType()
+                || targetType == BuiltinTypes.BYTE.getType()) {
             return emitAndReturn(cctx, "trunc i64 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof FloatBuiltinType || targetType instanceof DoubleBuiltinType) {
+        if (targetType == BuiltinTypes.FLOAT.getType()
+                || targetType == BuiltinTypes.DOUBLE.getType()) {
             return emitAndReturn(cctx, "sitofp i64 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof AnyPointerType) {
+        if (targetType == BuiltinTypes.ANYPTR.getType()) {
             return emitAndReturn(cctx, "inttoptr i64 " + valueRegister + " to i8*");
         }
 
@@ -138,15 +141,18 @@ public final class CastManager {
                                   final String valueRegister,
                                   final TypeRef targetType,
                                   final CompilationContext cctx) {
-        if (targetType instanceof IntBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.INT.getType()) return valueRegister;
 
-        if (targetType instanceof LongBuiltinType || targetType instanceof ShortBuiltinType || targetType instanceof ByteBuiltinType) {
+        if (targetType == BuiltinTypes.LONG.getType()
+                || targetType == BuiltinTypes.SHORT.getType()
+                || targetType == BuiltinTypes.BYTE.getType()) {
             return emitAndReturn(cctx, "sext i32 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof FloatBuiltinType || targetType instanceof DoubleBuiltinType) {
+        if (targetType == BuiltinTypes.FLOAT.getType()
+                || targetType == BuiltinTypes.DOUBLE.getType()) {
             return emitAndReturn(cctx, "sitofp i32 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof AnyPointerType) {
+        if (targetType == BuiltinTypes.ANYPTR.getType()) {
             return emitAndReturn(cctx, "inttoptr i32 " + valueRegister + " to i8*");
         }
 
@@ -158,12 +164,15 @@ public final class CastManager {
                                     final String valueRegister,
                                     final TypeRef targetType,
                                     final CompilationContext cctx) {
-        if (targetType instanceof ShortBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.SHORT.getType()) return valueRegister;
 
-        if (targetType instanceof LongBuiltinType || targetType instanceof IntBuiltinType || targetType instanceof ByteBuiltinType) {
+        if (targetType == BuiltinTypes.LONG.getType()
+                || targetType == BuiltinTypes.INT.getType()
+                || targetType == BuiltinTypes.BYTE.getType()) {
             return emitAndReturn(cctx, "sext i16 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof FloatBuiltinType || targetType instanceof DoubleBuiltinType) {
+        if (targetType == BuiltinTypes.FLOAT.getType()
+                || targetType == BuiltinTypes.DOUBLE.getType()) {
             return emitAndReturn(cctx, "sitofp i16 " + valueRegister + " to " + targetType.getLLVMName());
         }
 
@@ -175,12 +184,15 @@ public final class CastManager {
                                    final String valueRegister,
                                    final TypeRef targetType,
                                    final CompilationContext cctx) {
-        if (targetType instanceof ByteBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.BYTE.getType()) return valueRegister;
 
-        if (targetType instanceof ShortBuiltinType || targetType instanceof IntBuiltinType || targetType instanceof LongBuiltinType) {
+        if (targetType == BuiltinTypes.SHORT.getType()
+                || targetType == BuiltinTypes.INT.getType()
+                || targetType == BuiltinTypes.LONG.getType()) {
             return emitAndReturn(cctx, "sext i8 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof FloatBuiltinType || targetType instanceof DoubleBuiltinType) {
+        if (targetType == BuiltinTypes.FLOAT.getType()
+                || targetType == BuiltinTypes.DOUBLE.getType()) {
             return emitAndReturn(cctx, "sitofp i8 " + valueRegister + " to " + targetType.getLLVMName());
         }
 
@@ -192,13 +204,15 @@ public final class CastManager {
                                     final String valueRegister,
                                     final TypeRef targetType,
                                     final CompilationContext cctx) {
-        if (targetType instanceof FloatBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.FLOAT.getType()) return valueRegister;
 
-        if (targetType instanceof DoubleBuiltinType) {
+        if (targetType == BuiltinTypes.DOUBLE.getType()) {
             return emitAndReturn(cctx, "fpext float " + valueRegister + " to double");
         }
-        if (targetType instanceof LongBuiltinType || targetType instanceof IntBuiltinType ||
-                targetType instanceof ShortBuiltinType || targetType instanceof ByteBuiltinType) {
+        if (targetType == BuiltinTypes.LONG.getType()
+                || targetType == BuiltinTypes.INT.getType()
+                || targetType == BuiltinTypes.SHORT.getType()
+                || targetType == BuiltinTypes.BYTE.getType()) {
             return emitAndReturn(cctx, "fptosi float " + valueRegister + " to " + targetType.getLLVMName());
         }
 
@@ -210,13 +224,15 @@ public final class CastManager {
                                      final String valueRegister,
                                      final TypeRef targetType,
                                      final CompilationContext cctx) {
-        if (targetType instanceof DoubleBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.DOUBLE.getType()) return valueRegister;
 
-        if (targetType instanceof FloatBuiltinType) {
+        if (targetType == BuiltinTypes.FLOAT.getType()) {
             return emitAndReturn(cctx, "fptrunc double " + valueRegister + " to float");
         }
-        if (targetType instanceof LongBuiltinType || targetType instanceof IntBuiltinType ||
-                targetType instanceof ShortBuiltinType || targetType instanceof ByteBuiltinType) {
+        if (targetType == BuiltinTypes.LONG.getType()
+                || targetType == BuiltinTypes.INT.getType()
+                || targetType == BuiltinTypes.SHORT.getType()
+                || targetType == BuiltinTypes.BYTE.getType()) {
             return emitAndReturn(cctx, "fptosi double " + valueRegister + " to " + targetType.getLLVMName());
         }
 
@@ -228,13 +244,16 @@ public final class CastManager {
                                    final String valueRegister,
                                    final TypeRef targetType,
                                    final CompilationContext cctx) {
-        if (targetType instanceof BoolBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.BOOL.getType()) return valueRegister;
 
-        if (targetType instanceof ByteBuiltinType || targetType instanceof ShortBuiltinType ||
-                targetType instanceof IntBuiltinType || targetType instanceof LongBuiltinType) {
+        if (targetType == BuiltinTypes.BYTE.getType()
+                || targetType == BuiltinTypes.SHORT.getType()
+                || targetType == BuiltinTypes.INT.getType()
+                || targetType == BuiltinTypes.LONG.getType()) {
             return emitAndReturn(cctx, "zext i1 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof FloatBuiltinType || targetType instanceof DoubleBuiltinType) {
+        if (targetType == BuiltinTypes.FLOAT.getType()
+                || targetType == BuiltinTypes.DOUBLE.getType()) {
             return emitAndReturn(cctx, "uitofp i1 " + valueRegister + " to " + targetType.getLLVMName());
         }
 
@@ -246,14 +265,17 @@ public final class CastManager {
                                    final String valueRegister,
                                    final TypeRef targetType,
                                    final CompilationContext cctx) {
-        if (targetType instanceof CharBuiltinType || targetType instanceof ByteBuiltinType) {
+        if (targetType == BuiltinTypes.CHAR.getType() || targetType == BuiltinTypes.BYTE.getType()) {
             return valueRegister;
         }
 
-        if (targetType instanceof ShortBuiltinType || targetType instanceof IntBuiltinType || targetType instanceof LongBuiltinType) {
+        if (targetType == BuiltinTypes.SHORT.getType()
+                || targetType == BuiltinTypes.INT.getType()
+                || targetType == BuiltinTypes.LONG.getType()) {
             return emitAndReturn(cctx, "zext i8 " + valueRegister + " to " + targetType.getLLVMName());
         }
-        if (targetType instanceof FloatBuiltinType || targetType instanceof DoubleBuiltinType) {
+        if (targetType == BuiltinTypes.FLOAT.getType()
+                || targetType == BuiltinTypes.DOUBLE.getType()) {
             return emitAndReturn(cctx, "uitofp i8 " + valueRegister + " to " + targetType.getLLVMName());
         }
 
@@ -265,7 +287,7 @@ public final class CastManager {
                                          final String valueRegister,
                                          final TypeRef targetType,
                                          final CompilationContext cctx) {
-        if (targetType instanceof AnyPointerType) return valueRegister;
+        if (targetType == BuiltinTypes.ANYPTR.getType()) return valueRegister;
 
         if (targetType instanceof ArrayType arrayType) {
             final TypeRef elementType = arrayType.getInner();
@@ -275,7 +297,7 @@ public final class CastManager {
             return result;
         }
 
-        if (targetType instanceof StrBuiltinType) {
+        if (targetType == BuiltinTypes.STR.getType()) {
             return valueRegister;
         }
 
@@ -306,11 +328,12 @@ public final class CastManager {
             return result;
         }
 
-        if (targetType instanceof LongBuiltinType) {
+        if (targetType == BuiltinTypes.LONG.getType()) {
             return emitAndReturn(cctx, "ptrtoint " + sourcePointer.getLLVMName() + " " + valueRegister + " to i64");
         }
 
-        if (targetType instanceof AnyPointerType || (targetType instanceof StrBuiltinType && sourceInner instanceof CharBuiltinType)) {
+        if (targetType == BuiltinTypes.ANYPTR.getType()
+                || (targetType == BuiltinTypes.STR.getType() && sourceInner == BuiltinTypes.CHAR.getType())) {
             final String result = newRegister(cctx);
             cctx.emit(result + " = bitcast " + sourcePointer.getLLVMName() + " " + valueRegister + " to " + targetType.getLLVMName());
             return result;
@@ -325,7 +348,7 @@ public final class CastManager {
                                     final String valueRegister,
                                     final TypeRef targetType,
                                     final CompilationContext cctx) {
-        if (!(targetType instanceof AnyPointerType || targetType instanceof PointerType)) {
+        if (!(targetType == BuiltinTypes.ANYPTR.getType() || targetType instanceof PointerType)) {
             return incompatible(fileName, line, sourceArray, targetType);
         }
 
@@ -340,15 +363,15 @@ public final class CastManager {
                                   final String valueRegister,
                                   final TypeRef targetType,
                                   final CompilationContext cctx) {
-        if (targetType instanceof StrBuiltinType) return valueRegister;
+        if (targetType == BuiltinTypes.STR.getType()) return valueRegister;
 
-        if (targetType instanceof AnyPointerType || targetType instanceof PointerType) {
+        if (targetType == BuiltinTypes.ANYPTR.getType() || targetType instanceof PointerType) {
             final String result = newRegister(cctx);
             cctx.emit(result + " = bitcast " + BuiltinTypes.STR.getType().getLLVMName() + " " + valueRegister + " to " + targetType.getLLVMName());
             return result;
         }
 
-        if (targetType instanceof LongBuiltinType) {
+        if (targetType == BuiltinTypes.LONG.getType()) {
             return emitAndReturn(cctx, "ptrtoint " + BuiltinTypes.STR.getType().getLLVMName() + " " + valueRegister + " to i64");
         }
 

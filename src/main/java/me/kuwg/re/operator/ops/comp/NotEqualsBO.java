@@ -7,7 +7,7 @@ import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.*;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.struct.StructType;
 
@@ -26,33 +26,33 @@ public final class NotEqualsBO extends BinaryOperator {
         TypeRef rightType = c.rightType();
 
         if ((leftType instanceof NullType &&
-                !(rightType instanceof AnyPointerType || rightType instanceof StrBuiltinType)) ||
+                !(rightType == BuiltinTypes.ANYPTR.getType() || rightType == BuiltinTypes.STR.getType())) ||
                 (rightType instanceof NullType &&
-                        !(leftType instanceof AnyPointerType || leftType instanceof StrBuiltinType))) {
+                        !(leftType == BuiltinTypes.ANYPTR.getType() || leftType == BuiltinTypes.STR.getType()))) {
             return new RUnsupportedBinaryExpressionError(
                     leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
             ).raise();
         }
 
-        if (leftType instanceof StrBuiltinType && rightType instanceof NullType) {
+        if (leftType == BuiltinTypes.STR.getType() && rightType instanceof NullType) {
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(resReg + " = icmp ne ptr " + c.leftReg() + ", null");
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 
-        if (leftType instanceof NullType && rightType instanceof StrBuiltinType) {
+        if (leftType instanceof NullType && rightType == BuiltinTypes.STR.getType()) {
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(resReg + " = icmp ne ptr null, " + c.rightReg());
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 
-        if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
+        if (leftType == BuiltinTypes.STR.getType() && rightType == BuiltinTypes.STR.getType()) {
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(resReg + " = call i1 @strNotEquals(i8* " + c.leftReg() + ", i8* " + c.rightReg() + ")");
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 
-        if (leftType instanceof AnyPointerType && rightType instanceof AnyPointerType) {
+        if (leftType == BuiltinTypes.ANYPTR.getType() && rightType == BuiltinTypes.ANYPTR.getType()) {
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(
                     resReg + " = icmp ne ptr " + c.leftReg() + ", " + c.rightReg()
@@ -60,7 +60,7 @@ public final class NotEqualsBO extends BinaryOperator {
             return res(resReg, BuiltinTypes.BOOL.getType());
         }
 
-        if (leftType instanceof AnyPointerType && rightType instanceof NullType) {
+        if (leftType == BuiltinTypes.ANYPTR.getType() && rightType instanceof NullType) {
             String resReg = c.cctx().nextRegister();
             c.cctx().emit(
                     resReg + " = icmp ne ptr " + c.leftReg() + ", null"
@@ -107,7 +107,7 @@ public final class NotEqualsBO extends BinaryOperator {
 
                 String fieldNeq = c.cctx().nextRegister();
 
-                if (fieldType instanceof FloatBuiltinType || fieldType instanceof DoubleBuiltinType) {
+                if (fieldType == BuiltinTypes.FLOAT.getType() || fieldType == BuiltinTypes.DOUBLE.getType()) {
                     c.cctx().emit(fieldNeq + " = fcmp une "
                             + fieldType.getLLVMName() + " "
                             + leftVal + ", " + rightVal);
@@ -138,7 +138,7 @@ public final class NotEqualsBO extends BinaryOperator {
         String rightReg = convertToType(c.rightReg(), rightType, resultType, c);
         String resReg = c.cctx().nextRegister();
 
-        if (resultType instanceof FloatBuiltinType || resultType instanceof DoubleBuiltinType) {
+        if (resultType == BuiltinTypes.FLOAT.getType() || resultType == BuiltinTypes.DOUBLE.getType()) {
             c.cctx().emit(resReg + " = fcmp une " + resultType.getLLVMName() + " " + leftReg + ", " + rightReg);
         } else {
             c.cctx().emit(resReg + " = icmp ne " + resultType.getLLVMName() + " " + leftReg + ", " + rightReg);
@@ -157,32 +157,32 @@ public final class NotEqualsBO extends BinaryOperator {
         }
 
         if ((leftType instanceof NullType &&
-                !(rightType instanceof AnyPointerType || rightType instanceof StrBuiltinType)) ||
+                !(rightType == BuiltinTypes.ANYPTR.getType() || rightType == BuiltinTypes.STR.getType())) ||
                 (rightType instanceof NullType &&
-                        !(leftType instanceof AnyPointerType || leftType instanceof StrBuiltinType))) {
+                        !(leftType == BuiltinTypes.ANYPTR.getType() || leftType == BuiltinTypes.STR.getType()))) {
             return unsupported(leftType, rightType, left).raise();
         }
 
-        if ((leftType instanceof StrBuiltinType && rightType instanceof NullType) ||
-                (leftType instanceof NullType && rightType instanceof StrBuiltinType)) {
+        if ((leftType == BuiltinTypes.STR.getType() && rightType instanceof NullType) ||
+                (leftType instanceof NullType && rightType == BuiltinTypes.STR.getType())) {
             return "true";
         }
 
-        if (leftType instanceof StrBuiltinType && rightType instanceof StrBuiltinType) {
+        if (leftType == BuiltinTypes.STR.getType() && rightType == BuiltinTypes.STR.getType()) {
             return Boolean.toString(
                     !left.compileToConstant(cctx)
                             .equals(right.compileToConstant(cctx))
             );
         }
 
-        if (leftType instanceof BoolBuiltinType && rightType instanceof BoolBuiltinType) {
+        if (leftType == BuiltinTypes.BOOL.getType() && rightType == BuiltinTypes.BOOL.getType()) {
             return Boolean.toString(
                     Boolean.parseBoolean(left.compileToConstant(cctx)) !=
                             Boolean.parseBoolean(right.compileToConstant(cctx))
             );
         }
 
-        if (leftType instanceof CharBuiltinType && rightType instanceof CharBuiltinType) {
+        if (leftType == BuiltinTypes.CHAR.getType() && rightType == BuiltinTypes.CHAR.getType()) {
             return Boolean.toString(
                     Integer.parseInt(left.compileToConstant(cctx)) !=
                             Integer.parseInt(right.compileToConstant(cctx))
@@ -200,42 +200,42 @@ public final class NotEqualsBO extends BinaryOperator {
         }
 
         try {
-            if (resultType instanceof DoubleBuiltinType) {
+            if (resultType == BuiltinTypes.DOUBLE.getType()) {
                 final double l = Double.parseDouble(left.compileToConstant(cctx));
                 final double r = Double.parseDouble(right.compileToConstant(cctx));
 
                 return Boolean.toString(Double.isNaN(l) || Double.isNaN(r) || l != r);
             }
 
-            if (resultType instanceof FloatBuiltinType) {
+            if (resultType == BuiltinTypes.FLOAT.getType()) {
                 final float l = Float.parseFloat(left.compileToConstant(cctx));
                 final float r = Float.parseFloat(right.compileToConstant(cctx));
 
                 return Boolean.toString(Float.isNaN(l) || Float.isNaN(r) || l != r);
             }
 
-            if (resultType instanceof LongBuiltinType) {
+            if (resultType == BuiltinTypes.LONG.getType()) {
                 return Boolean.toString(
                         Long.parseLong(left.compileToConstant(cctx)) !=
                                 Long.parseLong(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof IntBuiltinType) {
+            if (resultType == BuiltinTypes.INT.getType()) {
                 return Boolean.toString(
                         Integer.parseInt(left.compileToConstant(cctx)) !=
                                 Integer.parseInt(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof ShortBuiltinType) {
+            if (resultType == BuiltinTypes.SHORT.getType()) {
                 return Boolean.toString(
                         Short.parseShort(left.compileToConstant(cctx)) !=
                                 Short.parseShort(right.compileToConstant(cctx))
                 );
             }
 
-            if (resultType instanceof ByteBuiltinType) {
+            if (resultType == BuiltinTypes.BYTE.getType()) {
                 return Boolean.toString(
                         Byte.parseByte(left.compileToConstant(cctx)) !=
                                 Byte.parseByte(right.compileToConstant(cctx))

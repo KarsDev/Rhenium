@@ -7,7 +7,6 @@ import me.kuwg.re.error.errors.len.RInvalidLenError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
-import me.kuwg.re.type.builtin.StrBuiltinType;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.struct.StructType;
 
@@ -35,7 +34,7 @@ public class LenNode extends ValueNode {
 
         cctx.emit("; Len of " + valueType.getName());
 
-        if (valueType instanceof StrBuiltinType) {
+        if (valueType == BuiltinTypes.STR.getType()) {
             cctx.emit(longReg + " = call i64 @strlen(i8* " + valReg + ") ; compute string length");
         } else if (valueType instanceof ArrayType arrType) {
             long size = arrType.size();
