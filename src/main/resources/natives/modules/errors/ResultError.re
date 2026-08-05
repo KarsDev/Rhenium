@@ -4,7 +4,7 @@
   a successful value first.
 
   Example:
-      let value = result.value()
+    value = result.value()
 
   when result contains an error variant.
 */
