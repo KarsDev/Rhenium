@@ -1,3 +1,5 @@
+using errors.IndexOutOfBoundsError
+using errors.IllegalArgumentError
 /*
     A dynamically-sized contiguous collection of values.
 
@@ -34,7 +36,7 @@ impl List<T>:
     // Creates a List with a given capacity
     init(capacity: mut int):
         if (capacity <= 0):
-            raise "Capacity must be positive"
+            raise init IllegalArgumentError("Capacity must be positive")
         this.size = 0
         this.capacity = capacity
         this.items = init arr -> T(capacity)
@@ -63,19 +65,19 @@ impl List<T>:
     // Gets an element at a given index
     func get(idx: int) -> T:
         if (idx < 0 or idx >= this.size):
-            raise "Index " + idx + " out of bounds for size " + this.size
+            raise init IndexOutOfBoundsError(idx, this.size)
         return this.items[idx]
 
     // Sets an element in the list at a given index
     func set(idx: int, v: T) -> none:
         if (idx < 0 or idx >= this.size):
-            raise "Index out of bounds"
+            raise init IndexOutOfBoundsError(idx, this.size)
         this.items[idx] = v
 
     // Inserts an element at a given index, creating space if necessary
     func insert(idx: int, v: T) -> none:
         if (idx < 0 or idx > this.size):
-            raise "Index out of bounds"
+            raise init IndexOutOfBoundsError(idx, this.size)
         if (this.size == this.capacity):
             this.resize()
         for (i in range(this.size, idx, -1)):
@@ -86,7 +88,7 @@ impl List<T>:
     // Removes an element at a given index
     func remove(idx: int) -> T:
         if (idx < 0 or idx >= this.size):
-            raise "Index out of bounds"
+            raise init IndexOutOfBoundsError(idx, this.size)
         val = this.items[idx]
         for (i in range(idx, this.size - 1)):
             this.items[i] = this.items[i + 1]
@@ -96,7 +98,7 @@ impl List<T>:
     // Removes and gets the last element from the list
     func pop() -> T:
         if (this.size == 0):
-            raise "List is empty"
+            raise init IndexOutOfBoundsError(0, 0)
 
         this.size -= 1
         return this.items[this.size]
