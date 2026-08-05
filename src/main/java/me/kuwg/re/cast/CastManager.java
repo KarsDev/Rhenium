@@ -143,10 +143,12 @@ public final class CastManager {
                                   final CompilationContext cctx) {
         if (targetType == BuiltinTypes.INT.getType()) return valueRegister;
 
-        if (targetType == BuiltinTypes.LONG.getType()
-                || targetType == BuiltinTypes.SHORT.getType()
+        if (targetType == BuiltinTypes.SHORT.getType()
                 || targetType == BuiltinTypes.BYTE.getType()) {
-            return emitAndReturn(cctx, "sext i32 " + valueRegister + " to " + targetType.getLLVMName());
+            return emitAndReturn(cctx, "trunc i32 " + valueRegister + " to " + targetType.getLLVMName());
+        }
+        if (targetType == BuiltinTypes.LONG.getType()) {
+            return emitAndReturn(cctx, "sext i32 " + valueRegister + " to i64");
         }
         if (targetType == BuiltinTypes.FLOAT.getType()
                 || targetType == BuiltinTypes.DOUBLE.getType()) {
