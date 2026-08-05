@@ -1,5 +1,8 @@
 // Includes the default modules in the native library
 
+// Error trait
+using default.error
+
 // String utilities
 using default.string
 
