@@ -129,6 +129,10 @@ public final class ASTParser {
     }
 
     public AST parse() {
+        if (fileName.substring(fileName.replace("\\", "/").lastIndexOf('/') + 1).equalsIgnoreCase("mod")) {
+            return parseModFile();
+        }
+
         AST ast = new AST(fileName);
 
         if (initial && !noDefaults) {
@@ -148,6 +152,11 @@ public final class ASTParser {
         }
 
         return ast;
+    }
+
+    private AST parseModFile() {
+        System.out.println("mod");
+        throw new RuntimeException();
     }
 
     private BlockNode parseBlock() {

@@ -105,9 +105,12 @@ public final class ModuleLoadingHelper {
 
         loadingModules.add(key);
         try {
-            String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
+            String modulePath = "/natives/modules/" + name + ".re";
+            String src = ResourceLoader.loadResourceAsString(modulePath);
+
             if (src == null) {
-                src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + "/mod.re");
+                modulePath = "/natives/modules/" + name + "/mod.re";
+                src = ResourceLoader.loadResourceAsString(modulePath);
             }
 
             if (src == null) {
@@ -115,7 +118,7 @@ public final class ModuleLoadingHelper {
                 return;
             }
 
-            load(typeMap, name, src, cctx);
+            load(typeMap, modulePath, src, cctx);
             loadedModules.add(key);
         } finally {
             loadingModules.remove(key);
@@ -189,16 +192,19 @@ public final class ModuleLoadingHelper {
 
         collectingModules.add(key);
         try {
-            String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
+            String modulePath = "/natives/modules/" + name + ".re";
+            String src = ResourceLoader.loadResourceAsString(modulePath);
+
             if (src == null) {
-                src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + "/mod.re");
+                modulePath = "/natives/modules/" + name + "/mod.re";
+                src = ResourceLoader.loadResourceAsString(modulePath);
             }
 
             if (src == null) {
                 return new RModuleNotFoundError(name, fileName, line).raise();
             }
 
-            Map<String, TypeRef> out = collectTypes(name, src, typeMap);
+            Map<String, TypeRef> out = collectTypes(modulePath, src, typeMap);
             collectedModules.add(key);
             return out;
         } finally {
