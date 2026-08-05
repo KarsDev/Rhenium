@@ -24,7 +24,7 @@ impl FileReader:
             return false
 
         if (this.file.exists() == false):
-            raise "Tried to open a FileReader of a file that does not exist"
+            raise init FileError("Tried to open a FileReader of a file that does not exist")
 
         success = BFR_00(0, this.file.name) == "1"
         if (success):
@@ -37,7 +37,7 @@ impl FileReader:
     // Reads the next N characters from the file
     func read(n: int) -> str:
         if (this.isOpen == false):
-            raise "Use FileReader#open() before FileReader#read"
+            raise init FileError("Use FileReader#open() before FileReader#read")
 
         start = this.position
         end: mut = start + n
@@ -56,7 +56,7 @@ impl FileReader:
     // Reads the next line from the file
     func readLine() -> str:
         if (this.isOpen == false):
-            raise "Use FileReader#open() before FileReader#readLine"
+            raise init FileError("Use FileReader#open() before FileReader#readLine")
 
         result: mut = ""
         while (this.position < len(this.content)):
@@ -75,7 +75,7 @@ impl FileReader:
     // Closes the file
     func close() -> bool:
         if (this.isOpen == false):
-            raise "Use FileReader#open() before FileReader#"
+            raise init FileError("Use FileReader#open() before FileReader#")
 
         this.content = ""
         this.position = 0

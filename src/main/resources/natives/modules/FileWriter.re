@@ -22,7 +22,7 @@ impl FileWriter:
             return false
             
         if (this.file.exists() == false):
-            raise "Tried to open a FileWriter of a file that does not exist"
+            raise init FileError("Tried to open a FileWriter of a file that does not exist")
 
         result = BFW_00(0, this.file.name, "")
         this.isOpen = result
@@ -32,7 +32,7 @@ impl FileWriter:
     // Opens the file for appending
     func openAppend() -> bool:
         if (this.isOpen):
-            raise "Use FileWriter#open() before FileWriter#openAppend"
+            raise init FileError("Use FileWriter#open() before FileWriter#openAppend")
 
         result = BFW_00(1, this.file.name, "")
         this.isOpen = result
@@ -42,28 +42,28 @@ impl FileWriter:
     // Writes raw text to the file
     func write(text: str) -> bool:
         if (this.isOpen == false):
-            raise "Use FileWriter#open() before FileWriter#write"
+            raise init FileError("Use FileWriter#open() before FileWriter#write")
 
         return BFW_00(2, this.file.name, text)
 
     // Writes text followed by a newline
     func writeLine(text: str) -> bool:
         if (this.isOpen == false):
-            raise "Use FileWriter#open() before FileWriter#writeLine"
+            raise init FileError("Use FileWriter#open() before FileWriter#writeLine")
 
         return BFW_00(2, this.file.name, text + "\n")
 
     // Flushes the file
     func flush() -> bool:
         if (this.isOpen == false):
-            raise "Use FileWriter#open() before flush"
+            raise init FileError("Use FileWriter#open() before flush")
 
         return BFW_00(3, this.file.name, "")
 
     // Closes the file
     func close() -> bool:
         if (this.isOpen == false):
-            raise "Use FileWriter#open() before FileWriter#close"
+            raise init FileError("Use FileWriter#open() before FileWriter#close")
 
         result = BFW_00(4, this.file.name, "")
         this.isOpen = false
