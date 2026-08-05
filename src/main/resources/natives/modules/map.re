@@ -1,5 +1,6 @@
 using hash
 using list
+using errors.IllegalArgumentError
 
 /*
   Represents a single key-value pair stored inside a HashMap.
@@ -80,7 +81,7 @@ impl HashMap<K, V>:
     // Creates an empty map with a given bucket count
     init(cap: int):
         if (cap <= 0):
-            raise "Capacity must be positive: " + cap
+            raise init IllegalArgumentError("Capacity must be positive: " + cap)
 
         this.capacity = cap
         this.size = 0
@@ -103,8 +104,9 @@ impl HashMap<K, V>:
         this.buckets[idx].add(init Entry<K, V>(key, value))
         this.size += 1
 
-    // Retrieves the value associated with a key
-    func get(key: K) -> V:
+    // Returns the value associated with a key,
+    // or the supplied value if absent
+    func getOrDefault(key: K, default: V) -> V:
         idx: mut = Hash::hash(key) % this.capacity
 
         if (idx < 0):
@@ -116,7 +118,12 @@ impl HashMap<K, V>:
             if (bucket.items[i].key == key):
                 return bucket.items[i].value
 
-        raise "Key not found: " + key
+        return default
+
+    // Retrieves the value associated with a key
+    func get(key: K) -> V:
+        def = zero V
+        return this.getOrDefault(key, def)
 
     // Returns true if the map contains the given key
     func containsKey(key: K) -> bool:
@@ -151,23 +158,7 @@ impl HashMap<K, V>:
 
         this.buckets[idx] = bucket
 
-        raise "Key not found: " + key
-
-    // Returns the value associated with a key,
-    // or the supplied value if absent
-    func getOrDefault(key: K, default: V) -> V:
-        idx: mut = Hash::hash(key) % this.capacity
-
-        if (idx < 0):
-            idx += this.capacity
-
-        bucket = this.buckets[idx]
-
-        for (i in range(bucket.size)):
-            if (bucket.items[i].key == key):
-                return bucket.items[i].value
-
-        return default
+        return zero V
 
     // Returns a list containing all keys in the map
     func keys() -> List<K>:
