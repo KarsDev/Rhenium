@@ -32,6 +32,46 @@ using utils.helpers in "my_package"
 using localModule in self
 
 /*
+Directory modules: mod.re
+
+When a module name resolves to a directory rather than a single
+file, the compiler looks for a file named `mod.re` at the root of
+that directory and treats it as the entry point for the whole
+package. This avoids having to name an internal file explicitly
+and lets a directory be imported as one cohesive module.
+
+Given the layout:
+
+    utils/
+      mod.re          <- entry point for the `utils` package
+      helpers.re
+      strings.re
+
+The statement:
+
+    using utils
+
+resolves to `utils/mod.re`, NOT to an arbitrarily chosen file in
+the directory. `mod.re` is typically used to re-export the pieces
+of the package that should be publicly visible, for example:
+
+    // utils/mod.re
+    using utils.helpers in self
+    using utils.strings in self
+
+- If a directory has no `mod.re`, importing it directly is an error;
+  you must `using` one of its files by name instead
+  (e.g. `using utils.helpers`).
+- `mod.re` is resolved automatically, so it is never named explicitly
+  in a `using` statement.
+- This mirrors the dot-notation -> path-separator rule above:
+  `using utils` still maps to the `utils` directory, the compiler
+  simply adds the `mod.re` lookup as the last resolution step.
+*/
+
+using utils // resolves to utils/mod.re if "utils.re" is not found
+
+/*
 <=------------------------=>|<=>|<=-----------------------=>
   BUILTIN AND INTERNAL DECLARATIONS
 <=------------------------=>|<=>|<=-----------------------=>
