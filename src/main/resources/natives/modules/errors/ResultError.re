@@ -8,12 +8,12 @@
 
   when result contains an error variant.
 */
-struct ResultUnwrapError inherits Error:
+struct ResultError inherits Error:
     message_text: str
 
-impl ResultUnwrapError:
+impl ResultError:
     init(stname: str):
-        this.message_text = "Unchecked get from " + stname
+        this.message_text = "Unchecked get/unwrap from " + stname
 
     func message() -> str: // override
         return this.message_text
