@@ -17,6 +17,10 @@ public class UsingNode extends ASTNode implements GlobalNode {
         this.pkg = pkg;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
