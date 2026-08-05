@@ -1,5 +1,5 @@
 /*
-  ResultUnwrapError is raised when a value is extracted from
+  ResultError is raised when a value is extracted from
   a Result, an Option or similar structs without checking whether it contains
   a successful value first.
 
