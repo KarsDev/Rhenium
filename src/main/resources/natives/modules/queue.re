@@ -1,4 +1,5 @@
 using list
+using error.IllegalArgumentError
 
 /*
 A first-in, first-out (FIFO) collection.
@@ -52,7 +53,7 @@ impl Queue<T>:
     // Creates a queue with the specified capacity
     init(capacity: mut int):
         if (capacity <= 0):
-            raise "Capacity must be positive"
+            raise init IllegalArgumentError("Capacity must be positive")
         this.capacity = capacity
         this.size = 0
         this.head = 0
@@ -92,7 +93,7 @@ impl Queue<T>:
     // Removes and returns the front element
     func dequeue() -> T:
         if (this.size == 0):
-            raise "Queue is empty"
+            raise zero T
 
         val = this.items[this.head]
         this.head = (this.head + 1) % this.capacity
@@ -107,7 +108,7 @@ impl Queue<T>:
     // Returns the front element without removing it
     func peek() -> T:
         if (this.size == 0):
-            raise "Queue is empty"
+            return zero T
         return this.items[this.head]
 
     // Returns true if the queue contains no elements
