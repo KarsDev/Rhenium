@@ -2033,6 +2033,10 @@ public final class ASTParser {
             }
 
             type = BuiltinTypes.getByName(typeName);
+
+            if (type == null && currentGenericTypes.contains(typeName)) {
+                return Optional.of(new GenericType(typeName));
+            }
         }
 
         if (type != null) {
