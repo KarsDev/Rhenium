@@ -27,5 +27,3 @@ trait Error:
     // This message is displayed when the error is raised
     // or reported by the runtime.
     func message() -> str
-trait Error:
-    func message() -> str
