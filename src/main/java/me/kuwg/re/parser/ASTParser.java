@@ -112,6 +112,7 @@ public final class ASTParser {
         this.initial = true;
         this.noDefaults = noDefaults;
         this.typeMap = new HashMap<>();
+        loader.extractNatives();
     }
 
     public ASTParser(final String fileName, final Token[] tokens, final Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader) {
@@ -129,7 +130,7 @@ public final class ASTParser {
     }
 
     public AST parse() {
-        if (fileName.substring(fileName.lastIndexOf('/') + 1).replaceFirst("\\.[^.]+$", "").equalsIgnoreCase("mod")) {
+        if (fileName.replace("\\", "/").endsWith("/mod.re")) {
             return parseModFile();
         }
 
@@ -155,8 +156,26 @@ public final class ASTParser {
     }
 
     private AST parseModFile() {
-        System.out.println("mod");
-        throw new RuntimeException();
+        AST ast = new AST(fileName);
+        removeNewlines();
+
+        while (!outOfBounds(0)) {
+            removeNewlines();
+            int line = line();
+            if (!matchAndConsume(IDENTIFIER, "export")) {
+                System.out.println(current());
+                return new RParserError("Use only 'export <file>' in module", fileName, line).raise();
+            }
+
+            String modName = identifier();
+            if (!outOfBounds(0) && !match(NEWLINE)) {
+                return new RParserError("Invalid syntax in module. Please use \"export <file>\"", fileName, line).raise();
+            }
+
+            ast.addChild(new UsingNode(fileName, line, modName, "self"));
+        }
+
+        return ast;
     }
 
     private BlockNode parseBlock() {

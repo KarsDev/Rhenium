@@ -8,10 +8,19 @@ import me.kuwg.re.parser.ASTParser;
 import me.kuwg.re.resource.ResourceLoader;
 import me.kuwg.re.token.Tokenizer;
 import me.kuwg.re.type.TypeRef;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +31,8 @@ public final class ModuleLoadingHelper {
 
     private final Set<String> collectedModules = new HashSet<>();
     private final Set<String> collectingModules = new HashSet<>();
+
+    private volatile Path extractedNativesRoot;
 
     private static String fileKey(Path file) {
         return "file:" + file.toAbsolutePath().normalize();
@@ -43,6 +54,90 @@ public final class ModuleLoadingHelper {
         }
 
         return direct;
+    }
+
+    private Path resolveExtractedNativeModule(String name) {
+        Path root = extractedNativesRoot;
+        if (root == null) {
+            return null;
+        }
+
+        Path direct = root.resolve("modules").resolve(name + ".re").normalize();
+        if (Files.exists(direct)) {
+            return direct;
+        }
+
+        Path folderMod = root.resolve("modules").resolve(name).resolve("mod.re").normalize();
+        if (Files.exists(folderMod)) {
+            return folderMod;
+        }
+
+        return null;
+    }
+
+    private static void copyTree(Path source, Path target) throws IOException {
+        if (!Files.exists(source)) {
+            return;
+        }
+
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
+                Files.createDirectories(target.resolve(source.relativize(dir).toString()));
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                Files.copy(
+                        file,
+                        target.resolve(source.relativize(file).toString()),
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.COPY_ATTRIBUTES
+                );
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    public synchronized void extractNatives() {
+        if (extractedNativesRoot != null && Files.exists(extractedNativesRoot)) {
+            return;
+        }
+
+        try {
+            URI location = ModuleLoadingHelper.class
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .toURI();
+
+            Path tempRoot = Files.createTempDirectory("re-natives-");
+            tempRoot.toFile().deleteOnExit();
+
+            Path locationPath = Path.of(location);
+            if (Files.isDirectory(locationPath)) {
+                Path nativesDir = locationPath.resolve("natives");
+                if (Files.exists(nativesDir)) {
+                    copyTree(nativesDir, tempRoot.resolve("natives"));
+                }
+            } else if (Files.isRegularFile(locationPath)) {
+                URI jarUri = URI.create("jar:" + location);
+                try (FileSystem fs = FileSystems.newFileSystem(jarUri, Collections.emptyMap())) {
+                    Path nativesDir = fs.getPath("/natives");
+                    if (Files.exists(nativesDir)) {
+                        copyTree(nativesDir, tempRoot.resolve("natives"));
+                    }
+                }
+            }
+
+            Path root = tempRoot.resolve("natives");
+            if (Files.exists(root)) {
+                extractedNativesRoot = root;
+            }
+        } catch (Exception ignored) {
+            // Fall back to ResourceLoader if extraction is not possible.
+        }
     }
 
     public void loadModule(final String fileName, int line, Map<String, TypeRef> typeMap,
@@ -105,6 +200,20 @@ public final class ModuleLoadingHelper {
 
         loadingModules.add(key);
         try {
+            extractNatives();
+
+            Path extracted = resolveExtractedNativeModule(name);
+            if (extracted != null) {
+                try {
+                    load(typeMap, extracted.toString(), Files.readString(extracted), cctx);
+                    loadedModules.add(key);
+                    return;
+                } catch (IOException e) {
+                    new RModuleCouldNotBeLoadedError(name, fileName, line).raise();
+                    return;
+                }
+            }
+
             String modulePath = "/natives/modules/" + name + ".re";
             String src = ResourceLoader.loadResourceAsString(modulePath);
 
@@ -192,6 +301,19 @@ public final class ModuleLoadingHelper {
 
         collectingModules.add(key);
         try {
+            extractNatives();
+
+            Path extracted = resolveExtractedNativeModule(name);
+            if (extracted != null) {
+                try {
+                    Map<String, TypeRef> out = collectTypes(extracted.toString(), Files.readString(extracted), typeMap);
+                    collectedModules.add(key);
+                    return out;
+                } catch (IOException e) {
+                    return new RModuleCouldNotBeLoadedError(name, fileName, line).raise();
+                }
+            }
+
             String modulePath = "/natives/modules/" + name + ".re";
             String src = ResourceLoader.loadResourceAsString(modulePath);
 
