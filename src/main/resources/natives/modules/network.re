@@ -1,5 +1,6 @@
 using map
 using number
+using error.NetworkError
 
 _NativeCPP("network") str BNET_00(op: int, id: str, arg1: str, arg2: str)
 
@@ -56,21 +57,21 @@ impl Network:
     // Sends data across the connection
     func send(data: str) -> bool:
         if (this.isOpen == false):
-            raise "Use Network#open() before Network#send"
+            raise init NetworkError("Use Network#open() before Network#send")
 
         return BNET_00(1, this.id, data, "") == "1"
 
     // Receives a chunk of data from the connection
     func receive() -> str:
         if (this.isOpen == false):
-            raise "Use Network#open() before Network#receive"
+            raise init NetworkError("Use Network#open() before Network#receive")
 
         return BNET_00(2, this.id, "", "")
 
     // Closes the connection
     func close() -> bool:
         if (this.isOpen == false):
-            raise "Use Network#open() before Network#close"
+            raise init NetworkError("Use Network#open() before Network#close")
 
         success = BNET_00(3, this.id, "", "") == "1"
 
@@ -86,7 +87,7 @@ impl Network:
     // Reads all available data until the remote side stops sending
     func receiveAll() -> str:
         if (not this.isOpen):
-            raise "Use Network#open() before Network#receiveAll"
+            raise init NetworkError("Use Network#open() before Network#receiveAll")
 
         data: mut = ""
 
@@ -165,7 +166,7 @@ namespace Http:
         headerEnd = strIndexOf(raw, "\r\n\r\n")
 
         if (headerEnd == -1):
-            raise "Invalid HTTP response"
+            raise init NetworkError("Invalid HTTP response")
 
         headerText = strSubRange(raw, 0, headerEnd)
         bodyText = strSubRange(raw, headerEnd + 4, len(raw))
@@ -176,13 +177,13 @@ namespace Http:
         linesLen = dynLines.size
 
         if (linesLen == 0):
-            raise "Invalid HTTP response"
+            raise init NetworkError("Invalid HTTP response")
 
         statusLine = lines[0]
         statusPartsDyn = strSplit(statusLine, " ")
 
         if (statusPartsDyn.size < 2):
-            raise "Invalid HTTP status line"
+            raise init NetworkError("Invalid HTTP status line")
 
         response.status = Number::parseInt(statusPartsDyn.values[1])
 
@@ -215,7 +216,7 @@ namespace Http:
         conn = init Network("http_" + host + path, host, port)
 
         if (conn.open() == false):
-            raise "Failed to open HTTP connection"
+            raise init NetworkError("Failed to open HTTP connection")
 
         hostHeader: mut = host if port == 80 else host + ":" + intToStr(port)
 
@@ -223,7 +224,7 @@ namespace Http:
 
         if (conn.send(request) == false):
             conn.close()
-            raise "Failed to send HTTP request"
+            raise init NetworkError("Failed to send HTTP request")
 
         raw = conn.receive()
         conn.close()
