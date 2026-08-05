@@ -22,12 +22,27 @@ public final class ModuleLoadingHelper {
 
     private final Set<String> collectedModules = new HashSet<>();
     private final Set<String> collectingModules = new HashSet<>();
+
     private static String fileKey(Path file) {
         return "file:" + file.toAbsolutePath().normalize();
     }
 
     private static String nativeKey(String name) {
         return "native:" + name;
+    }
+
+    private static Path resolveModuleFile(Path base, String name) {
+        Path direct = base.resolve(name + ".re").normalize().toAbsolutePath();
+        if (Files.exists(direct)) {
+            return direct;
+        }
+
+        Path folderMod = base.resolve(name).resolve("mod.re").normalize().toAbsolutePath();
+        if (Files.exists(folderMod)) {
+            return folderMod;
+        }
+
+        return direct;
     }
 
     public void loadModule(final String fileName, int line, Map<String, TypeRef> typeMap,
@@ -52,7 +67,7 @@ public final class ModuleLoadingHelper {
             return;
         }
 
-        Path file = base.resolve(name + ".re").normalize().toAbsolutePath();
+        Path file = resolveModuleFile(base, name);
         String key = fileKey(file);
 
         if (loadedModules.contains(key) || loadingModules.contains(key)) {
@@ -91,6 +106,10 @@ public final class ModuleLoadingHelper {
         loadingModules.add(key);
         try {
             String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
+            if (src == null) {
+                src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + "/mod.re");
+            }
+
             if (src == null) {
                 new RModuleNotFoundError(name, fileName, line).raise();
                 return;
@@ -132,7 +151,7 @@ public final class ModuleLoadingHelper {
             return new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
         }
 
-        Path file = base.resolve(name + ".re").normalize().toAbsolutePath();
+        Path file = resolveModuleFile(base, name);
         String key = fileKey(file);
 
         if (collectedModules.contains(key) || collectingModules.contains(key)) {
@@ -171,6 +190,10 @@ public final class ModuleLoadingHelper {
         collectingModules.add(key);
         try {
             String src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + ".re");
+            if (src == null) {
+                src = ResourceLoader.loadResourceAsString("/natives/modules/" + name + "/mod.re");
+            }
+
             if (src == null) {
                 return new RModuleNotFoundError(name, fileName, line).raise();
             }
