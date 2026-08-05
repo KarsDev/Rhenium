@@ -1,4 +1,5 @@
 using file
+using errors.FileError
 
 // Native C++ backend for file reading
 _NativeCPP("FileReader") str BFR_00(op: int, path: str) // returns file content or empty string
