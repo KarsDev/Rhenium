@@ -1,4 +1,4 @@
-using time
+using clock.time
 
 /*
 Random module

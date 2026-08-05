@@ -6,4 +6,3 @@ _NativeCPP("win/win") \
     \
     none registerMouseMoveCallback(cb: lambda(int, int) -> none) and \
     none registerKeyCallback(cb: lambda(int, bool) -> none)
-    

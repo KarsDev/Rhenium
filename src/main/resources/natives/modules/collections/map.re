@@ -1,5 +1,5 @@
-using hash
-using list
+using lang.hash
+using collections.list
 using errors.IllegalArgumentError
 
 /*

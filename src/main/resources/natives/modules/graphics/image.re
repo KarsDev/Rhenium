@@ -1,8 +1,8 @@
-using color
-using list
-using file
-using FileWriter
-using math
+using graphics.color
+using collections.list
+using file.file
+using file.FileWriter
+using math.math
 
 struct Image:
     m_width: int

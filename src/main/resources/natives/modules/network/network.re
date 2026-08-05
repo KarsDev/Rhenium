@@ -1,5 +1,5 @@
-using map
-using number
+using collections.map
+using number.number
 using error.NetworkError
 
 _NativeCPP("network") str BNET_00(op: int, id: str, arg1: str, arg2: str)
@@ -110,9 +110,9 @@ impl Network:
    - body    : response body
 */
 struct HttpResponse:
-        status: int
-        headers: HashMap<str, str>
-        body: str
+    status: int
+    headers: HashMap<str, str>
+    body: str
 
 /*
   HHTP utility functions
