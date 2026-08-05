@@ -737,6 +737,9 @@ func main() -> int:
     return 0
 
 // Entry point overload that receives command-line arguments
+// argc is the argument count
+// args is the default passed arguments
+// args[0] is always the executable path
 func main(argc: int, args: ptr -> str) -> int:
     println("Specified " + argc + " args:")
     for (i in range(argc)):
