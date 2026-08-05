@@ -1,3 +1,5 @@
+using errors.ResultError
+
 /*
   Represents an optional value.
   
@@ -52,7 +54,7 @@ impl Option<T>:
     // Gets the contained value, raising an exception if the Option is empty
     func get() -> T:
         if (not this.isPresent()):
-            raise "Option is empty"
+            raise init ResultError("Option")
         
         return this.value
     
