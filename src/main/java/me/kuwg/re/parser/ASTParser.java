@@ -129,7 +129,7 @@ public final class ASTParser {
     }
 
     public AST parse() {
-        if (fileName.substring(fileName.replace("\\", "/").lastIndexOf('/') + 1).equalsIgnoreCase("mod")) {
+        if (fileName.substring(fileName.lastIndexOf('/') + 1).replaceFirst("\\.[^.]+$", "").equalsIgnoreCase("mod")) {
             return parseModFile();
         }
 
