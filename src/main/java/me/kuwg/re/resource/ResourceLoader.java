@@ -13,7 +13,6 @@ public final class ResourceLoader {
     public static String loadResourceAsString(String resourcePath) {
         try (InputStream inputStream = ResourceLoader.class.getResourceAsStream(resourcePath)) {
             if (inputStream == null) {
-                System.err.println("Resource not found: " + resourcePath);
                 return null;
             }
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
