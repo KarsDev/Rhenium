@@ -78,13 +78,6 @@ public class StructFunctionCallNode extends VariableReference {
 
         TypeRef structType = selfType;
 
-        if (!(struct instanceof VariableReference)) {
-            String addr = cctx.nextRegister();
-            cctx.emit(addr + " = alloca " + structType.getLLVMName());
-            cctx.emit("store " + structType.getLLVMName() + " " + selfValue + ", " + toPtr(structType.getLLVMName()) + addr);
-            selfValue = addr;
-        }
-
         List<String> llvmArgs = new ArrayList<>();
         List<TypeRef> argTypes = new ArrayList<>();
 
