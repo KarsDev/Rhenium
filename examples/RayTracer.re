@@ -1,5 +1,5 @@
 using math
-using image
+using graphics
 
 struct Vec3:
     x: float

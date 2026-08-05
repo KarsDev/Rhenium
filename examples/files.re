@@ -1,6 +1,4 @@
-using File
-using FileWriter
-using FileReader
+using file
 
 func main() -> int:
     input = init File("file_input.txt") 

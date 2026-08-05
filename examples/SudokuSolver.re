@@ -1,6 +1,6 @@
-using list
+using collections.list
 using number
-using option
+using lang.option
 
 type Board = List<List<int>>
 
