@@ -1,4 +1,5 @@
 using file
+using errors.FileError
 
 // Native C++ backend for file writing
 _NativeCPP("FileWriter") bool BFW_00(op: int, path: str, data: str)
