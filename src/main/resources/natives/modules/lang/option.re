@@ -11,12 +11,12 @@ using errors.ResultError
   avoiding the need for null references.
   
   Example:
-  name = Option<str>("Alice")
+  name = init Option<str>("Alice")
   
   if (name.isPresent()):
       println(name.get())
   
-  empty = Option<str>()
+  empty = init Option<str>()
   println(empty.orElse("Unknown"))
   
   Common Uses:

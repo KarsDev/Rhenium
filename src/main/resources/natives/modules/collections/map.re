@@ -45,7 +45,7 @@ impl Entry<K, V>:
   resolved by storing entries in a list within each bucket.
  
   Example:
-  map = HashMap<str, int>()
+  map = init HashMap<str, int>()
  
   map.put("age", 25)
   map.put("score", 100)

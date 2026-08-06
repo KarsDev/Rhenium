@@ -19,7 +19,7 @@ using errors.IllegalArgumentError
     When the list becomes full, its capacity is automatically doubled.
 
     Example:
-    nums = List<int>()
+    nums = init List<int>()
     nums.add(10)
     nums.add(20)
 
