@@ -25,7 +25,7 @@ The queue maintains:
 - tail     : index where the next element will be inserted
 
 Example:
-q = Queue<str>()
+q = init Queue<str>()
 
 q.enqueue("A")
 q.enqueue("B")
