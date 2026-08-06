@@ -22,9 +22,9 @@ func _randomSeed() -> long:
 impl Random:
     init():
         this.seed = _randomSeed()
-        this._a= 1103515245
-        this._c= 12345
-        this._m= 2147483647 // 2^31 - 1
+        this._a = 1103515245
+        this._c = 12345
+        this._m = 2147483647 // 2^31 - 1
     
     // Generates a pseudorandom 64-bit integer 
     func nextLong() -> long:
