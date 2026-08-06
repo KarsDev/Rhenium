@@ -147,13 +147,13 @@ impl TestError:
         return "Test Message \"" + msg + "\""
 
 func testRaise():
-    success = false
+    success: mut = false
     try:
         raise "Error with raise/try-catch"
     catch:
         success = true
 
-    if (!success):
+    if (not success):
         raise "Error with raise/try-catch"
 
     try:
