@@ -162,7 +162,7 @@ public final class ASTParser {
         while (!outOfBounds(0)) {
             removeNewlines();
             int line = line();
-            if (!matchAndConsume(IDENTIFIER, "export")) {
+            if (!matchAndConsume(KEYWORD, "export")) {
                 System.out.println(current());
                 return new RParserError("Use only 'export <file>' in module", fileName, line).raise();
             }
