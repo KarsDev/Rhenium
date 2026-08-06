@@ -14,7 +14,7 @@ _NativeCPP("network") str BNET_00(op: int, id: str, arg1: str, arg2: str)
   when no longer needed.
 
   Example:
-  conn = Network("example", "example.com", 80)
+  conn = init Network("example", "example.com", 80)
   
   if (conn.open()):
       conn.send("Hello")
