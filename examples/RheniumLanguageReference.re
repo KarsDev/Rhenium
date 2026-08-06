@@ -501,6 +501,22 @@ try:
 catch:
     println("caught error")
 
+// Raising custom errors
+struct TestError inherits Error:
+    msg: str
+
+impl TestError:
+    func message() -> str: // override
+        return "Test Message \"" + msg + "\""
+
+
+try:
+    raise init TestError("LOL") // raising a custom error
+catch TestError: // catching for the same error
+    println("Catched successfully")
+catch:
+    raise "Unreachable" // The raised error is always 'TestError'
+
 // Async blocks
 
 t = async:
