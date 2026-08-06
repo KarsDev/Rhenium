@@ -4,6 +4,7 @@ import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.blocks.BlockNode;
 import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.writer.Writeable;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class TryCatchNode extends ASTNode implements IBlockContainer {
@@ -36,7 +38,14 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
 
         final List<CompiledCatch> compiledCatches = new ArrayList<>(catches.size());
         for (final CatchClause clause : catches) {
-            compiledCatches.add(new CompiledCatch(clause.type(), clause.variable(), cctx.nextLabel("catch")));
+            String addrReg = null;
+
+            if (clause.variable() != null && clause.type() != null) {
+                addrReg = "%" + RVariable.makeUnique(clause.variable());
+                cctx.emit(addrReg + " = alloca " + clause.type().getLLVMName() + " ; storage for caught variable '" + clause.variable() + "'");
+            }
+
+            compiledCatches.add(new CompiledCatch(clause.type(), cctx.nextLabel("catch"), addrReg));
         }
 
         final String endLabel = cctx.nextLabel("try_end");
@@ -62,7 +71,22 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
             cctx.emit("; Catch " + (compiled.type() == null ? "any" : compiled.type().getName()));
             cctx.emit(compiled.label() + ":");
 
+            final boolean boundVariable = clause.variable() != null && compiled.addrReg() != null;
+            if (boundVariable) {
+                cctx.pushScope();
+
+                final String llvmType = Objects.requireNonNull(compiled.type()).getLLVMName();
+                final String loaded = cctx.nextRegister();
+                cctx.emit(loaded + " = load " + llvmType + ", " + toPtr(llvmType) + " " + compiled.addrReg());
+
+                cctx.addVariable(new RVariable(clause.variable(), false, true, compiled.type(), compiled.addrReg(), loaded));
+            }
+
             clause.block().compile(cctx);
+
+            if (boundVariable) {
+                cctx.popScope();
+            }
 
             final String afterCatchLabel = cctx.nextLabel("catch_after");
             cctx.emit("br label %" + afterCatchLabel);
@@ -104,7 +128,7 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
         return catches.stream().map(c -> c.block).collect(Collectors.toList());
     }
 
-    public record CompiledCatch(@Nullable TypeRef type, @Nullable String variable, String label) {}
+    public record CompiledCatch(@Nullable TypeRef type, String label, @Nullable String addrReg) {}
     public record CatchClause(@Nullable TypeRef type, @Nullable String variable, BlockNode block) implements Writeable, Cloneable {
         @Override
         public void write(final StringBuilder sb, final String indent) {
