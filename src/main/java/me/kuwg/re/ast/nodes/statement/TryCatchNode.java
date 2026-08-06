@@ -36,7 +36,7 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
 
         final List<CompiledCatch> compiledCatches = new ArrayList<>(catches.size());
         for (final CatchClause clause : catches) {
-            compiledCatches.add(new CompiledCatch(clause.type(), cctx.nextLabel("catch")));
+            compiledCatches.add(new CompiledCatch(clause.type(), clause.variable(), cctx.nextLabel("catch")));
         }
 
         final String endLabel = cctx.nextLabel("try_end");
@@ -104,12 +104,13 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
         return catches.stream().map(c -> c.block).collect(Collectors.toList());
     }
 
-    public record CompiledCatch(@Nullable TypeRef type, String label) {}
-    public record CatchClause(@Nullable TypeRef type, BlockNode block) implements Writeable, Cloneable {
+    public record CompiledCatch(@Nullable TypeRef type, @Nullable String variable, String label) {}
+    public record CatchClause(@Nullable TypeRef type, @Nullable String variable, BlockNode block) implements Writeable, Cloneable {
         @Override
         public void write(final StringBuilder sb, final String indent) {
             sb.append(indent).append("Catch:").append(NEWLINE)
-                    .append(indent).append(TAB).append("Type: ").append(type == null ? "any" : type.getName()).append(NEWLINE);
+                    .append(indent).append(TAB).append("Type: ").append(type == null ? "any" : type.getName()).append(NEWLINE)
+                    .append(indent).append(TAB).append("Variable: ").append(variable == null ? "none" : variable);
 
             block.write(sb, indent + TAB);
         }
@@ -117,7 +118,7 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
         @SuppressWarnings("MethodDoesntCallSuperMethod")
         @Override
         public CatchClause clone() {
-            return new CatchClause(type, block.clone());
+            return new CatchClause(type, variable, block.clone());
         }
     }
 }

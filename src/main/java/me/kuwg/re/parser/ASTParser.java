@@ -1089,12 +1089,14 @@ public final class ASTParser {
 
             TypeRef catched = parseOptionalType().orElse(null);
 
+            String variable = catched != null && match(IDENTIFIER) ? identifier() : null;
+
             if (!matchAndConsume(OPERATOR, ":"))
                 return new RParserError("Expected ':' for catch declaration", fileName, line).raise();
 
             BlockNode catchBlock = parseBlock();
 
-            clauses.add(new TryCatchNode.CatchClause(catched, catchBlock));
+            clauses.add(new TryCatchNode.CatchClause(catched, variable, catchBlock));
         } while (match(KEYWORD, "catch"));
 
         return new TryCatchNode(fileName, line, tryBlock, clauses);

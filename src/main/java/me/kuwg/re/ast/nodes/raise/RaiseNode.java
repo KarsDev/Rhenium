@@ -6,6 +6,8 @@ import me.kuwg.re.ast.nodes.constants.StringNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
+import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
+import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
@@ -42,23 +44,59 @@ public class RaiseNode extends ASTNode implements InterruptNode {
             compileRaise(cctx);
         } else {
             ValueNode cloned = value.clone();
-            cloned.compileAndGet(cctx);
+            final String valueReg = cloned.compileAndGet(cctx);
             TypeRef type = cloned.getType();
-            String catchLabel = null;
+            TryCatchNode.CompiledCatch matched = null;
             for (TryCatchNode.CompiledCatch cc : catches) {
                 if (cc.type() == null) {
-                    catchLabel = cc.label();
+                    matched = cc;
                     break;
                 } else if (cc.type().isCompatibleWith(type)) {
-                    catchLabel = cc.label();
+                    matched = cc;
                     break;
                 }
             }
-            if (catchLabel == null) {
+            if (matched == null) {
                 compileRaise(cctx);
                 return;
             }
-            cctx.emit("br label %" + catchLabel);
+
+            if (matched.variable() != null) {
+                new VariableDeclarationNode(
+                        fileName, line,
+                        new DirectVariableReferenceNode(fileName, line, matched.variable()),
+                        true,
+                        type,
+                        new ValueNode(fileName, line, type) {
+
+                            @Override
+                            public void write(final StringBuilder sb, final String indent) {
+                                sb.append(indent).append("Caught Value").append(NEWLINE);
+                            }
+
+                            @Override
+                            public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
+                            }
+
+                            @Override
+                            public void compile(final CompilationContext cctx) {
+                                throw new RInternalError("Should be compiled via compileAndGet");
+                            }
+
+                            @Override
+                            public String compileAndGet(final CompilationContext cctx) {
+                                return valueReg;
+                            }
+
+                            @Override
+                            public ValueNode clone() {
+                                return this;
+                            }
+                        }
+                ).compile(cctx);
+            }
+
+            cctx.emit("br label %" + matched.label());
         }
     }
 
