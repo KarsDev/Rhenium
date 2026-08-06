@@ -1,1 +1,2 @@
 export random
+export SecureRandom
