@@ -1,8 +1,10 @@
 package me.kuwg.re.compiler;
 
+import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.enums.REnum;
+import me.kuwg.re.compiler.error.CatchScopeStack;
 import me.kuwg.re.compiler.function.RFunction;
 import me.kuwg.re.compiler.loop.LoopContext;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
@@ -53,7 +55,7 @@ public final class CompilationContext {
     private final Stack<LoopContext> loopStack = new Stack<>();
     private Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private final Map<String, RDefaultStruct> structs = new HashMap<>();
-    private final Stack<String> catchScopeStack = new Stack<>();
+    private final CatchScopeStack catchScopeStack = new CatchScopeStack();
     private final Map<String, Path> nativeCPPModules = new LinkedHashMap<>();
     private final Set<String> declaredIR = new LinkedHashSet<>();
     private final Set<String> declaredStructs = new LinkedHashSet<>();
@@ -199,13 +201,12 @@ public final class CompilationContext {
         return structs.get(name);
     }
 
-    public void pushTryCatchScope(String catchLabel) {
-        catchScopeStack.push(catchLabel);
+    public void pushTryCatchScope(final List<TryCatchNode.CompiledCatch> compiledCatches) {
+        catchScopeStack.pushCatchScope(compiledCatches);
     }
 
-    public String popTryCatchScope() {
-        if (catchScopeStack.isEmpty()) return null;
-        return catchScopeStack.pop();
+    public List<TryCatchNode.CompiledCatch> popTryCatchScope() {
+        return catchScopeStack.popCatchScope();
     }
 
     public void addNativeCPPModule(String id, Path path) {

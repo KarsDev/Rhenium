@@ -98,7 +98,9 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
 
             if (node instanceof TryCatchNode tc) {
                 tc.getTryBlock().checkTypes(cctx, returnType, false);
-                tc.getCatchBlock().checkTypes(cctx, returnType, false);
+                for (BlockNode c : tc.getCatchBlocks()) {
+                    c.checkTypes(cctx, returnType, false);
+                }
                 continue;
             } else if (node instanceof MatchNode mc) {
                 final TypeRef frt = returnType;

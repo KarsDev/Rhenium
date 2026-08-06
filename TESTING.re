@@ -139,11 +139,29 @@ func testPointers():
 
     println("Pointer testing passed successfully")
 
+struct TestError inherits Error:
+    msg: str
+
+impl TestError:
+    func message() -> str: // override
+        return "Test Message \"" + msg + "\""
+
 func testRaise():
+    success = false
     try:
         raise "Error with raise/try-catch"
     catch:
+        success = true
+
+    if (!success):
+        raise "Error with raise/try-catch"
+
+    try:
+        raise init TestError("LOL")
+    catch TestError:
         println("Error testing passed successfully")
+    catch:
+        raise "Error with raise/try-catch"
 
 func testNativeFunctions():
     i = 5

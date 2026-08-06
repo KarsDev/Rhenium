@@ -6,40 +6,69 @@ import me.kuwg.re.ast.nodes.blocks.IBlockContainer;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.writer.Writeable;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TryCatchNode extends ASTNode implements IBlockContainer {
     private final BlockNode tryBlock;
-    private final BlockNode catchBlock;
+    private final List<CatchClause> catches;
 
-    public TryCatchNode(final String fileName, final int line, final BlockNode tryBlock, final BlockNode catchBlock) {
+    public TryCatchNode(final String fileName, final int line, final BlockNode tryBlock, final List<CatchClause> catches) {
         super(fileName, line);
         this.tryBlock = tryBlock;
-        this.catchBlock = catchBlock;
+        this.catches = catches;
     }
 
     @Override
     public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
         tryBlock.replaceGenerics(generics, cctx);
-        catchBlock.replaceGenerics(generics, cctx);
+        catches.forEach(c -> c.block.replaceGenerics(generics, cctx));
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
         cctx.emit("; Try-catch");
 
-        String catchLabel = cctx.nextLabel("catch_label");
-        String endLabel = cctx.nextLabel("try_end");
+        final List<CompiledCatch> compiledCatches = new ArrayList<>(catches.size());
+        for (final CatchClause clause : catches) {
+            compiledCatches.add(new CompiledCatch(clause.type(), cctx.nextLabel("catch")));
+        }
 
-        cctx.pushTryCatchScope(catchLabel);
+        final String endLabel = cctx.nextLabel("try_end");
 
-        tryBlock.compile(cctx);
+        try {
+            cctx.pushTryCatchScope(compiledCatches);
+
+            cctx.emit("; Try block");
+            tryBlock.compile(cctx);
+        } finally {
+            cctx.popTryCatchScope();
+        }
+
+        final String afterTryLabel = cctx.nextLabel("try_after");
+        cctx.emit("br label %" + afterTryLabel);
+        cctx.emit(afterTryLabel + ":");
         cctx.emit("br label %" + endLabel);
 
-        cctx.emit(catchLabel + ":");
-        catchBlock.compile(cctx);
-        cctx.emit("br label %" + endLabel);
+        for (int i = 0; i < catches.size(); i++) {
+            final CatchClause clause = catches.get(i);
+            final CompiledCatch compiled = compiledCatches.get(i);
+
+            cctx.emit("; Catch " + (compiled.type() == null ? "any" : compiled.type().getName()));
+            cctx.emit(compiled.label() + ":");
+
+            clause.block().compile(cctx);
+
+            final String afterCatchLabel = cctx.nextLabel("catch_after");
+            cctx.emit("br label %" + afterCatchLabel);
+            cctx.emit(afterCatchLabel + ":");
+            cctx.emit("br label %" + endLabel);
+        }
 
         cctx.emit(endLabel + ":");
     }
@@ -50,12 +79,16 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
         tryBlock.write(sb, indent + TAB);
 
         sb.append(indent).append("Catch:").append(NEWLINE);
-        catchBlock.write(sb, indent + TAB);
+        catches.forEach(c -> c.write(sb, indent + TAB));
     }
 
     @Override
     public TryCatchNode clone() {
-        return new TryCatchNode(fileName, line, tryBlock.clone(), catchBlock.clone());
+        List<CatchClause> cloned = new ArrayList<>(catches.size());
+        for (int i = 0; i < catches.size(); i++) {
+            cloned.add(i, catches.get(i).clone());
+        }
+        return new TryCatchNode(fileName, line, tryBlock.clone(), cloned);
     }
 
     @Override
@@ -67,7 +100,24 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
         return tryBlock;
     }
 
-    public BlockNode getCatchBlock() {
-        return catchBlock;
+    public List<BlockNode> getCatchBlocks() {
+        return catches.stream().map(c -> c.block).collect(Collectors.toList());
+    }
+
+    public record CompiledCatch(@Nullable TypeRef type, String label) {}
+    public record CatchClause(@Nullable TypeRef type, BlockNode block) implements Writeable, Cloneable {
+        @Override
+        public void write(final StringBuilder sb, final String indent) {
+            sb.append(indent).append("Catch:").append(NEWLINE)
+                    .append(indent).append(TAB).append("Type: ").append(type == null ? "any" : type.getName()).append(NEWLINE);
+
+            block.write(sb, indent + TAB);
+        }
+
+        @SuppressWarnings("MethodDoesntCallSuperMethod")
+        @Override
+        public CatchClause clone() {
+            return new CatchClause(type, block.clone());
+        }
     }
 }

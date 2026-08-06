@@ -1081,15 +1081,23 @@ public final class ASTParser {
 
         BlockNode tryBlock = parseBlock();
 
-        if (!matchAndConsume(KEYWORD, "catch"))
-            return new RParserError("Expected catch block after try declaration", fileName, line).raise();
+        List<TryCatchNode.CatchClause> clauses = new ArrayList<>();
 
-        if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for catch declaration", fileName, line).raise();
+        do {
+            if (!matchAndConsume(KEYWORD, "catch"))
+                return new RParserError("Expected catch block after try declaration", fileName, line).raise();
 
-        BlockNode catchBlock = parseBlock();
+            TypeRef catched = parseOptionalType().orElse(null);
 
-        return new TryCatchNode(fileName, line, tryBlock, catchBlock);
+            if (!matchAndConsume(OPERATOR, ":"))
+                return new RParserError("Expected ':' for catch declaration", fileName, line).raise();
+
+            BlockNode catchBlock = parseBlock();
+
+            clauses.add(new TryCatchNode.CatchClause(catched, catchBlock));
+        } while (match(KEYWORD, "catch"));
+
+        return new TryCatchNode(fileName, line, tryBlock, clauses);
     }
 
     private @SubFunc ASTNode parse_NativeCPPKeyword() {

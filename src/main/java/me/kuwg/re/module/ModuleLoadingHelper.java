@@ -38,10 +38,6 @@ public final class ModuleLoadingHelper {
         return "file:" + file.toAbsolutePath().normalize();
     }
 
-    private static String nativeKey(String name) {
-        return "native:" + name;
-    }
-
     private static Path resolveModuleFile(Path base, String name) {
         Path direct = base.resolve(name + ".re").normalize().toAbsolutePath();
         if (Files.exists(direct)) {
@@ -82,13 +78,13 @@ public final class ModuleLoadingHelper {
 
         Files.walkFileTree(source, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.createDirectories(target.resolve(source.relativize(dir).toString()));
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.copy(
                         file,
                         target.resolve(source.relativize(file).toString()),
@@ -136,7 +132,6 @@ public final class ModuleLoadingHelper {
                 extractedNativesRoot = root;
             }
         } catch (Exception ignored) {
-            // Fall back to ResourceLoader if extraction is not possible.
         }
     }
 
@@ -191,8 +186,17 @@ public final class ModuleLoadingHelper {
         }
     }
 
-    private void loadNativeModule(final String fileName, int line, Map<String, TypeRef> typeMap, String name, CompilationContext cctx) {
-        String key = nativeKey(name);
+    private void loadNativeModule(final String fileName, int line,
+                                  Map<String, TypeRef> typeMap,
+                                  String name,
+                                  CompilationContext cctx) {
+
+        extractNatives();
+
+        Path extracted = resolveExtractedNativeModule(name);
+        String key = extracted != null
+                ? fileKey(extracted)
+                : "/natives/modules/" + name;
 
         if (loadedModules.contains(key) || loadingModules.contains(key)) {
             return;
@@ -200,9 +204,6 @@ public final class ModuleLoadingHelper {
 
         loadingModules.add(key);
         try {
-            extractNatives();
-
-            Path extracted = resolveExtractedNativeModule(name);
             if (extracted != null) {
                 try {
                     load(typeMap, extracted.toString(), Files.readString(extracted), cctx);
@@ -220,6 +221,11 @@ public final class ModuleLoadingHelper {
             if (src == null) {
                 modulePath = "/natives/modules/" + name + "/mod.re";
                 src = ResourceLoader.loadResourceAsString(modulePath);
+            }
+            key = modulePath;
+
+            if (loadedModules.contains(key) || loadingModules.contains(key)) {
+                return;
             }
 
             if (src == null) {
@@ -291,9 +297,17 @@ public final class ModuleLoadingHelper {
         }
     }
 
-    private Map<String, TypeRef> collectNativeModuleTypes(final String fileName, int line,
-                                                          String name, Map<String, TypeRef> typeMap) {
-        String key = nativeKey(name);
+    private Map<String, TypeRef> collectNativeModuleTypes(final String fileName,
+                                                          int line,
+                                                          String name,
+                                                          Map<String, TypeRef> typeMap) {
+
+        extractNatives();
+
+        Path extracted = resolveExtractedNativeModule(name);
+        String key = extracted != null
+                ? fileKey(extracted)
+                : "/natives/modules/" + name;
 
         if (collectedModules.contains(key) || collectingModules.contains(key)) {
             return typeMap;
@@ -301,12 +315,10 @@ public final class ModuleLoadingHelper {
 
         collectingModules.add(key);
         try {
-            extractNatives();
-
-            Path extracted = resolveExtractedNativeModule(name);
             if (extracted != null) {
                 try {
-                    Map<String, TypeRef> out = collectTypes(extracted.toString(), Files.readString(extracted), typeMap);
+                    Map<String, TypeRef> out =
+                            collectTypes(extracted.toString(), Files.readString(extracted), typeMap);
                     collectedModules.add(key);
                     return out;
                 } catch (IOException e) {
@@ -320,6 +332,11 @@ public final class ModuleLoadingHelper {
             if (src == null) {
                 modulePath = "/natives/modules/" + name + "/mod.re";
                 src = ResourceLoader.loadResourceAsString(modulePath);
+            }
+            key = modulePath;
+
+            if (collectedModules.contains(key) || collectingModules.contains(key)) {
+                return typeMap;
             }
 
             if (src == null) {

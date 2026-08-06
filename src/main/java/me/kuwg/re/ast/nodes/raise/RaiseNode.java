@@ -5,6 +5,7 @@ import me.kuwg.re.ast.nodes.constants.NumberNode;
 import me.kuwg.re.ast.nodes.constants.StringNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
+import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.types.interrupt.InterruptNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
@@ -34,53 +35,74 @@ public class RaiseNode extends ASTNode implements InterruptNode {
 
     @Override
     public void compile(final CompilationContext cctx) {
-        String catchLabel = cctx.popTryCatchScope();
+        var catches = cctx.popTryCatchScope();
 
         cctx.emit("; Raise");
-        if (catchLabel == null) {
-            if (value == null) {
-                String message = generateLog(line, cctx.writeExceptionLines);
-
-                new FunctionCallNode(
-                        fileName, line,
-                        "println",
-                        List.of(new StringNode(fileName, line, message))
-                ).compile(cctx);
-            } else {
-                ValueNode cloned = value.clone();
-                String valueReg = cloned.compileAndGet(cctx);
-                TypeRef type = cloned.getType();
-
-                LABEL_O1: {
-                    if (type == BuiltinTypes.STR.getType()) {
-                        compileString(valueReg, cctx);
-                        break LABEL_O1;
-                    } else if (type instanceof StructType st) {
-                        RDefaultStruct struct = cctx.getStruct(st.getName());
-                        if (struct != null && struct.inherited().contains("Error")) {
-                            compileError(cctx);
-                            break LABEL_O1;
-                        }
-                    }
-
-                    new RVariableTypeError("Raise only supports Error or string types: " + type.getName() + " is not supported", fileName, line).raise();
-                    return;
+        if (catches == null) {
+            compileRaise(cctx);
+        } else {
+            ValueNode cloned = value.clone();
+            cloned.compileAndGet(cctx);
+            TypeRef type = cloned.getType();
+            String catchLabel = null;
+            for (TryCatchNode.CompiledCatch cc : catches) {
+                if (cc.type() == null) {
+                    catchLabel = cc.label();
+                    break;
+                } else if (cc.type().isCompatibleWith(type)) {
+                    catchLabel = cc.label();
+                    break;
                 }
-
-
-
             }
+            if (catchLabel == null) {
+                compileRaise(cctx);
+                return;
+            }
+            cctx.emit("br label %" + catchLabel);
+        }
+    }
+
+    private void compileRaise(CompilationContext cctx) {
+        if (value == null) {
+            String message = generateLog(line, cctx.writeExceptionLines);
 
             new FunctionCallNode(
                     fileName, line,
-                    "System$$exit",
-                    List.of(new NumberNode(fileName, line, "1"))
+                    "println",
+                    List.of(new StringNode(fileName, line, message))
             ).compile(cctx);
-
-            cctx.emit("unreachable");
         } else {
-            cctx.emit("br label %" + catchLabel);
+            ValueNode cloned = value.clone();
+            String valueReg = cloned.compileAndGet(cctx);
+            TypeRef type = cloned.getType();
+
+            LABEL_O1: {
+                if (type == BuiltinTypes.STR.getType()) {
+                    compileString(valueReg, cctx);
+                    break LABEL_O1;
+                } else if (type instanceof StructType st) {
+                    RDefaultStruct struct = cctx.getStruct(st.getName());
+                    if (struct != null && struct.inherited().contains("Error")) {
+                        compileError(cctx);
+                        break LABEL_O1;
+                    }
+                }
+
+                new RVariableTypeError("Raise only supports Error or string types: " + type.getName() + " is not supported", fileName, line).raise();
+                return;
+            }
+
+
+
         }
+
+        new FunctionCallNode(
+                fileName, line,
+                "System$$exit",
+                List.of(new NumberNode(fileName, line, "1"))
+        ).compile(cctx);
+
+        cctx.emit("unreachable");
     }
 
     private void compileString(String valueReg, CompilationContext cctx) {
