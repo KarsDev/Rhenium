@@ -509,13 +509,19 @@ impl TestError:
     func message() -> str: // override
         return "Test Message \"" + msg + "\""
 
-
 try:
-    raise init TestError("LOL") // raising a custom error
+    raise init TestError("Err") // raising a custom error
 catch TestError: // catching for the same error
     println("Catched successfully")
 catch:
     raise "Unreachable" // The raised error is always 'TestError'
+
+// It is also possible to catch and get the raised error
+try:
+    raise init TestError("Err")
+catch TestError errorVariable: // catching TestError and setting creating 'errorVariable' with the raised value
+    println("Catched TestError with message: " + errorVariable.msg)
+
 
 // Async blocks
 
