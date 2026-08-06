@@ -1,4 +1,5 @@
 using clock.time
+using errors.IllegalArgumentError
 
 /*
 Random module
@@ -22,10 +23,20 @@ func _randomSeed() -> long:
 impl Random:
     init():
         this.seed = _randomSeed()
+        setConstants()
+    
+    init(seed: long):
+        this.seed = seed
+        setConstants()
+    
+    init(seed: long, _a: int, _c: int, _m: int):
+        raise init IllegalArgumentError("Default constructor is not usable for Random")
+
+    func setConstants() -> none:
         this._a = 1103515245
         this._c = 12345
         this._m = 2147483647 // 2^31 - 1
-    
+
     // Generates a pseudorandom 64-bit integer 
     func nextLong() -> long:
         // seed = (a * seed + c) % m
