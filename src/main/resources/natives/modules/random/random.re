@@ -29,19 +29,19 @@ impl Random:
     // Generates a pseudorandom 64-bit integer 
     func nextLong() -> long:
         // seed = (a * seed + c) % m
-        (@self).seed = ((@self)._a * (@self).seed + (@self)._c) % (@self)._m
+        this.seed = (this._a * this.seed + this._c) % this._m
     
-        if ((@self).seed < 0):
-            (@self).seed *= -1
-        return (@self).seed
+        if (this.seed < 0):
+            this.seed *= -1
+        return this.seed
 
     // Generates a pseudorandom 32-bit integer 
     func nextInt() -> int:
-        return cast<int>((@self).nextLong())
+        return cast<int>(this.nextLong())
 
     // Returns a pseudorandom number within a range
     func nextInt(min: int, max: int) -> int:
-        raw: int = (@self).nextInt()
+        raw: int = this.nextInt()
         delta: long = max - min + 1
         offset: int = raw % delta
         return min + offset
@@ -49,5 +49,4 @@ impl Random:
     // Returns a pseudorandom bool
     func nextBool() -> bool:
         // Fixed function name match (rangeInt)
-        val: int = (@self).nextInt(0, 1)
-        return val == 0
+        return this.nextInt(0, 1) == 0
