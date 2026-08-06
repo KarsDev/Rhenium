@@ -1,6 +1,6 @@
 using collections.map
 using number.number
-using error.NetworkError
+using errors.NetworkError
 
 _NativeCPP("network") str BNET_00(op: int, id: str, arg1: str, arg2: str)
 

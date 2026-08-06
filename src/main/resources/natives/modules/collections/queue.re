@@ -1,5 +1,5 @@
 using collections.list
-using error.IllegalArgumentError
+using errors.IllegalArgumentError
 
 /*
 A first-in, first-out (FIFO) collection.

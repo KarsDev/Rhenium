@@ -1,4 +1,4 @@
-using win.keys
+using graphics.keys
 
 _NativeCPP("win/win") \
     anyptr createScreen(width: int, height: int, title: str) and \
