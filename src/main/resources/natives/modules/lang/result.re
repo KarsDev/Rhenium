@@ -77,3 +77,11 @@ impl Result<T, E inherits Error>:
     func containsErr(error: E) -> bool:
         return this.isErr() and this.unwrapErr() == error
     
+namespace Result:
+    // Successed result
+    generic func Ok<T, E>(obj: T):
+        return init Result<T, E>(obj)
+
+    // Failed result
+    generic func Err<T, E>(err: E):
+        return init Result<T, E>(err, true)
