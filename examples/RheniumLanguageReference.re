@@ -394,9 +394,11 @@ delete dynarr
 Struct declaration
 */
 
+// Structs field can either be mutable (mut <type>) or immutable
+
 struct Vec2:
-    x: int
-    y: int
+    x: mut int
+    y: mut int
 
 // Builtin structs cannot be initialized and are usually used by the compiler
 _Builtin struct NotInit:
@@ -691,8 +693,8 @@ extern func write():
 
 using memory
 struct CharBuf:
-    inner: ptr -> char
-    length: int
+    inner: mut ptr -> char
+    length: mut int
 
 impl CharBuf:
     init(s: str):

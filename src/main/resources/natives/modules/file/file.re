@@ -4,7 +4,7 @@ _NativeCPP("file") bool BFN_00(op: int, file: str)
 // File struct
 struct File:
     // File name, also with extension
-    name: str
+    name: mut str
 
 // Implement File functions
 impl File:

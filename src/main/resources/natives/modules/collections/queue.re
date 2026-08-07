@@ -43,11 +43,11 @@ Time Complexity:
 - toList()  : O(n)
 */
 generic struct Queue<T>:
-    items: ptr -> T
-    capacity: int
-    size: int
-    head: int
-    tail: int
+    items: mut ptr -> T
+    capacity: mut int
+    size: mut int
+    head: mut int
+    tail: mut int
 
 impl Queue<T>:
     // Creates a queue with the specified capacity

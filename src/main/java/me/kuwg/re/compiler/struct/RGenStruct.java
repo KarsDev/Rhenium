@@ -60,7 +60,7 @@ public final class RGenStruct extends RDefaultStruct {
         List<RStructField> newFields = new ArrayList<>();
         for (RStructField field : fields) {
             TypeRef replaced = ASTNode.replaceGenericType(field.type(), mapping, cctx, line);
-            newFields.add(new RStructField(field.name(), replaced));
+            newFields.add(new RStructField(field.name(), field.mutable(), replaced));
         }
 
         String mangledName = mangleName(types);
@@ -154,7 +154,9 @@ public final class RGenStruct extends RDefaultStruct {
                 FunctionDeclarationNode fn = new FunctionDeclarationNode(fileName, ctor.block().getNodes().get(0).getLine(), false, mangledName, withSelf, BuiltinTypes.NONE.getType(), ctor.block().clone());
 
                 fn.replaceGenerics(combined, cctx);
+                cctx.compilingConstructor = true;
                 fn.compile(cctx);
+                cctx.compilingConstructor = false;
 
                 RFunction compiled = cctx.getFunction(mangledName, extractTypes(withSelf));
                 struct.constructors().add(compiled);

@@ -37,7 +37,7 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode, TopLev
         for (int i = 0; i < fields.size(); i++) {
             RStructField field = fields.get(i);
             TypeRef replaced = replaceGenericType(field.type(), generics, cctx);
-            fields.set(i, new RStructField(field.name(), replaced));
+            fields.set(i, new RStructField(field.name(), field.mutable(), replaced));
         }
     }
 

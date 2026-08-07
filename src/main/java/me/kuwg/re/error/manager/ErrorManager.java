@@ -13,8 +13,8 @@ final class ErrorManager {
         if (error.getLine() != -1) System.err.println("  At line " + error.getLine());
         System.err.println("  Internal error name: \"" + getIEN(error.getCode()) + "\"");
 
-        System.exit(error.getCode());
-        //throw new RInternalError();
+        //System.exit(error.getCode());
+        throw new RInternalError();
     }
 
     private static String getIEN(int code) {

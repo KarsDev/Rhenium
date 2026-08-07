@@ -2,7 +2,7 @@ using clock.time
 using errors.IllegalArgumentError
 
 struct SecureRandom:
-    seed: long
+    seed: mut long
 
 impl SecureRandom:
     init():

@@ -7,8 +7,8 @@ _NativeCPP("FileWriter") bool BFW_00(op: int, path: str, data: str)
 // FileWriter struct
 struct FileWriter:
     file: File
-    isOpen: bool
-    append: bool
+    isOpen: mut bool
+    append: mut bool
 
 // Implement FileWriter functions
 impl FileWriter:

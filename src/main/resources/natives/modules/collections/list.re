@@ -28,9 +28,9 @@ using errors.IllegalArgumentError
 */
 
 generic struct List<T>:
-    items: ptr -> T
-    size: int
-    capacity: int
+    items: mut ptr -> T
+    size: mut int
+    capacity: mut int
 
 impl List<T>:
     // Creates a List with a given capacity

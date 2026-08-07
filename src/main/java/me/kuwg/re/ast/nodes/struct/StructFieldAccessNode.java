@@ -136,12 +136,14 @@ public class StructFieldAccessNode extends VariableReference {
         }
 
         int index = -1;
+        boolean mutable = false;
         TypeRef fieldType = null;
 
         var fields = structDef.fields();
         for (int i = 0; i < fields.size(); i++) {
             if (fields.get(i).name().equals(fieldName)) {
                 index = i;
+                mutable = fields.get(i).mutable() || cctx.compilingConstructor;
                 fieldType = fields.get(i).type();
                 break;
             }
@@ -164,7 +166,7 @@ public class StructFieldAccessNode extends VariableReference {
 
         cctx.emit(loaded + " = load " + ftln + ", " + toPtr(ftln) + fieldPtr);
 
-        return new RVariable(fieldName, true, true, fieldType, fieldPtr, loaded);
+        return new RVariable(fieldName, mutable, true, fieldType, fieldPtr, loaded);
     }
 
     @Override

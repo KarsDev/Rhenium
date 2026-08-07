@@ -122,7 +122,7 @@ func testModules():
     println("Module testing passed successfully")
 
 struct PtrTest:
-    lol: str
+    lol: mut str
 
 func testPointers():
     x = init PtrTest("olo")
@@ -176,7 +176,7 @@ func testNativeFunctions():
     println("Native functions testing passed successfully")
 
 generic struct Box<T>:
-    inner: T
+    inner: mut T
 
 func specificTest0(a: ptr -> Box<int>):
     (@a).inner +=1

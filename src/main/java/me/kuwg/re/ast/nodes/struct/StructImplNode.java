@@ -175,7 +175,9 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
         }
 
         for (PreparedFunction constructor : loadedConstructors) {
+            cctx.compilingConstructor = true;
             constructor.node.compile(cctx);
+            cctx.compilingConstructor = false;
 
             RFunction compiledCtor = cctx.getFunction(
                     constructor.lookupName,

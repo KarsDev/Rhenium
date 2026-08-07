@@ -71,6 +71,8 @@ public final class CompilationContext {
     private int indentLevel = 1;
     private int labelCounter = 0;
 
+    public boolean compilingConstructor = false;
+
     public CompilationContext(final String fileName, Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader,
                               final boolean writeExceptionLines) {
         this.fileName = fileName;

@@ -32,7 +32,7 @@ struct Network:
     host: str
     port: int
 
-    isOpen: bool
+    isOpen: mut bool
 
 impl Network:
     // Creates a network connection descriptor
@@ -110,9 +110,9 @@ impl Network:
    - body    : response body
 */
 struct HttpResponse:
-    status: int
+    status: mut int
     headers: HashMap<str, str>
-    body: str
+    body: mut str
 
 /*
   HHTP utility functions

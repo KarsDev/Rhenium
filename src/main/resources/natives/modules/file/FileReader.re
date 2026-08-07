@@ -7,9 +7,9 @@ _NativeCPP("FileReader") str BFR_00(op: int, path: str) // returns file content 
 // FileReader struct
 struct FileReader:
     file: File
-    isOpen: bool
-    content: str
-    position: int
+    isOpen: mut bool
+    content: mut str
+    position: mut int
 
 // Implement FileReader functions
 impl FileReader:

@@ -11,7 +11,7 @@ using errors.IllegalArgumentError
 */
 generic struct Entry<K, V>:
     key: K
-    value: V
+    value: mut V
 
 impl Entry<K, V>:
     func toString() -> str:
@@ -66,7 +66,7 @@ impl Entry<K, V>:
 generic struct HashMap<K, V>:
     buckets: ptr -> List<Entry<K, V>>
     capacity: int
-    size: int
+    size: mut int
 
 impl HashMap<K, V>:
     // Creates an empty map with default bucket count (5)

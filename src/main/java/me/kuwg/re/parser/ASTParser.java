@@ -807,13 +807,11 @@ public final class ASTParser {
                 return new RParserError("Expected ':' for struct field declaration", fileName, line()).raise();
             }
 
-            if (match(KEYWORD, "mut")) {
-                return new RParserError("You can't declare fields as mutable", fileName, line()).raise();
-            }
+            boolean mutable = matchAndConsume(KEYWORD, "mut");
 
             TypeRef fieldType = parseType(false);
 
-            fields.add(new RStructField(fieldName, fieldType));
+            fields.add(new RStructField(fieldName, mutable, fieldType));
             types.add(fieldType);
         }
 
@@ -1479,13 +1477,11 @@ public final class ASTParser {
                 return new RParserError("Expected ':' for struct field declaration", fileName, line).raise();
             }
 
-            if (match(KEYWORD, "mut")) {
-                return new RParserError("You can't declare fields as mutable", fileName, line).raise();
-            }
+            boolean mutable = matchAndConsume(KEYWORD, "mut");
 
             TypeRef fieldType = parseType(true);
 
-            fields.add(new RStructField(fieldName, fieldType));
+            fields.add(new RStructField(fieldName, mutable, fieldType));
             fieldTypes.add(fieldType);
         }
 
@@ -2566,6 +2562,8 @@ public final class ASTParser {
             if (!matchAndConsume(OPERATOR, ":")) {
                 continue;
             }
+
+            matchAndConsume(KEYWORD, "mut");
 
             TypeRef fieldType = collectType(generic);
             fieldTypes.add(fieldType);
