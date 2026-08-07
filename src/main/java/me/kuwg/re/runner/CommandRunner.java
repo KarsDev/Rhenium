@@ -21,10 +21,10 @@ public final class CommandRunner {
         }
 
         int exitCode = process.waitFor();
-        System.out.println("Compiler exited with code: " + exitCode);
 
         if (exitCode != 0) {
             throw new RInternalError("Execution failed with code " + exitCode);
         }
+        System.exit(exitCode);
     }
 }
