@@ -102,7 +102,7 @@ impl HashMap<K, V>:
                 this.buckets[idx].items[i].value = value
                 return
         this.buckets[idx].add(init Entry<K, V>(key, value))
-        this.size += 1
+        this.size++
 
     // Returns the value associated with a key,
     // or the supplied value if absent
@@ -153,7 +153,7 @@ impl HashMap<K, V>:
             if (bucket.items[i].key == key):
                 entry = bucket.remove(i)
                 this.buckets[idx] = bucket
-                this.size -= 1
+                this.size--
                 return entry.value
 
         this.buckets[idx] = bucket

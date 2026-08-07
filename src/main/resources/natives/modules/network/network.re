@@ -197,7 +197,7 @@ namespace Http:
                 value = strTrim(strSubRange(line, colon + 1, len(line)))
                 response.headers.put(key, value)
         
-            i += 1
+            i++
 
         
         transferEncoding: mut = ""

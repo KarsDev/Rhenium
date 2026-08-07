@@ -88,7 +88,7 @@ impl Queue<T>:
 
         this.items[this.tail] = v
         this.tail = (this.tail + 1) % this.capacity
-        this.size += 1
+        this.size++
 
     // Removes and returns the front element
     func dequeue() -> T:
@@ -97,7 +97,7 @@ impl Queue<T>:
 
         val = this.items[this.head]
         this.head = (this.head + 1) % this.capacity
-        this.size -= 1
+        this.size--
 
         if (this.size == 0):
             this.head = 0

@@ -60,7 +60,7 @@ impl List<T>:
         if (this.size == this.capacity):
             this.resize()
         this.items[this.size] = v
-        this.size += 1
+        this.size++
     
     // Gets an element at a given index
     func get(idx: int) -> T:
@@ -83,7 +83,7 @@ impl List<T>:
         for (i in range(this.size, idx, -1)):
             this.items[i] = this.items[i - 1]
         this.items[idx] = v
-        this.size += 1
+        this.size++
 
     // Removes an element at a given index
     func remove(idx: int) -> T:
@@ -92,7 +92,7 @@ impl List<T>:
         val = this.items[idx]
         for (i in range(idx, this.size - 1)):
             this.items[i] = this.items[i + 1]
-        this.size -= 1
+        this.size--
         return val
 
     // Removes and gets the last element from the list
@@ -100,7 +100,7 @@ impl List<T>:
         if (this.size == 0):
             raise init IndexOutOfBoundsError(0, 0)
 
-        this.size -= 1
+        this.size--
         return this.items[this.size]
 
     // Checks whether the list contains a specific element

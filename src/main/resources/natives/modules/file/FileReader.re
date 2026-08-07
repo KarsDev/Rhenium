@@ -49,7 +49,7 @@ impl FileReader:
         i: mut = start
         while (i < end):
             result = result + this.content[i]
-            i = i + 1
+            i++
 
         this.position = end
         return result
