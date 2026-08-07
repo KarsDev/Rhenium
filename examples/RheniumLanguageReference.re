@@ -71,6 +71,11 @@ of the package that should be publicly visible, for example:
 
 using utils // resolves to utils/mod.re if "utils.re" is not found
 
+// The keyword 'export' is reserved for modules (files called "mod.re"), 
+// and they use the following syntax:
+// export <module>
+export utils // exports utils.re in the same package
+
 /*
 <=------------------------=>|<=>|<=-----------------------=>
   BUILTIN AND INTERNAL DECLARATIONS
