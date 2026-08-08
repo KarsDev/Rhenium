@@ -1,16 +1,27 @@
-#include <string>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
+#include <string>
 
 namespace fs = std::filesystem;
 
-bool fileExists(const char* file)
+static bool fileExists(const char* file)
 {
-    return fs::exists(file);
+    if (!file)
+        return false;
+
+    try {
+        return fs::exists(file);
+    }
+    catch (...) {
+        return false;
+    }
 }
 
-bool createFile(const char* file)
+static bool createFile(const char* file)
 {
+    if (!file)
+        return false;
+
     if (fileExists(file))
         return true;
 
@@ -21,6 +32,7 @@ bool createFile(const char* file)
             fs::create_directories(p.parent_path());
 
         std::ofstream ofs(file);
+
         return ofs.good();
     }
     catch (...) {
@@ -28,18 +40,37 @@ bool createFile(const char* file)
     }
 }
 
-bool isDirectory(const char* file)
+static bool isDirectory(const char* file)
 {
-    return fs::is_directory(file);
+    if (!file)
+        return false;
+
+    try {
+        return fs::is_directory(file);
+    }
+    catch (...) {
+        return false;
+    }
 }
 
-bool isFile(const char* file)
+static bool isFile(const char* file)
 {
-    return fs::is_regular_file(file);
+    if (!file)
+        return false;
+
+    try {
+        return fs::is_regular_file(file);
+    }
+    catch (...) {
+        return false;
+    }
 }
 
-bool renameFile(const char* file, const char* newName)
+static bool renameFile(const char* file, const char* newName)
 {
+    if (!file || !newName)
+        return false;
+
     try {
         fs::rename(file, newName);
         return true;
@@ -49,42 +80,57 @@ bool renameFile(const char* file, const char* newName)
     }
 }
 
-bool deleteFile(const char* file)
+static bool deleteFile(const char* file)
 {
-    return fs::remove(file);
+    if (!file)
+        return false;
+
+    try {
+        return fs::remove(file);
+    }
+    catch (...) {
+        return false;
+    }
 }
 
-extern "C" {
-    bool BFN_00(int operation, char* file) {
-        switch (operation){
-            case 0:
-                return fileExists(file);
-            case 1:
-                return createFile(file);
-            case 2:
-                return isDirectory(file);
-            case 3:
-                return isFile(file);
-            case 4: {
-                std::string full_string = file;
-                const std::string DELIMITER = "//";
 
-                size_t delimiter_pos = full_string.find(DELIMITER);
+// ============================================================
+// Public ABI
+// ============================================================
 
-                if (delimiter_pos != std::string::npos) {
-                    std::string name = full_string.substr(0, delimiter_pos);
+extern "C" bool BFN_00(
+    int operation,
+    const char* arg1,
+    const char* arg2
+)
+{
+    switch (operation)
+    {
+        case 0:
+            // fileExists(path)
+            return fileExists(arg1);
 
-                    size_t newName_start_pos = delimiter_pos + DELIMITER.length();
-                    std::string newName = full_string.substr(newName_start_pos);
-                    
-                    return renameFile(name.c_str(), newName.c_str());
-                }
-                break;
-            }
-            case 5:
-                return deleteFile(file);
-        }
-        
-        return false;
+        case 1:
+            // createFile(path)
+            return createFile(arg1);
+
+        case 2:
+            // isDirectory(path)
+            return isDirectory(arg1);
+
+        case 3:
+            // isFile(path)
+            return isFile(arg1);
+
+        case 4:
+            // renameFile(oldPath, newPath)
+            return renameFile(arg1, arg2);
+
+        case 5:
+            // deleteFile(path)
+            return deleteFile(arg1);
+
+        default:
+            return false;
     }
 }
