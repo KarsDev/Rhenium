@@ -165,4 +165,127 @@ void __RegexFreeAll0(char** result, int count) {
     delete[] result;
 }
 
+const char* __RegexReplace0(std::regex* regex, const char* input, const char* replacement) {
+    if (!regex || !input || !replacement) {
+        return nullptr;
+    }
+
+    try {
+        thread_local std::string result;
+
+        result = std::regex_replace(
+            std::string(input),
+            *regex,
+            replacement
+        );
+
+        return result.c_str();
+    }
+    catch (...) {
+        return nullptr;
+    }
+}
+
+char** __RegexSplit0(const char* input, const std::regex& pattern, int* count) {
+    if (!count) {
+        return nullptr;
+    }
+
+    *count = 0;
+
+    if (!input) {
+        return nullptr;
+    }
+
+    try {
+        std::string str(input);
+        std::vector<std::string> parts;
+
+        for (std::sregex_token_iterator it(
+                 str.begin(), str.end(), pattern, -1);
+             it != std::sregex_token_iterator();
+             ++it) {
+
+            parts.push_back(*it);
+        }
+
+        if (parts.size() >
+            static_cast<size_t>(std::numeric_limits<int>::max())) {
+            return nullptr;
+        }
+
+        char** result = new char*[parts.size() + 1];
+
+        for (size_t i = 0; i < parts.size(); ++i) {
+            result[i] = new char[parts[i].size() + 1];
+
+            std::memcpy(
+                result[i],
+                parts[i].c_str(),
+                parts[i].size() + 1
+            );
+        }
+
+        result[parts.size()] = nullptr;
+        *count = static_cast<int>(parts.size());
+
+        return result;
+    }
+    catch (...) {
+        return nullptr;
+    }
+}
+
+char** __RegexGroups0(const char* input, const std::regex& pattern, int* count) {
+    if (!count) {
+        return nullptr;
+    }
+
+    *count = 0;
+
+    if (!input) {
+        return nullptr;
+    }
+
+    try {
+        std::string str(input);
+        std::smatch match;
+
+        if (!std::regex_search(str, match, pattern)) {
+            return nullptr;
+        }
+
+        size_t groupCount = match.size() > 0 ? match.size() - 1 : 0;
+
+        if (groupCount >
+            static_cast<size_t>(std::numeric_limits<int>::max())) {
+            return nullptr;
+        }
+
+        char** result = new char*[groupCount + 1];
+
+        for (size_t i = 0; i < groupCount; ++i) {
+            const std::string group = match[i + 1].matched
+                ? match[i + 1].str()
+                : std::string();
+
+            result[i] = new char[group.size() + 1];
+
+            std::memcpy(
+                result[i],
+                group.c_str(),
+                group.size() + 1
+            );
+        }
+
+        result[groupCount] = nullptr;
+        *count = static_cast<int>(groupCount);
+
+        return result;
+    }
+    catch (...) {
+        return nullptr;
+    }
+}
+
 }
