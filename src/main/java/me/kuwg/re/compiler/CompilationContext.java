@@ -329,7 +329,7 @@ public final class CompilationContext {
         }
     }
 
-    public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs) throws IOException {
+    public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs, boolean keepLLVM) throws IOException {
         var main = getFunction("main", List.of());
         if (main == null) {
             main = getFunction("main", List.of(new ArrayType(ArrayType.UNKNOWN_SIZE, BuiltinTypes.STR.getType()), BuiltinTypes.INT.getType()));
@@ -341,7 +341,7 @@ public final class CompilationContext {
             withMain(main, llvmFile);
         }
 
-        return getCompilationCommand(llvmFile.getAbsolutePath(), executableFile.getAbsolutePath(), clangArgs);
+        return getCompilationCommand(llvmFile.getAbsolutePath(), executableFile.getAbsolutePath(), clangArgs, keepLLVM);
     }
 
     private void noMain(File output) throws IOException {
@@ -437,7 +437,7 @@ public final class CompilationContext {
         return unions.get(name);
     }
 
-    private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs) {
+    private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs, boolean keepLLVM) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
 
         final String extraClangArgs = (clangArgs == null || clangArgs.isEmpty()) ? "" : " " + String.join(" ", clangArgs);
@@ -450,27 +450,35 @@ public final class CompilationContext {
         String and = " && ";
 
         StringBuilder cmd = new StringBuilder();
-        List<String> bcFiles = new ArrayList<>();
+        List<String> llFiles = new ArrayList<>();
 
         for (Path p : nativeCPPModules.values()) {
             String src = p.toString();
-            String bc = src + ".bc";
+            String ll = src + ".ll";
 
-            cmd.append("clang++ -O3 -march=native -mtune=native -flto -c -emit-llvm -std=c++17").append(extraClangArgs).append(" ").append(quote.apply(src)).append(" -o ").append(quote.apply(bc)).append(and);
+            cmd.append("clang++ -O3 -march=native -mtune=native -flto -S -emit-llvm -std=c++17").append(extraClangArgs).append(" ").append(quote.apply(src)).append(" -o ").append(quote.apply(ll)).append(and);
 
-            bcFiles.add(bc);
+            llFiles.add(ll);
+        }
+
+        boolean hasNativeModules = !llFiles.isEmpty();
+        String combined = tempBase + ".combined.ll";
+
+        if (hasNativeModules) {
+            cmd.append("llvm-link ");
+
+            for (String ll : llFiles) {
+                cmd.append(quote.apply(ll)).append(" ");
+            }
+
+            cmd.append("-S -o ").append(quote.apply(combined)).append(and);
         }
 
         String linked = tempBase + ".linked.bc";
 
-        if (!bcFiles.isEmpty()) {
-            cmd.append("llvm-link -o ").append(quote.apply(linked)).append(" ").append(quote.apply(llvmFile));
-
-            for (String bc : bcFiles) {
-                cmd.append(" ").append(quote.apply(bc));
-            }
-
-            cmd.append(and);
+        if (hasNativeModules) {
+            cmd.append("llvm-link -o ").append(quote.apply(linked)).append(" ")
+                    .append(quote.apply(llvmFile)).append(" ").append(quote.apply(combined)).append(and);
         } else {
             linked = llvmFile;
         }
@@ -502,10 +510,11 @@ public final class CompilationContext {
 
         cmd.append(deleteCmd).append(quote.apply(optimized)).append(" ");
 
-        if (!bcFiles.isEmpty()) {
+        if (hasNativeModules) {
             cmd.append(quote.apply(linked)).append(" ");
-            for (String bc : bcFiles) {
-                cmd.append(quote.apply(bc)).append(" ");
+            if (!keepLLVM) cmd.append(quote.apply(combined)).append(" ");
+            for (String ll : llFiles) {
+                cmd.append(quote.apply(ll)).append(" ");
             }
         }
 

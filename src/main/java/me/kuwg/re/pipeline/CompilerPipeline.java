@@ -30,7 +30,7 @@ public final class CompilerPipeline {
             CompilationContext cctx = new CompilationContext(args.inputFile().getName(), frontend.typeMap, loader, args.writeExceptionLines());
             ast.compile(cctx);
 
-            String command = cctx.compileAndGet(args.llvmFile(), args.executableFile(), args.clangArgs());
+            String command = cctx.compileAndGet(args.llvmFile(), args.executableFile(), args.clangArgs(), args.keepLLVM());
 
             if (args.dumpAST()) dumpAST(ast);
             if (args.runCommand()) CommandRunner.run(command);
