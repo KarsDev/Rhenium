@@ -440,10 +440,13 @@ public final class CompilationContext {
     private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs, boolean keepLLVM) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
 
-        final String extraClangArgs = (clangArgs == null || clangArgs.isEmpty()) ? "" : " " + String.join(" ", clangArgs);
+        final String extraClangArgs = (clangArgs == null || clangArgs.isEmpty())
+                        ? ""
+                        : " " + String.join(" ", clangArgs);
 
         String tempBase = executableFile;
         int lastDot = tempBase.lastIndexOf('.');
+
         if (lastDot > 0) tempBase = tempBase.substring(0, lastDot);
 
         String deleteCmd = WIN ? "del /f " : "rm -f ";
@@ -456,33 +459,33 @@ public final class CompilationContext {
             String src = p.toString();
             String ll = src + ".ll";
 
-            cmd.append("clang++ -O3 -march=native -mtune=native -flto -S -emit-llvm -std=c++17").append(extraClangArgs).append(" ").append(quote.apply(src)).append(" -o ").append(quote.apply(ll)).append(and);
+            cmd.append("clang++ -O3 -march=native -mtune=native")
+                    .append(" -flto -S -emit-llvm -std=c++17")
+                    .append(extraClangArgs)
+                    .append(" ")
+                    .append(quote.apply(src))
+                    .append(" -o ")
+                    .append(quote.apply(ll))
+                    .append(and);
 
             llFiles.add(ll);
         }
 
         boolean hasNativeModules = !llFiles.isEmpty();
+
         String combined = tempBase + ".combined.ll";
 
-        String linked;
-
         if (hasNativeModules) {
-            cmd.append("llvm-link ")
-                    .append(quote.apply(llvmFile))
-                    .append(" ");
+            cmd.append("llvm-link ").append(quote.apply(llvmFile)).append(" ");
 
             for (String ll : llFiles) {
                 cmd.append(quote.apply(ll)).append(" ");
             }
 
-            cmd.append("-S -o ")
-                    .append(quote.apply(combined))
-                    .append(and);
-
-            linked = combined;
-        } else {
-            linked = llvmFile;
+            cmd.append("-S -o ").append(quote.apply(combined)).append(and);
         }
+
+        String linked = hasNativeModules ? combined : llvmFile;
 
         String optimized = tempBase + ".opt.bc";
 
@@ -513,14 +516,20 @@ public final class CompilationContext {
                 .append(quote.apply(executableFile))
                 .append(and);
 
-        cmd.append(deleteCmd).append(quote.apply(optimized)).append(" ");
+        List<String> temporaryFiles = new ArrayList<>();
+
+        temporaryFiles.add(optimized);
 
         if (hasNativeModules) {
-            cmd.append(quote.apply(linked)).append(" ");
-            if (!keepLLVM) cmd.append(quote.apply(combined)).append(" ");
-            for (String ll : llFiles) {
-                cmd.append(quote.apply(ll)).append(" ");
-            }
+            if (!keepLLVM) temporaryFiles.add(combined);
+            temporaryFiles.addAll(llFiles);
+        }
+
+        cmd.append(deleteCmd);
+
+        for (int i = 0; i < temporaryFiles.size(); i++) {
+            if (i > 0) cmd.append(" ");
+            cmd.append(quote.apply(temporaryFiles.get(i)));
         }
 
         return cmd.toString().trim();
