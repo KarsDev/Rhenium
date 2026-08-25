@@ -464,28 +464,33 @@ public final class CompilationContext {
         boolean hasNativeModules = !llFiles.isEmpty();
         String combined = tempBase + ".combined.ll";
 
+        String linked;
+
         if (hasNativeModules) {
-            cmd.append("llvm-link ");
+            cmd.append("llvm-link ")
+                    .append(quote.apply(llvmFile))
+                    .append(" ");
 
             for (String ll : llFiles) {
                 cmd.append(quote.apply(ll)).append(" ");
             }
 
-            cmd.append("-S -o ").append(quote.apply(combined)).append(and);
-        }
+            cmd.append("-S -o ")
+                    .append(quote.apply(combined))
+                    .append(and);
 
-        String linked = tempBase + ".linked.bc";
-
-        if (hasNativeModules) {
-            cmd.append("llvm-link -o ").append(quote.apply(linked)).append(" ")
-                    .append(quote.apply(llvmFile)).append(" ").append(quote.apply(combined)).append(and);
+            linked = combined;
         } else {
             linked = llvmFile;
         }
 
         String optimized = tempBase + ".opt.bc";
 
-        cmd.append("opt -passes=\"default<O3>,globaldce\" ").append(quote.apply(linked)).append(" -o ").append(quote.apply(optimized)).append(and);
+        cmd.append("opt -passes=\"default<O3>,globaldce\" ")
+                .append(quote.apply(linked))
+                .append(" -o ")
+                .append(quote.apply(optimized))
+                .append(and);
 
         cmd.append("clang++ ")
                 .append("-O3 ")
