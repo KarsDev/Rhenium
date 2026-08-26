@@ -11,19 +11,25 @@ import java.util.Map;
 
 public final class RGenFunction extends RFunction {
     private final List<TypeParameter> typeParameters;
+    private final boolean inline;
     private final BlockNode block;
 
     private final Map<String, RFunction> instantiations = new HashMap<>();
 
     public RGenFunction(final String llvmName, final String name, final List<TypeParameter> typeParameters, final TypeRef returnType,
-                        final List<FunctionParameter> parameters, final BlockNode block) {
+                        final List<FunctionParameter> parameters, final boolean inline, final BlockNode block) {
         super(llvmName, name, returnType, parameters);
         this.typeParameters = typeParameters;
+        this.inline = inline;
         this.block = block;
     }
 
     public List<TypeParameter> typeParameters() {
         return typeParameters;
+    }
+
+    public boolean inline() {
+        return inline;
     }
 
     public BlockNode block() {

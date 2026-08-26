@@ -96,7 +96,8 @@ public class FunctionCallNode extends FunCall {
         RFunction existing = genFn.getInstantiation(bindings);
         if (existing == null) {
             String mangledName = genFn.name() + "__" + bindings.values().stream().map(TypeRef::getName).reduce((a, b) -> a + "_" + b).orElse("");
-            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(fileName, line, true, mangledName, concreteParams, concreteReturnType, genFn.block().clone());
+            FunctionDeclarationNode concreteFnNode = new FunctionDeclarationNode(fileName, line, true,
+                    mangledName, concreteParams, genFn.inline(), false, concreteReturnType, genFn.block().clone());
             concreteFnNode.replaceGenerics(bindings, cctx);
 
             concreteFnNode.compile(cctx);

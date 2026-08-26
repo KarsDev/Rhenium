@@ -17,16 +17,18 @@ public class GenFunctionDeclarationNode extends ASTNode implements TopLevelNode 
     private final List<TypeParameter> typeParameters;
     private final List<FunctionParameter> params;
     private TypeRef returnType;
+    private final boolean inline;
     private final BlockNode block;
 
     private boolean registered = false;
 
-    public GenFunctionDeclarationNode(final String fileName, final int line, final String name, final List<TypeParameter> typeParameters, final List<FunctionParameter> params, final TypeRef returnType, final BlockNode block) {
+    public GenFunctionDeclarationNode(final String fileName, final int line, final String name, final List<TypeParameter> typeParameters, final List<FunctionParameter> params, final TypeRef returnType, final boolean inline, final BlockNode block) {
         super(fileName, line);
         this.name = name;
         this.typeParameters = typeParameters;
         this.params = params;
         this.returnType = returnType;
+        this.inline = inline;
         this.block = block;
     }
 
@@ -58,7 +60,7 @@ public class GenFunctionDeclarationNode extends ASTNode implements TopLevelNode 
 
     @Override
     public GenFunctionDeclarationNode clone() {
-        var v = new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, block.clone());
+        var v = new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, inline, block.clone());
         v.registered = registered;
         return v;
     }
@@ -73,6 +75,7 @@ public class GenFunctionDeclarationNode extends ASTNode implements TopLevelNode 
                 typeParameters,
                 returnType,
                 params,
+                inline,
                 block
         );
 

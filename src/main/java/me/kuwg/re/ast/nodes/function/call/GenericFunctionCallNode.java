@@ -105,6 +105,8 @@ public class GenericFunctionCallNode extends FunCall {
                     true,
                     mangledName,
                     concreteParams,
+                    genFn.inline(),
+                    false,
                     concreteReturnType,
                     genFn.block().clone()
             );

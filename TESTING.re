@@ -181,7 +181,7 @@ generic struct Box<T>:
 func specificTest0(a: ptr -> Box<int>):
     (@a).inner +=1
 
-generic func sum<T>(a: T, b: T) -> T:
+generic func sum<T>(a: T, b: T) -> T inline:
     return a + b
 
 func testGenerics():

@@ -1421,6 +1421,8 @@ public final class ASTParser {
         var params = parseParamsDeclare(true);
         TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(true) : BuiltinTypes.NONE.getType();
 
+        boolean inline = matchAndConsume(KEYWORD, "inline");
+
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for function declaration", fileName, line).raise();
         }
@@ -1429,7 +1431,7 @@ public final class ASTParser {
 
         currentGenericTypes = old;
 
-        return new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, block);
+        return new GenFunctionDeclarationNode(fileName, line, name, typeParameters, params, returnType, inline, block);
     }
 
     private @SubFunc ASTNode parseGenericStruct(int line) {

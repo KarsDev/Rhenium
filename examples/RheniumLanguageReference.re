@@ -277,6 +277,10 @@ Inline functions
 func write(l: str) -> none inline:
   println(l)
 
+// Generic functions can be inlined too
+generic func sum<T>(a: T, b: T) -> T inline:
+    return a + b
+
 /*
 <=------------------------=>|<=>|<=-----------------------=>
   CONTROL FLOW
