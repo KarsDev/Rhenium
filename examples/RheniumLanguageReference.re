@@ -273,8 +273,8 @@ log("hello")
 Inline functions
 */
 
-// inlines the functions after compilation, purely a perforemance choice
-func write(l: str) inline:
+// inlines the functions after compilation, purely a performance choice
+func write(l: str) -> none inline:
   println(l)
 
 /*

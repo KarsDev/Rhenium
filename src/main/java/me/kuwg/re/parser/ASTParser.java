@@ -667,10 +667,8 @@ public final class ASTParser {
         String name = identifier();
 
         var params = parseParamsDeclare(false);
-
-        boolean inline = matchAndConsume(KEYWORD, "inline");
-
         TypeRef returnType = matchAndConsume(OPERATOR, "->") ? parseType(false) : BuiltinTypes.NONE.getType();
+        boolean inline = matchAndConsume(KEYWORD, "inline");
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for function declaration", fileName, line).raise();
