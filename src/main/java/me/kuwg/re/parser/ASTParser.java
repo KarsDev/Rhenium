@@ -799,6 +799,8 @@ public final class ASTParser {
                 }
             }
 
+            if (outOfBounds(0)) break;
+
             String fieldName = identifier();
 
             if (!matchAndConsume(OPERATOR, ":")) {
@@ -2442,6 +2444,11 @@ public final class ASTParser {
         while (!match(EOF)) {
             removeNewlines();
 
+            if (matchAndConsume(KEYWORD, "type")) {
+                collectTypedef();
+                continue;
+            }
+
             if (matchAndConsume(KEYWORD, "generic")) {
                 if (matchAndConsume(KEYWORD, "struct")) {
                     collectStructType(true);
@@ -2519,6 +2526,16 @@ public final class ASTParser {
         typeMap.putAll(resolved);
     }
 
+    private void collectTypedef() {
+        String name = identifier();
+        if (!matchAndConsume(OPERATOR, "=")) {
+            return;
+        }
+        TypeRef type = parseType(false);
+
+        addType(name, type);
+    }
+
     private void collectStructType(boolean generic) {
         if (!match(IDENTIFIER)) {
             return;
@@ -2551,7 +2568,7 @@ public final class ASTParser {
         while (!match(DEDENT) && !match(EOF)) {
             removeNewlines();
 
-            if (match(DEDENT)) break;
+            if (match(DEDENT) || outOfBounds(0)) break;
 
             if (!match(IDENTIFIER)) {
                 consume();
