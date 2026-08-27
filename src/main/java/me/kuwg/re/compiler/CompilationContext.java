@@ -521,7 +521,10 @@ public final class CompilationContext {
         temporaryFiles.add(optimized);
 
         if (hasNativeModules) {
-            if (!keepLLVM) temporaryFiles.add(combined);
+            if (!keepLLVM) {
+                temporaryFiles.add(combined);
+                temporaryFiles.add(llvmFile);
+            }
             temporaryFiles.addAll(llFiles);
         }
 
