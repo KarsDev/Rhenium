@@ -7,6 +7,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.error.errors.constant.RNotConstantError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.writer.Writeable;
 
 import java.util.ArrayList;
@@ -41,6 +42,120 @@ public class MatchNode extends ASTNode {
 
         final String exprReg = expr.compileAndGet(cctx);
         final TypeRef exprType = evalType(expr.getType(), cctx, fileName, line);
+        if (exprType == BuiltinTypes.STR.getType()) {
+            final String endLabel = cctx.nextLabel("match_end");
+
+            String defaultLabel = null;
+            final List<MatchCase> nonDefaultCases = new ArrayList<>();
+            final List<String> caseLabels = new ArrayList<>();
+
+            for (MatchCase mc : cases) {
+                if (mc.isDefault()) {
+                    if (defaultLabel == null) {
+                        defaultLabel = cctx.nextLabel("match_default");
+                    }
+                } else {
+                    nonDefaultCases.add(mc);
+                    caseLabels.add(cctx.nextLabel("match_case"));
+                }
+            }
+
+            if (defaultLabel == null) {
+                defaultLabel = endLabel;
+            }
+
+            for (int i = 0; i < nonDefaultCases.size(); i++) {
+                final MatchCase mc = nonDefaultCases.get(i);
+                final String caseLabel = caseLabels.get(i);
+
+                for (int j = 0; j < mc.values.size(); j++) {
+                    final ValueNode value = mc.values.get(j);
+
+                    if (!value.isConstant(cctx)) {
+                        new RNotConstantError(
+                                "Expected constant value for match case",
+                                fileName,
+                                line
+                        ).raise();
+                        return;
+                    }
+
+                    final String nextLabel = cctx.nextLabel("match_next");
+                    final String caseReg = value.compileAndGet(cctx);
+
+                    if (!value.getType().equals(exprType)) {
+                        new RVariableTypeError(
+                                value.getType().getName(),
+                                exprType.getName(),
+                                fileName,
+                                line
+                        ).raise();
+                        return;
+                    }
+
+
+
+                    final String cmpReg = cctx.nextRegister();
+                    cctx.emit(
+                            cmpReg + " = call i32 @strcmp(i8* " +
+                                    exprReg + ", i8* " + caseReg + ")"
+                    );
+
+                    final String eqReg = cctx.nextRegister();
+                    cctx.emit(
+                            eqReg + " = icmp eq i32 " + cmpReg + ", 0"
+                    );
+
+                    cctx.emit(
+                            "br i1 " + eqReg +
+                                    ", label %" + caseLabel +
+                                    ", label %" + nextLabel
+                    );
+
+                    cctx.emit(nextLabel + ":");
+                }
+            }
+
+            cctx.emit("br label %" + defaultLabel);
+
+            for (int i = 0; i < nonDefaultCases.size(); i++) {
+                final MatchCase mc = nonDefaultCases.get(i);
+                final String label = caseLabels.get(i);
+
+                cctx.emit(label + ":");
+                cctx.pushIndent();
+                cctx.pushScope();
+
+                mc.block.compile(cctx);
+
+                cctx.emit("br label %" + endLabel);
+
+                cctx.popScope();
+                cctx.popIndent();
+            }
+
+            if (!defaultLabel.equals(endLabel)) {
+                cctx.emit(defaultLabel + ":");
+                cctx.pushIndent();
+                cctx.pushScope();
+
+                for (MatchCase mc : cases) {
+                    if (mc.isDefault()) {
+                        mc.block.compile(cctx);
+                        break;
+                    }
+                }
+
+                cctx.emit("br label %" + endLabel);
+
+                cctx.popScope();
+                cctx.popIndent();
+            }
+
+            cctx.emit(endLabel + ":");
+            return;
+        }
+
         final String llvmType = exprType.getLLVMName();
 
         final String endLabel = cctx.nextLabel("match_end");
