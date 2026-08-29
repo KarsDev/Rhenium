@@ -6,6 +6,7 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
+import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.Map;
 
@@ -25,16 +26,22 @@ public class ReturnNode extends ASTNode implements InterruptNode {
     @Override
     public void compile(final CompilationContext cctx) {
         cctx.emit("; Return statement");
+
         if (value == null) {
             cctx.emit("ret void");
-        } else {
-            String valueReg = value.compileAndGet(cctx);
-            String llvmType = value.getType().getLLVMName();
-
-            valueReg = cctx.ensureValue(value, valueReg);
-
-            cctx.emit("ret " + llvmType + " " + valueReg);
+            return;
         }
+
+        String valueReg = value.compileAndGet(cctx);
+        valueReg = cctx.ensureValue(value, valueReg);
+
+        TypeRef type = value.getType();
+
+        if (type instanceof ArrayType arr && arr.isStatic()) {
+            type = new ArrayType(ArrayType.UNKNOWN_SIZE, arr.getInner());
+        }
+
+        cctx.emit("ret " + type.getLLVMName() + " " + valueReg);
     }
 
     @Override
