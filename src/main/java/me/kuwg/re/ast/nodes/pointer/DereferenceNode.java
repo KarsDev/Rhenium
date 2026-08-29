@@ -39,13 +39,15 @@ public class DereferenceNode extends VariableReference {
 
         cctx.emit(" ; Pointer dereference");
 
-        String ptrValueReg;
-
-        ptrValueReg = cctx.nextRegister();
+        String ptrValueReg = cctx.nextRegister();
         cctx.emit(ptrValueReg + " = load "
                 + ptr.getLLVMName() + ", "
                 + toPtr(ptr.getLLVMName())
                 + var.addrReg());
+
+        if (ptr.getInner() instanceof StructType) {
+            return ptrValueReg;
+        }
 
         String destReg = cctx.nextRegister();
         cctx.emit(destReg + " = load "
