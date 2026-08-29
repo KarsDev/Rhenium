@@ -28,11 +28,12 @@ public final class CompilerPipeline {
             var ast = frontend.parse(loader, args.noDefaults());
 
             CompilationContext cctx = new CompilationContext(args.inputFile().getName(), frontend.typeMap, loader, args.writeExceptionLines());
+            if (args.dumpAST()) dumpAST(ast);
             ast.compile(cctx);
 
             String command = cctx.compileAndGet(args.llvmFile(), args.executableFile(), args.clangArgs(), args.keepLLVM());
 
-            if (args.dumpAST()) dumpAST(ast);
+
             if (args.runCommand()) CommandRunner.run(command);
             if (!args.keepLLVM()) args.llvmFile().delete();
 
