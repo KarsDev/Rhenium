@@ -73,12 +73,19 @@ public class ArrayAccessNode extends VariableReference {
 
         if (array instanceof VariableReference vr) {
             RVariable arrVar = vr.getVariable(cctx);
+
             if (arrVar == null) {
-                return new RVariableNotFoundError(vr.getCompleteName(), fileName, line).raise();
+                return new RVariableNotFoundError(
+                        vr.getCompleteName(), fileName, line
+                ).raise();
             }
 
-            if (arrVar.type() instanceof ArrayType) {
-                arrayPtr = arrVar.addrReg();
+            if (arrVar.type() instanceof ArrayType arrType) {
+                if (arrType.isStatic()) {
+                    arrayPtr = arrVar.addrReg();
+                } else {
+                    arrayPtr = arrVar.valueReg();
+                }
             } else {
                 arrayPtr = arrVar.valueReg();
             }

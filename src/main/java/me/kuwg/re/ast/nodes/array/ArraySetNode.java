@@ -42,7 +42,7 @@ public class ArraySetNode extends ValueNode {
                 return new RVariableTypeError("addressable array", "temporary value", fileName, line).raise();
             }
 
-            if (arrVar.type() instanceof ArrayType) {
+            if (arrVar.type() instanceof ArrayType arrType && arrType.isStatic()) {
                 arrayPtr = arrVar.addrReg();
             } else {
                 arrayPtr = arrVar.valueReg();
@@ -72,7 +72,7 @@ public class ArraySetNode extends ValueNode {
 
         TypeRef arrayType = array.getType();
         TypeRef elementType;
-        boolean isArrayValuedPtr = arrayType instanceof ArrayType;
+        boolean isStaticArray = arrayType instanceof ArrayType arrType && arrType.isStatic();
 
         if (arrayType instanceof ArrayType arrType) {
             elementType = arrType.getInner();
@@ -96,7 +96,7 @@ public class ArraySetNode extends ValueNode {
         String elemPtrReg = cctx.nextRegister();
         String llvmElemType = elementType.getLLVMName();
 
-        if (isArrayValuedPtr) {
+        if (isStaticArray) {
             String llvmArrType = arrayType.getLLVMName();
             cctx.emit(elemPtrReg + " = getelementptr " + llvmArrType + ", " + llvmArrType + "* " + arrayPtr + ", i64 0, i64 " + index64Reg);
         } else {
