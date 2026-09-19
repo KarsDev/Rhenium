@@ -7,7 +7,6 @@ import me.kuwg.re.error.errors.deref.RDerefNotPointerError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.ptr.PointerType;
-import me.kuwg.re.type.struct.StructType;
 
 import java.util.Map;
 
@@ -27,35 +26,25 @@ public class DereferenceNode extends VariableReference {
     @Override
     public String compileAndGet(final CompilationContext cctx) {
         RVariable var = value.getVariable(cctx);
-        if (var == null)
-            return new RVariableNotFoundError(value.getCompleteName(), fileName, line).raise();
+        if (var == null) return new RVariableNotFoundError(value.getCompleteName(), fileName, line).raise();
 
         if (!(var.type() instanceof PointerType ptr))
             return new RDerefNotPointerError(value.getCompleteName(), fileName, line).raise();
 
         ptr = evalType(ptr, cctx, fileName, line);
-
         setType(ptr.getInner());
 
         cctx.emit(" ; Pointer dereference");
 
         String ptrValueReg = cctx.nextRegister();
-        cctx.emit(ptrValueReg + " = load "
-                + ptr.getLLVMName() + ", "
-                + toPtr(ptr.getLLVMName())
-                + var.addrReg());
 
-        if (ptr.getInner() instanceof StructType) {
-            return ptrValueReg;
-        }
+        cctx.emit(ptrValueReg + " = load " + ptr.getLLVMName() + ", " + toPtr(ptr.getLLVMName()) + var.addrReg());
 
-        String destReg = cctx.nextRegister();
-        cctx.emit(destReg + " = load "
-                + ptr.getInner().getLLVMName() + ", "
-                + toPtr(ptr.getInner().getLLVMName())
-                + ptrValueReg);
+        String valueReg = cctx.nextRegister();
 
-        return destReg;
+        cctx.emit(valueReg + " = load " + ptr.getInner().getLLVMName() + ", " + toPtr(ptr.getInner().getLLVMName()) + ptrValueReg);
+
+        return valueReg;
     }
 
     @Override
@@ -72,8 +61,7 @@ public class DereferenceNode extends VariableReference {
     @Override
     public RVariable getVariable(final CompilationContext cctx) {
         RVariable var = value.getVariable(cctx);
-        if (var == null)
-            return new RVariableNotFoundError(value.getCompleteName(), fileName, line).raise();
+        if (var == null) return new RVariableNotFoundError(value.getCompleteName(), fileName, line).raise();
 
         if (!(var.type() instanceof PointerType ptr))
             return new RDerefNotPointerError(value.getCompleteName(), fileName, line).raise();
@@ -83,33 +71,15 @@ public class DereferenceNode extends VariableReference {
         String ptrValueReg;
 
         ptrValueReg = cctx.nextRegister();
-        cctx.emit(ptrValueReg + " = load "
-                + ptr.getLLVMName() + ", "
-                + toPtr(ptr.getLLVMName())
-                + var.addrReg());
+        cctx.emit(ptrValueReg + " = load " + ptr.getLLVMName() + ", " + toPtr(ptr.getLLVMName()) + var.addrReg());
 
-        String valueReg;
+        String valueReg = cctx.nextRegister();
 
-        if (ptr.getInner() instanceof StructType) {
-            valueReg = ptrValueReg;
-        } else {
-            valueReg = cctx.nextRegister();
-            cctx.emit(valueReg + " = load "
-                    + ptr.getInner().getLLVMName() + ", "
-                    + toPtr(ptr.getInner().getLLVMName())
-                    + ptrValueReg);
-        }
+        cctx.emit(valueReg + " = load " + ptr.getInner().getLLVMName() + ", " + toPtr(ptr.getInner().getLLVMName()) + ptrValueReg);
 
         setType(ptr.getInner());
 
-        return new RVariable(
-                value.getSimpleName(),
-                true,
-                true,
-                ptr.getInner(),
-                ptrValueReg,
-                valueReg
-        );
+        return new RVariable(value.getSimpleName(), true, true, ptr.getInner(), ptrValueReg, valueReg);
     }
 
     @Override

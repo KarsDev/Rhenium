@@ -38,7 +38,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String ERROR_LINE = "call void @\"MoveGenerator.generatePawnMoves_7175_54\"(%struct.MoveGenerator* %9";
 
     private final String fileName;
