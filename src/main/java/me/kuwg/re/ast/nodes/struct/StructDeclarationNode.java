@@ -63,7 +63,7 @@ public class StructDeclarationNode extends ASTNode implements GlobalNode, TopLev
         }
 
         sb.append(" }");
-        cctx.declare(sb.toString());
+        cctx.addIR(sb.toString());
     }
 
     private TypeRef resolveFieldType(final TypeRef original, final CompilationContext cctx) {
