@@ -38,13 +38,13 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final String ERROR_LINE = "ret %struct.EmptyNode %2169 --";
+    private static final boolean DEBUG = true;
+    private static final String ERROR_LINE = "call void @\"MoveGenerator.generatePawnMoves_7175_54\"(%struct.MoveGenerator* %9";
 
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
     private final ModuleLoadingHelper loader;
     public final boolean writeExceptionLines;
-
 
     private final List<String> irCode = new ArrayList<>();
     private final StringBuilder declarations = new StringBuilder();
@@ -97,7 +97,7 @@ public final class CompilationContext {
     }
 
     public void emit(String s) {
-        if (s.contains(ERROR_LINE)) throw new RInternalError();
+        if (DEBUG && s.contains(ERROR_LINE)) throw new RInternalError();
         if (s.contains(" ptr*")) {
             System.err.println("WARNING: emitted invalid LLVM opaque pointer syntax:");
             System.err.println(s);
@@ -233,7 +233,7 @@ public final class CompilationContext {
     }
 
     public void declare(String declaration) {
-        if (declaration.contains(ERROR_LINE)) throw new RInternalError();
+        if (DEBUG && declaration.contains(ERROR_LINE)) throw new RInternalError();
         declarations.append(declaration).append('\n');
     }
 
@@ -261,16 +261,38 @@ public final class CompilationContext {
         declaredStructs.add(struct);
     }
 
-    public String ensureValue(ValueNode node, String reg) {
-        if (!(node.getType() instanceof StructType)) return reg;
+    public String ensureValue(final ValueNode node, final String reg) {
+        TypeRef type = node.getType();
 
-        if (node instanceof VariableReference vr) {
-            var var = vr.getVariable(this);
-            if (var != null && reg.equals(var.addrReg())) {
-                String loaded = nextRegister();
-                emit(loaded + " = load " + node.getType().getLLVMName() + ", " + node.getType().getLLVMName() + "* " + reg);
-                return loaded;
+        if (type instanceof StructType) {
+            if (node instanceof VariableReference vr) {
+                var var = vr.getVariable(this);
+                if (var != null && reg.equals(var.addrReg())) {
+                    String loaded = nextRegister();
+                    String llvmType = type.getLLVMName();
+
+                    emit(loaded + " = load " + llvmType + ", " + llvmType + "* " + reg);
+                    return loaded;
+                }
             }
+
+            return reg;
+        }
+
+        if (type instanceof ArrayType arrType && arrType.isStatic()) {
+            String llvmArrayType = arrType.getLLVMName();
+
+            String raw = nextRegister();
+            emit(raw + " = call i8* @malloc(i64 " + arrType.getSize() + ")");
+
+            String arrayPtr = nextRegister();
+            emit(arrayPtr + " = bitcast i8* " + raw + " to " + llvmArrayType + "*");
+            emit("store " + llvmArrayType + " " + reg + ", " + llvmArrayType + "* " + arrayPtr);
+
+            String dataPtr = nextRegister();
+            emit(dataPtr + " = getelementptr " + llvmArrayType + ", " + llvmArrayType + "* " + arrayPtr + ", i64 0, i64 0");
+
+            return dataPtr;
         }
 
         return reg;
