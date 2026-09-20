@@ -2,6 +2,7 @@ package me.kuwg.re.compiler;
 
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
+import me.kuwg.re.ast.types.value.PointerValueNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.enums.REnum;
 import me.kuwg.re.compiler.error.CatchScopeStack;
@@ -220,6 +221,8 @@ public final class CompilationContext {
     }
 
     public void addIR(String ir) {
+        if (DEBUG && ir.contains(ERROR_LINE)) throw new RInternalError();
+
         String[] lines = ir.split("\n");
         for (String line : lines) {
             String trimmed = line.split(";")[0].strip();
@@ -262,14 +265,13 @@ public final class CompilationContext {
     }
 
     public String ensureValue(final ValueNode node, final String reg) {
-        TypeRef type = node.getType();
-
-        if (type instanceof StructType) {
+        final TypeRef currentType = node.getType();
+        if (currentType instanceof StructType) {
             if (node instanceof VariableReference vr) {
                 var var = vr.getVariable(this);
                 if (var != null && reg.equals(var.addrReg())) {
                     String loaded = nextRegister();
-                    String llvmType = type.getLLVMName();
+                    String llvmType = currentType.getLLVMName();
 
                     emit(loaded + " = load " + llvmType + ", " + llvmType + "* " + reg);
                     return loaded;
@@ -279,18 +281,32 @@ public final class CompilationContext {
             return reg;
         }
 
-        if (type instanceof ArrayType arrType && arrType.isStatic()) {
+        if (currentType instanceof ArrayType arrType && arrType.isStatic()) {
             String llvmArrayType = arrType.getLLVMName();
 
-            String raw = nextRegister();
-            emit(raw + " = call i8* @malloc(i64 " + arrType.getSize() + ")");
+            TypeRef base = arrType.getInner();
+            int depth = 1;
+            while (base instanceof ArrayType inner && inner.isStatic()) {
+                base = inner.getInner();
+                depth++;
+            }
 
-            String arrayPtr = nextRegister();
-            emit(arrayPtr + " = bitcast i8* " + raw + " to " + llvmArrayType + "*");
-            emit("store " + llvmArrayType + " " + reg + ", " + llvmArrayType + "* " + arrayPtr);
+            String arrayPtr;
+            if (node instanceof PointerValueNode) {
+                arrayPtr = reg;
+            } else {
+                String raw = nextRegister();
+                emit(raw + " = call i8* @malloc(i64 " + arrType.getSize() + ")");
+
+                arrayPtr = nextRegister();
+                emit(arrayPtr + " = bitcast i8* " + raw + " to " + llvmArrayType + "*");
+                emit("store " + llvmArrayType + " " + reg + ", " + llvmArrayType + "* " + arrayPtr);
+            }
+
+            final String indices = "i64 0" + ", i64 0".repeat(Math.max(0, depth));
 
             String dataPtr = nextRegister();
-            emit(dataPtr + " = getelementptr " + llvmArrayType + ", " + llvmArrayType + "* " + arrayPtr + ", i64 0, i64 0");
+            emit(dataPtr + " = getelementptr " + llvmArrayType + ", " + llvmArrayType + "* " + arrayPtr + ", " + indices);
 
             return dataPtr;
         }
