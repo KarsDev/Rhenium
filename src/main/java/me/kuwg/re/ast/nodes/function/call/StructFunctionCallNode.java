@@ -1,5 +1,6 @@
 package me.kuwg.re.ast.nodes.function.call;
 
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.StructImplNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
 import me.kuwg.re.ast.types.value.ValueNode;
@@ -102,12 +103,7 @@ public class StructFunctionCallNode extends VariableReference {
 
             StringBuilder call = new StringBuilder();
             call.append("call ").append(rt.getLLVMName()).append(" @").append(fn.llvmName()).append("(");
-
-            for (int i = 0; i < llvmArgs.size(); i++) {
-                call.append(argTypes.get(i).getLLVMName()).append(" ").append(llvmArgs.get(i));
-                if (i < llvmArgs.size() - 1) call.append(", ");
-            }
-
+            call.append(buildArgList(cctx, fn, llvmArgs, argTypes));
             call.append(")");
 
             if (rt == BuiltinTypes.NONE.getType()) {
@@ -251,10 +247,7 @@ public class StructFunctionCallNode extends VariableReference {
             StringBuilder call = new StringBuilder();
             call.append("call ").append(returnType.getLLVMName()).append(" @").append(fn.llvmName()).append("(");
 
-            for (int i1 = 0; i1 < caseArgs.size(); i1++) {
-                call.append(caseArgTypes.get(i1).getLLVMName()).append(" ").append(caseArgs.get(i1));
-                if (i1 < caseArgs.size() - 1) call.append(", ");
-            }
+            call.append(buildArgList(cctx, fn, caseArgs, caseArgTypes));
 
             call.append(")");
 
@@ -287,6 +280,29 @@ public class StructFunctionCallNode extends VariableReference {
         String result = cctx.nextRegister();
         cctx.emit(result + " = load " + returnType.getLLVMName() + ", " + returnType.getLLVMName() + "* " + resultSlot);
         return result;
+    }
+
+    private String buildArgList(final CompilationContext cctx, final RFunction fn, final List<String> regs, final List<TypeRef> types) {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < regs.size(); i++) {
+            String reg = regs.get(i);
+            String llvmType = types.get(i).getLLVMName();
+
+            if (i > 0 && i < fn.parameters().size()) {
+                TypeRef expected = evalType(fn.parameters().get(i).type(), cctx, fileName, line);
+
+                if (FunctionDeclarationNode.passedByPointer(expected)) {
+                    reg = ArgumentPassing.addressOf(cctx, params.get(i - 1), reg, expected, false);
+                    llvmType = FunctionDeclarationNode.llvmParamType(expected);
+                }
+            }
+
+            if (i > 0) sb.append(", ");
+            sb.append(llvmType).append(" ").append(reg);
+        }
+
+        return sb.toString();
     }
 
     private Map<StructType, RFunction> getUnionFunctions(TypeRef selfType, String name, List<TypeRef> argTypes, CompilationContext cctx) {

@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.function.call;
 
-import me.kuwg.re.ast.nodes.cast.CastNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
+import me.kuwg.re.cast.CastManager;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
@@ -77,19 +78,33 @@ public abstract class FunCall extends ValueNode {
             }
         }
 
+        List<String> finalRegs = new ArrayList<>(argRegs.size());
+        List<String> finalTypes = new ArrayList<>(argRegs.size());
+
         for (int i = 0; i < parameters.size(); i++) {
             TypeRef expected = fn.parameters().get(i).type();
-            TypeRef actual = callTypes.get(i);
 
             if (containsGeneric(expected)) {
                 return new RFunctionGenericsError("Generic type leaked into concrete call", fileName, line).raise();
             }
 
+            expected = evalType(expected, cctx, fileName, line);
+            TypeRef actual = evalType(callTypes.get(i), cctx, fileName, line);
+            String reg = argRegs.get(i);
+            boolean castApplied = false;
+
             if (!actual.equals(expected)) {
-                CastNode cast = new CastNode(fileName, line, expected, parameters.get(i));
-                argRegs.set(i, cast.compileAndGet(cctx));
-                callTypes.set(i, expected);
+                cctx.emit("; Cast from " + actual.getName() + " to " + expected.getName());
+                reg = CastManager.executeCast(fileName, line, reg, actual, expected, cctx);
+                castApplied = true;
             }
+
+            if (FunctionDeclarationNode.passedByPointer(expected)) {
+                reg = ArgumentPassing.addressOf(cctx, parameters.get(i), reg, expected, castApplied);
+            }
+
+            finalRegs.add(reg);
+            finalTypes.add(FunctionDeclarationNode.llvmParamType(expected));
         }
 
         StringBuilder sb = new StringBuilder();
@@ -104,9 +119,9 @@ public abstract class FunCall extends ValueNode {
 
         sb.append("call ").append(rt.getLLVMName()).append(" @").append(fn.llvmName).append("(");
 
-        for (int i = 0; i < argRegs.size(); i++) {
-            sb.append(evalType(callTypes.get(i), cctx, fileName, line).getLLVMName()).append(" ").append(argRegs.get(i));
-            if (i < argRegs.size() - 1) sb.append(", ");
+        for (int i = 0; i < finalRegs.size(); i++) {
+            sb.append(finalTypes.get(i)).append(" ").append(finalRegs.get(i));
+            if (i < finalRegs.size() - 1) sb.append(", ");
         }
 
         sb.append(")");

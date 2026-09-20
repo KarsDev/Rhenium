@@ -17,6 +17,7 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.generic.GenericType;
 import me.kuwg.re.type.iterable.range.RangeType;
 import me.kuwg.re.type.ptr.PointerType;
+import me.kuwg.re.type.struct.StructType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,29 +35,11 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
     private TypeRef returnType;
     private boolean registered = false;
 
-    public FunctionDeclarationNode(
-            final String fileName,
-            final int line,
-            final boolean isGeneric,
-            final String name,
-            final List<FunctionParameter> parameters,
-            final TypeRef returnType,
-            final BlockNode block
-    ) {
+    public FunctionDeclarationNode(final String fileName, final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final BlockNode block) {
         this(fileName, line, isGeneric, name, parameters, false, false, returnType, block);
     }
 
-    public FunctionDeclarationNode(
-            final String fileName,
-            final int line,
-            final boolean isGeneric,
-            final String name,
-            final List<FunctionParameter> parameters,
-            final boolean inline,
-            final boolean extern,
-            final TypeRef returnType,
-            final BlockNode block
-    ) {
+    public FunctionDeclarationNode(final String fileName, final int line, final boolean isGeneric, final String name, final List<FunctionParameter> parameters, final boolean inline, final boolean extern, final TypeRef returnType, final BlockNode block) {
         super(fileName, line);
         this.isGeneric = isGeneric;
         this.name = name;
@@ -70,6 +53,14 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         if (returnType instanceof RangeType) {
             new RRangeTypeError(fileName, line).raise();
         }
+    }
+
+    public static boolean passedByPointer(final TypeRef type) {
+        return type instanceof StructType;
+    }
+
+    public static String llvmParamType(final TypeRef type) {
+        return passedByPointer(type) ? type.getLLVMName() + "*" : type.getLLVMName();
     }
 
     private static boolean appendMainReturn(StringBuilder sb) {
@@ -114,7 +105,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
             var pt = evalType(param.type(), cctx, fileName, line);
             types.add(i, pt);
 
-            func.append(pt.getLLVMName()).append(" %").append(param.name());
+            func.append(llvmParamType(pt)).append(" %").append(param.name());
             if (i < parameters.size() - 1) func.append(", ");
         }
 
@@ -141,17 +132,19 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
                 TypeRef pt = evalType(types.get(i), cctx, fileName, line);
 
+                if (passedByPointer(pt)) {
+                    String llvm = pt.getLLVMName();
+                    String loaded = "%" + param.name() + ".val";
+                    cctx.emit(loaded + " = load " + llvm + ", " + llvm + "* %" + param.name());
+
+                    cctx.addVariable(new RVariable(param.name(), param.mutable(), false, pt, "%" + param.name(), loaded));
+                    continue;
+                }
+
                 cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
                 cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 
-                RVariable paramVar = new RVariable(
-                        param.name(),
-                        param.mutable(),
-                        true,
-                        pt,
-                        paramPtr,
-                        "%" + param.name()
-                );
+                RVariable paramVar = new RVariable(param.name(), param.mutable(), true, pt, paramPtr, "%" + param.name());
 
                 cctx.addVariable(paramVar);
             }
