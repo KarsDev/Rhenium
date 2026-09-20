@@ -186,7 +186,10 @@ public final class CastManager {
                                    final String valueRegister,
                                    final TypeRef targetType,
                                    final CompilationContext cctx) {
-        if (targetType == BuiltinTypes.BYTE.getType()) return valueRegister;
+        if (targetType == BuiltinTypes.BYTE.getType()
+                || targetType == BuiltinTypes.CHAR.getType()) {
+            return valueRegister;
+        }
 
         if (targetType == BuiltinTypes.SHORT.getType()
                 || targetType == BuiltinTypes.INT.getType()
