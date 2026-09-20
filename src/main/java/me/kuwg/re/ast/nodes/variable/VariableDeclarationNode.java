@@ -58,10 +58,8 @@ public class VariableDeclarationNode extends ValueNode {
             zero.setType(type);
         }
 
-        ValueNode temp = value.clone();
-        String valueReg = temp.compileAndGet(cctx);
-        TypeRef valueType = temp.getType();
-        value.setType(valueType);
+        String valueReg = value.compileAndGet(cctx);
+        TypeRef valueType = value.getType();
 
         TypeRef targetType = type != null ? type : (oldVar != null ? oldVar.type() : valueType);
 
