@@ -65,9 +65,20 @@ public class NumberNode extends ConstantNode {
     private static long parseLong(String literal) {
         int radix = 10;
 
-        if (literal.startsWith("0x")) { radix = 16; literal = literal.substring(2); }
-        else if (literal.startsWith("0b")) { radix = 2; literal = literal.substring(2); }
-        else if (literal.startsWith("0") && literal.length() > 1) { radix = 8; literal = literal.substring(1); }
+        if (literal.startsWith("0x")) {
+            radix = 16;
+            literal = literal.substring(2);
+        } else if (literal.startsWith("0b")) {
+            radix = 2;
+            literal = literal.substring(2);
+        } else if (literal.startsWith("0") && literal.length() > 1) {
+            radix = 8;
+            literal = literal.substring(1);
+        }
+
+        if (radix == 16 || radix == 2) {
+            return Long.parseUnsignedLong(literal, radix);
+        }
 
         return Long.parseLong(literal, radix);
     }
