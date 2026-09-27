@@ -79,7 +79,7 @@ public class TryCatchNode extends ASTNode implements IBlockContainer {
                 final String loaded = cctx.nextRegister();
                 cctx.emit(loaded + " = load " + llvmType + ", " + toPtr(llvmType) + " " + compiled.addrReg());
 
-                cctx.addVariable(new RVariable(clause.variable(), false, true, compiled.type(), compiled.addrReg(), loaded));
+                cctx.addVariable(new RVariable(clause.variable(), false, true, compiled.type(), compiled.addrReg(), loaded, null));
             }
 
             clause.block().compile(cctx);

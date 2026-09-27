@@ -2,10 +2,19 @@ package me.kuwg.re.compiler.variable;
 
 import me.kuwg.re.type.TypeRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public record RVariable(@NotNull String name, boolean mutable, boolean addressBacked, @NotNull TypeRef type, @NotNull String addrReg, @NotNull String valueReg) {
+public record RVariable(
+        @NotNull String name,
+        boolean mutable,
+        boolean addressBacked,
+        @NotNull TypeRef type,
+        @NotNull String addrReg,
+        @NotNull String valueReg,
+        @Nullable String constantValue
+) {
     private static final AtomicInteger COUNTER = new AtomicInteger();
 
     public static String makeUnique(String base) {

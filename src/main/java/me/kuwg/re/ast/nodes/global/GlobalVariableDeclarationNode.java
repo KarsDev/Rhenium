@@ -14,6 +14,8 @@ import me.kuwg.re.type.struct.StructType;
 import java.util.Map;
 
 public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode {
+    public static final String PREFIX = "@GLOBAL$";
+
     private final String name;
     private final ValueNode value;
     private TypeRef type;
@@ -51,19 +53,18 @@ public class GlobalVariableDeclarationNode extends ASTNode implements GlobalNode
         String llvmDecl;
 
         if (varType instanceof StructType) {
-            llvmDecl = "@GLOBAL$" + name + " = global " + varType.getLLVMName() + " zeroinitializer";
+            llvmDecl = PREFIX + name + " = global " + varType.getLLVMName() + " zeroinitializer";
         } else {
-            llvmDecl = "@GLOBAL$" + name + " = global " + varType.getLLVMName() + " " + initialValue;
+            llvmDecl = PREFIX + name + " = global " + varType.getLLVMName() + " " + initialValue;
         }
 
         cctx.declare(llvmDecl + " ; Global variable " + name);
 
         String valueReg;
 
+        valueReg = PREFIX + name;
 
-        valueReg = "@GLOBAL$" + name;
-
-        RVariable globalVar = new RVariable(name, false, true, varType, "@GLOBAL$" + name, valueReg);
+        RVariable globalVar = new RVariable(name, false, true, varType, valueReg, valueReg, initialValue);
 
         cctx.addGlobal(globalVar);
     }

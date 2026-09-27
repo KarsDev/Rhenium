@@ -38,7 +38,7 @@ public class LambdaDeclarationNode extends ValueNode {
         cctx.pushFunctionBody();
 
         for (final FunctionParameter param : params) {
-            cctx.addVariable(new RVariable(param.name(), param.mutable(), false, param.type(), "tva", "tvr"));
+            cctx.addVariable(new RVariable(param.name(), param.mutable(), false, param.type(), "tva", "tvr", null));
         }
 
         cloned.compile(cctx);

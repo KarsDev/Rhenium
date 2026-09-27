@@ -132,7 +132,8 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
                 true,
                 BuiltinTypes.INT.getType(),
                 loopVarAddr,
-                loopVarValue
+                loopVarValue,
+                null
         ));
 
         String startLabel = cctx.nextLabel("for_start");
@@ -204,7 +205,8 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
                 true,
                 arr.getInner(),
                 loopVarAddr,
-                loopVarValue
+                loopVarValue,
+                null
         ));
 
         String startLabel = cctx.nextLabel("for_start");
@@ -268,7 +270,8 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
                 true,
                 BuiltinTypes.CHAR.getType(),
                 "%" + llvmVariable,
-                loopVarValue
+                loopVarValue,
+                null
         ));
 
         String startLabel = cctx.nextLabel("for_start");

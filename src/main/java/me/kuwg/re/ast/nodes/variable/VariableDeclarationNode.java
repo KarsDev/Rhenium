@@ -126,7 +126,7 @@ public class VariableDeclarationNode extends ValueNode {
             if (src == null) {
                 return new RVariableNotFoundError(((VariableReference) value).getCompleteName(), fileName, line).raise();
             }
-            RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, src.addrReg(), src.valueReg());
+            RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, src.addrReg(), src.valueReg(), null);
             cctx.addVariable(v);
             return valueReg;
         }
@@ -155,14 +155,14 @@ public class VariableDeclarationNode extends ValueNode {
             String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
             cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + toPtr(varType.getLLVMName()) + addrReg);
 
-            RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded);
+            RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded, null);
             cctx.addVariable(v);
             return valueReg;
         }
 
         if (varType instanceof StructType && value instanceof VariableReference) {
             RVariable src = ((VariableReference) value).getVariable(cctx);
-            cctx.addVariable(new RVariable(variable.getSimpleName(), mutable, false, varType, src.addrReg(), src.valueReg()));
+            cctx.addVariable(new RVariable(variable.getSimpleName(), mutable, false, varType, src.addrReg(), src.valueReg(), null));
             return valueReg;
         }
 
@@ -178,7 +178,7 @@ public class VariableDeclarationNode extends ValueNode {
         String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
         cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
 
-        RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded);
+        RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded, null);
         cctx.addVariable(v);
 
         if (varType instanceof StructType st) {

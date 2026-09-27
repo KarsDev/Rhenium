@@ -151,7 +151,7 @@ public class StructFunctionCallNode extends VariableReference {
         cctx.emit(addr + " = alloca " + type.getLLVMName());
         cctx.emit("store " + type.getLLVMName() + " " + value + ", " + toPtr(type.getLLVMName()) + addr);
 
-        return new RVariable("\"" + getCompleteName() + "\"", false, false, type, addr, value);
+        return new RVariable("\"" + getCompleteName() + "\"", false, false, type, addr, value, null);
     }
 
     @Override

@@ -137,14 +137,14 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
                     String loaded = "%" + param.name() + ".val";
                     cctx.emit(loaded + " = load " + llvm + ", " + llvm + "* %" + param.name());
 
-                    cctx.addVariable(new RVariable(param.name(), param.mutable(), false, pt, "%" + param.name(), loaded));
+                    cctx.addVariable(new RVariable(param.name(), param.mutable(), false, pt, "%" + param.name(), loaded, null));
                     continue;
                 }
 
                 cctx.emit(paramPtr + " = alloca " + pt.getLLVMName());
                 cctx.emit("store " + pt.getLLVMName() + " %" + param.name() + ", " + toPtr(pt.getLLVMName()) + paramPtr);
 
-                RVariable paramVar = new RVariable(param.name(), param.mutable(), true, pt, paramPtr, "%" + param.name());
+                RVariable paramVar = new RVariable(param.name(), param.mutable(), true, pt, paramPtr, "%" + param.name(), null);
 
                 cctx.addVariable(paramVar);
             }

@@ -1,5 +1,6 @@
 package me.kuwg.re.ast.nodes.variable;
 
+import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
 import me.kuwg.re.ast.nodes.pointer.DereferenceNode;
 import me.kuwg.re.ast.nodes.struct.StructFieldAccessNode;
 import me.kuwg.re.compiler.CompilationContext;
@@ -10,6 +11,7 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class DirectVariableReferenceNode extends VariableReference {
     private final String name;
@@ -63,10 +65,23 @@ public class DirectVariableReferenceNode extends VariableReference {
     }
 
     @Override
+    public boolean isConstant(final CompilationContext cctx) {
+        RVariable variable = cctx.getVariable(name);
+        if (variable == null) return false;
+        return variable.addrReg().startsWith(GlobalVariableDeclarationNode.PREFIX);
+    }
+
+    @Override
+    public String compileToConstant(final CompilationContext cctx) {
+        if (!isConstant(cctx)) super.compileToConstant(cctx);
+        return Objects.requireNonNull(cctx.getVariable(name)).constantValue();
+    }
+
+    @Override
     public RVariable getVariable(final CompilationContext cctx) {
         var v = cctx.getVariable(name);
 
-        if (v != null && v.addrReg().startsWith("@GLOBAL$")) v = loadGlobalVariable(v, cctx);
+        if (v != null && v.addrReg().startsWith(GlobalVariableDeclarationNode.PREFIX)) v = loadGlobalVariable(v, cctx);
 
         if (v != null) setType(v.type());
         if (v == null) {
@@ -87,7 +102,7 @@ public class DirectVariableReferenceNode extends VariableReference {
 
         cctx.emit(loaded + " = load " + v.type().getLLVMName() + ", " + toPtr(v.type().getLLVMName()) + v.addrReg());
 
-        return new RVariable(v.name(), v.mutable(), false, v.type(), v.addrReg(), loaded);
+        return new RVariable(v.name(), v.mutable(), false, v.type(), v.addrReg(), loaded, null);
     }
 
     private RVariable compileSelfReference(CompilationContext cctx) {

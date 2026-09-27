@@ -166,7 +166,7 @@ public class StructFieldAccessNode extends VariableReference {
 
         cctx.emit(loaded + " = load " + ftln + ", " + toPtr(ftln) + fieldPtr);
 
-        return new RVariable(fieldName, mutable, true, fieldType, fieldPtr, loaded);
+        return new RVariable(fieldName, mutable, true, fieldType, fieldPtr, loaded, null);
     }
 
     @Override

@@ -79,7 +79,7 @@ public class DereferenceNode extends VariableReference {
 
         setType(ptr.getInner());
 
-        return new RVariable(value.getSimpleName(), true, true, ptr.getInner(), ptrValueReg, valueReg);
+        return new RVariable(value.getSimpleName(), true, true, ptr.getInner(), ptrValueReg, valueReg, null);
     }
 
     @Override
