@@ -28,4 +28,8 @@ public final class EnvironmentValidator {
             return false;
         }
     }
+
+    public static String clangNotInstalledErrorMessage() {
+        return "Clang is not installed or could not be executed.";
+    }
 }
