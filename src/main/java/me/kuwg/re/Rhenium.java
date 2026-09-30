@@ -12,6 +12,9 @@ public final class Rhenium {
             RThrower.throwError(EnvironmentValidator.notSupportedErrorMessage());
         }
 
+        if (!EnvironmentValidator.isClangInstalled()) {
+            RThrower.throwError(EnvironmentValidator.clangNotInstalledErrorMessage());
+        }
 
         Arguments arguments = ArgumentParser.parse(args);
 
