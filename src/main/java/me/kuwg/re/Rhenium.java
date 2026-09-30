@@ -9,8 +9,9 @@ import me.kuwg.re.pipeline.CompilerPipeline;
 public final class Rhenium {
     public static void main(String[] args) {
         if (!EnvironmentValidator.isSupported()) {
-            RThrower.throwError(EnvironmentValidator.errorMessage());
+            RThrower.throwError(EnvironmentValidator.notSupportedErrorMessage());
         }
+
 
         Arguments arguments = ArgumentParser.parse(args);
 

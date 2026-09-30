@@ -7,7 +7,7 @@ public final class EnvironmentValidator {
         return WIN || SUPPORT_NW;
     }
 
-    public static String errorMessage() {
+    public static String notSupportedErrorMessage() {
         return "This OS is not supported: " + OS;
     }
 }
