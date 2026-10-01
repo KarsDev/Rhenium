@@ -4,6 +4,7 @@ declare i32 @strlen(i8*)
 declare i32 @printf(i8*, ...)
 declare i8* @malloc(i64)
 declare i32 @getchar()
+declare void @free(ptr)
 
 ; Reusable format strings for printf.
 @fmt_newline    = private constant [4 x i8] c"%s\0A\00"
