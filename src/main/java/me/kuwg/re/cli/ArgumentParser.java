@@ -22,7 +22,7 @@ public final class ArgumentParser {
 
     public static Arguments parse(String[] args) {
         if (args.length == 0) {
-            return RThrower.throwError("Missing input file. Use \"help\" for help.");
+            return RThrower.throwError("Missing input file", true);
         }
 
         Arguments.Builder builder = new Arguments.Builder();
@@ -33,7 +33,7 @@ public final class ArgumentParser {
                 printUsage();
                 System.exit(0);
             }
-            return RThrower.throwError("File not found: " + input);
+            return RThrower.throwError("File not found: " + input, false);
         }
 
         builder.inputFile(input);
@@ -43,13 +43,13 @@ public final class ArgumentParser {
             Option option = OPTIONS.get(arg);
 
             if (option == null) {
-                return RThrower.throwError("Unknown option: " + arg);
+                return RThrower.throwError("Unknown option: " + arg, true);
             }
 
             String value = null;
             if (option.takesValue()) {
                 if (i + 1 >= args.length) {
-                    return RThrower.throwError("Missing value for " + arg);
+                    return RThrower.throwError("Missing value for " + arg, true);
                 }
                 value = args[++i];
             }

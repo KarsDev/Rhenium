@@ -28,13 +28,12 @@ public final class ArgumentValidator {
                         RThrower.throwError(
                                 "Arguments -" + field.getName() +
                                         " and -" + otherName +
-                                        " cannot be used together"
-                        );
+                                        " cannot be used together", false);
                         return;
                     }
                 }
             } catch (ReflectiveOperationException e) {
-                RThrower.throwError("Invalid argument configuration");
+                RThrower.throwError("Invalid argument configuration", true);
                 return;
             }
         }

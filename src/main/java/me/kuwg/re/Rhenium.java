@@ -9,11 +9,11 @@ import me.kuwg.re.pipeline.CompilerPipeline;
 public final class Rhenium {
     public static void main(String[] args) {
         if (!EnvironmentValidator.isSupported()) {
-            RThrower.throwError(EnvironmentValidator.notSupportedErrorMessage());
+            RThrower.throwError(EnvironmentValidator.notSupportedErrorMessage(), false);
         }
 
         if (!EnvironmentValidator.isClangInstalled()) {
-            RThrower.throwError(EnvironmentValidator.clangNotInstalledErrorMessage());
+            RThrower.throwError(EnvironmentValidator.clangNotInstalledErrorMessage(), false);
         }
 
         Arguments arguments = ArgumentParser.parse(args);

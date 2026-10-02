@@ -133,7 +133,7 @@ public final class Arguments {
 
         public Arguments build() {
             if (inputFile == null) {
-                return RThrower.throwError("Input file not specified");
+                return RThrower.throwError("Input file not specified", true);
             }
 
             if (llvmFile == null) {
