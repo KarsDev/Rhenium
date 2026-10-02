@@ -502,6 +502,10 @@ func main(argc: int, args: ptr -> str) -> int:
 
 `RheniumLanguageReference.re` is the comprehensive executable reference for the language. It demonstrates the parser-supported syntax and behavior across modules, declarations, types, expressions, control flow, data structures, memory management, error handling, concurrency, generics, namespaces, traits, enums, and entry points.
 
+## VSCode Extension
+
+`rhenium-0.0.1.vsix` is the Rhenium VSCode extension. Place it into the extensions folder then install from vsix.
+
 ## Goals
 
 - Simple, readable syntax without hidden behavior
