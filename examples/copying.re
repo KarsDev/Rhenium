@@ -11,10 +11,10 @@ impl Casual:
 func main(argc: int, args: ptr -> str) -> int:
     vals = init List<ptr -> Casual>()
 
-    for (i in range(5)):
+    for i in range(5):
         add(ptr(vals), i)
     
-    for (i in range(5)):
+    for i in range(5):
         println(@(vals.get(i)))
 
 func add(vs: ptr -> List<ptr -> Casual>, i: int):

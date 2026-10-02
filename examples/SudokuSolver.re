@@ -12,22 +12,22 @@ func parseBoard(boardStr: str) -> Board:
     board = init List<List<int>>()
 
     result = strSplit(boardStr, "\n")
-    for (i in range(result.size)):
+    for i in range(result.size):
         r = result.values[i]
         line = strReplace(strStrip(r), " ", "")
 
-        if (len(line) == 0):
+        if len(line) == 0:
             continue
         
-        if (len(line) != 9):
+        if len(line) != 9:
             raise "Invalid row: " + line
         
         row = init List<int>()
 
-        for (c in line):
-            if (c == '.' or c == '0'):
+        for c in line:
+            if c == '.' or c == '0':
                 row.add(0)
-            else if (c >= '0' and c <= '9'):
+            else if c >= '0' and c <= '9':
                 cts = charToStrAscii(c)
                 row.add(Number::parseInt(cts))
             else:
@@ -38,28 +38,28 @@ func parseBoard(boardStr: str) -> Board:
     return board
 
 func findEmpty(board: Board) -> Option<Coord>:
-    for (r in range(9)):
-        for (c in range(9)):
-            if (board.get(r).get(c) == 0):
+    for r in range(9):
+        for c in range(9):
+            if board.get(r).get(c) == 0:
                 coord = init Coord(r, c)
                 return init Option<Coord>(coord)
     return init Option<Coord>()
 
 func valid(board: Board, row: int, col: int, num: int) -> bool:
-    for (c in range(9)):
-        if (board.get(row).get(c) == num):
+    for c in range(9):
+        if board.get(row).get(c) == num:
             return false
     
-    for (r in range(9)):
-        if (board.get(r).get(col) == num):
+    for r in range(9):
+        if board.get(r).get(col) == num:
             return false
 
     box_row = (row / 3) * 3
     box_col = (col / 3) * 3
 
-    for (r in range(box_row, box_row + 3)):
-        for (c in range(box_col, box_col + 3)):
-            if (board.get(r).get(c) == num):
+    for r in range(box_row, box_row + 3):
+        for c in range(box_col, box_col + 3):
+            if board.get(r).get(c) == num:
                 return false
 
     return true
@@ -67,17 +67,17 @@ func valid(board: Board, row: int, col: int, num: int) -> bool:
 func solve(board: Board) -> bool:
     empty = findEmpty(board)
 
-    if (empty.isEmpty()):
+    if empty.isEmpty()):
         return true
     
     row = empty.get().x
     col = empty.get().y
 
-    for (num in range(1, 10)):
-        if (valid(board, row, col, num)):
+    for num in range(1, 10):
+        if valid(board, row, col, num):
             board.get(row).set(col, num)
 
-            if (solve(board)):
+            if solve(board):
                 return true
 
             board.get(row).set(col, 0)
@@ -86,11 +86,11 @@ func solve(board: Board) -> bool:
 func writeBoard(board: Board) -> str:
     s: mut = ""
 
-    for (i in range(board.size)):
+    for i in range(board.size):
         b = board.get(i)
-        for (j in range(b.size)):
+        for j in range(b.size):
             s += b.get(j)
-        if (i < board.size):
+        if i < board.size:
             s += "\n"
     
     return s

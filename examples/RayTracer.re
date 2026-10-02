@@ -68,7 +68,7 @@ func hitSphere(ray: Ray, sphere: Sphere) -> float:
         b * b - \
         4 * a * c
 
-    if (d < 0):
+    if d < 0:
         return cast<float>(-1.0)
 
     return cast<float>((-b - Math::sqrt(d)) /(2 * a))
@@ -107,7 +107,7 @@ func rayColor(ray: Ray, sphere: Sphere) -> Color:
 
     t = hitSphere(ray, sphere)
 
-    if (t > 0):
+    if t > 0:
 
         p = rayAt(ray, t)
 
@@ -149,9 +149,9 @@ func main() -> int:
         1.0 \
     )
 
-    for (y in range(height)):
+    for y in range(height):
 
-        for (x in range(width)):
+        for x in range(width):
 
             u: float = x / (width - 1.0)
             v: float = (height - 1 - y) / (height - 1.0)

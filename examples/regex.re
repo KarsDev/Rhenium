@@ -3,19 +3,19 @@ using regex
 func main() -> int:
     regex = Regex::compile("(hello)")
 
-    if (regex.matches("hello")):
+    if regex.matches("hello"):
         println("matches: PASS")
     else:
         println("matches: FAIL")
 
-    if (regex.search("say hello world")):
+    if regex.search("say hello world"):
         println("search: PASS")
     else:
         println("search: FAIL")
 
     found = regex.find("say hello world")
 
-    if (found.isPresent()):
+    if found.isPresent():
         println("find: PASS")
         println("find result: " + found.get())
     else:
@@ -25,7 +25,7 @@ func main() -> int:
 
     println("findAll count: " + all.size)
 
-    if (all.size == 3):
+    if all.size == 3:
         println("findAll: PASS")
     else:
         println("findAll: FAIL")
@@ -34,7 +34,7 @@ func main() -> int:
 
     println("count: " + count)
 
-    if (count == 3):
+    if count == 3:
         println("count: PASS")
     else:
         println("count: FAIL")
@@ -43,7 +43,7 @@ func main() -> int:
 
     println("groups count: " + groups.size)
 
-    if (groups.size == 1):
+    if groups.size == 1:
         println("groups: PASS")
         println("group 1: " + groups.values[0])
     else:
@@ -55,7 +55,7 @@ func main() -> int:
 
     println("split count: " + parts.size)
 
-    if (parts.size == 3):
+    if parts.size == 3:
         println("split: PASS")
         println("split[0]: " + parts.values[0])
         println("split[1]: " + parts.values[1])
@@ -69,7 +69,7 @@ func main() -> int:
 
     println("replace result: " + replaced)
 
-    if (replaced == "hi world hi"):
+    if replaced == "hi world hi":
         println("replace: PASS")
     else:
         println("replace: FAIL")
