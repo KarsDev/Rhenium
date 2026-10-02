@@ -474,10 +474,6 @@ public final class ASTParser {
 
                 ValueNode value = parseValue();
 
-                //if (variable instanceof StructFieldAccessNode access) {
-                //    yield new StructFieldReassignmentNode(fileName, line, access, value);
-                //}
-
                 yield new VariableDeclarationNode(fileName, line, variable, false, null, value);
             }
             case ":" -> {
