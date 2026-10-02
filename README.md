@@ -33,7 +33,7 @@ func main() -> int:
     println("Hello, World!")
 
     count: mut = 0
-    while (count < 3):
+    while count < 3:
         println(count)
         count++
 
@@ -194,17 +194,17 @@ generic func sum<T>(a: T, b: T) -> T inline:
 Rhenium supports conditional branches, `while` loops, `for` loops, `continue`, `break`, and range iteration.
 
 ```text
-if (a > 0):
+if a > 0:
     println("positive")
-else if (a < 0):
+else if a < 0:
     println("negative")
 else:
     println("zero")
 
-for (i in range(0, 10)):
+for i in range(0, 10):
     println(i)
 
-while (a < 10):
+while a < 10:
     a += 1
 ```
 
@@ -454,7 +454,7 @@ struct CharBuf:
 
 impl CharBuf:
     delete:
-        if (this.inner != null):
+        if this.inner != null:
             Memory::free(cast<anyptr>(this.inner))
             this.inner = null
 
@@ -496,7 +496,7 @@ The reference also demonstrates a command-line entry-point overload:
 ```text
 func main(argc: int, args: ptr -> str) -> int:
     println("Specified " + argc + " args:")
-    for (i in range(argc)):
+    for i in range(argc):
         println("   - " + args[i])
     return 0
 ```
