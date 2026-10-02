@@ -1646,13 +1646,7 @@ public final class ASTParser {
     private @SubFunc ASTNode parseMatchKeyword() {
         int line = line();
 
-        if (!matchAndConsume(DIVIDER, "(")) {
-            return new RParserError("Expected '(' for match declaration", fileName, line).raise();
-        }
         ValueNode value = parseValue();
-        if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' for match declaration", fileName, line).raise();
-        }
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for match declaration", fileName, line).raise();
