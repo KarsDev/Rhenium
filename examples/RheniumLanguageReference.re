@@ -227,7 +227,7 @@ Syntax:
     then_expr if condition else else_expr
 */
 
-max = a if (a > b) else b
+max = a if a > b else b
 
 /*
  Prefix and postfix increment/decrement are also supported
