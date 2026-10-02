@@ -278,13 +278,6 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
         }
     }
 
-    private static final class PreparedBuiltinFunction {
-        private final BuiltinFunctionDeclarationNode node;
-        private final String lookupName;
-
-        private PreparedBuiltinFunction(BuiltinFunctionDeclarationNode node, String lookupName) {
-            this.node = node;
-            this.lookupName = lookupName;
-        }
+    private record PreparedBuiltinFunction(BuiltinFunctionDeclarationNode node, String lookupName) {
     }
 }
