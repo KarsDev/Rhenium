@@ -104,7 +104,7 @@ public final class BlockNode implements Writeable, Compilable, GlobalNode, Clone
                 continue;
             } else if (node instanceof MatchNode mc) {
                 final TypeRef frt = returnType;
-                mc.getCases().forEach(c -> c.block.checkTypes(cctx, frt, false));
+                mc.getCases().forEach(c -> c.block().checkTypes(cctx, frt, false));
             }
 
             if (node instanceof IBlockContainer bc) {

@@ -263,42 +263,35 @@ public class MatchNode extends ASTNode {
         return cases;
     }
 
-    public static final class MatchCase implements Writeable {
-        public final List<ValueNode> values;
-        public final BlockNode block;
-
-        public MatchCase(final List<ValueNode> values, final BlockNode block) {
-            this.values = values;
-            this.block = block;
-        }
+    public record MatchCase(List<ValueNode> values, BlockNode block) implements Writeable {
 
         @Override
-        public void write(final StringBuilder sb, final String indent) {
-            sb.append(indent).append("Case: ").append(NEWLINE).append(indent).append(TAB).append("Value: ").append(NEWLINE);
-            if (values == null || values.isEmpty()) {
-                sb.append(indent).append(TAB).append(TAB).append("Default Case");
-            } else {
-                values.forEach(v -> v.write(sb, indent + TAB + TAB));
+            public void write(final StringBuilder sb, final String indent) {
+                sb.append(indent).append("Case: ").append(NEWLINE).append(indent).append(TAB).append("Value: ").append(NEWLINE);
+                if (values == null || values.isEmpty()) {
+                    sb.append(indent).append(TAB).append(TAB).append("Default Case");
+                } else {
+                    values.forEach(v -> v.write(sb, indent + TAB + TAB));
+                }
+
+                sb.append(indent).append(TAB).append("Block: ").append(NEWLINE);
+                block.write(sb, indent + TAB + TAB);
             }
 
-            sb.append(indent).append(TAB).append("Block: ").append(NEWLINE);
-            block.write(sb, indent + TAB + TAB);
-        }
+            @Override
+            @SuppressWarnings("MethodDoesntCallSuperMethod")
+            public MatchCase clone() {
+                if (values == null) {
+                    return new MatchCase(null, block.clone());
+                }
 
-        @Override
-        @SuppressWarnings("MethodDoesntCallSuperMethod")
-        public MatchCase clone() {
-            if (values == null) {
-                return new MatchCase(null, block.clone());
+                List<ValueNode> cloned = new ArrayList<>(values.size());
+                values.forEach(v -> cloned.add(v.clone()));
+                return new MatchCase(cloned, block.clone());
             }
 
-            List<ValueNode> cloned = new ArrayList<>(values.size());
-            values.forEach(v -> cloned.add(v.clone()));
-            return new MatchCase(cloned, block.clone());
+            public boolean isDefault() {
+                return values == null;
+            }
         }
-
-        public boolean isDefault() {
-            return values == null;
-        }
-    }
 }
