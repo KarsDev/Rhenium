@@ -53,7 +53,7 @@ impl Option<T>:
 
     // Gets the contained value, raising an exception if the Option is empty
     func get() -> T:
-        if (not this.isPresent()):
+        if not this.isPresent():
             raise init ResultError("Option")
         
         return this.value
@@ -64,7 +64,7 @@ impl Option<T>:
     
     // Returns the contained value or raises an exception with the message if empty
     func expect(message: str) -> T:
-        if (this.isEmpty()):
+        if this.isEmpty():
             raise message
         return this.get()
     

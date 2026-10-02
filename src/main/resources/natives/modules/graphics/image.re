@@ -21,7 +21,7 @@ impl Image:
     func savePPM(fileName: str):
         file = init File(fileName)
 
-        if (not file.exists()):
+        if not file.exists():
             file.createNew()
         
         writer = init FileWriter(file)
@@ -29,7 +29,7 @@ impl Image:
         writer.write("P3\n")
         writer.write(this.m_width + " " + this.m_height + "\n255\n")
         
-        for (i in range(this.m_pixels.length())):
+        for i in range(this.m_pixels.length()):
             c = this.m_pixels.get(i)
             k: float = 255.999
             r = Math::clamp(cast<int>(c.r * k), 0, 255)

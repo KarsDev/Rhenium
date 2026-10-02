@@ -52,7 +52,7 @@ generic struct Queue<T>:
 impl Queue<T>:
     // Creates a queue with the specified capacity
     init(capacity: mut int):
-        if (capacity <= 0):
+        if capacity <= 0:
             raise init IllegalArgumentError("Capacity must be positive")
         this.capacity = capacity
         this.size = 0
@@ -73,7 +73,7 @@ impl Queue<T>:
         newCapacity = this.capacity * 2
         newItems = init arr -> T(newCapacity)
 
-        for (i in range(this.size)):
+        for i in range(this.size):
             newItems[i] = this.items[(this.head + i) % this.capacity]
 
         this.items = newItems
@@ -83,7 +83,7 @@ impl Queue<T>:
 
     // Adds an element to the back of the queue
     func enqueue(v: T) -> none:
-        if (this.size == this.capacity):
+        if this.size == this.capacity:
             this.resize()
 
         this.items[this.tail] = v
@@ -92,14 +92,14 @@ impl Queue<T>:
 
     // Removes and returns the front element
     func dequeue() -> T:
-        if (this.size == 0):
+        if this.size == 0:
             raise zero T
 
         val = this.items[this.head]
         this.head = (this.head + 1) % this.capacity
         this.size--
 
-        if (this.size == 0):
+        if this.size == 0:
             this.head = 0
             this.tail = 0
 
@@ -107,7 +107,7 @@ impl Queue<T>:
 
     // Returns the front element without removing it
     func peek() -> T:
-        if (this.size == 0):
+        if this.size == 0:
             return zero T
         return this.items[this.head]
 
@@ -127,11 +127,11 @@ impl Queue<T>:
 
     // Ensures the queue can hold at least newCap elements
     func reserve(newCap: int) -> none:
-        if (newCap <= this.capacity):
+        if newCap <= this.capacity:
             return
 
         newItems = init arr -> T(newCap)
-        for (i in range(this.size)):
+        for i in range(this.size):
             newItems[i] = this.items[(this.head + i) % this.capacity]
 
         this.items = newItems
@@ -144,7 +144,7 @@ impl Queue<T>:
     func toList() -> List<T>:
         result = init List<T>()
 
-        for (i in range(this.size)):
+        for i in range(this.size):
             result.add(this.items[(this.head + i) % this.capacity])
 
         return result

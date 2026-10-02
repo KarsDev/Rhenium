@@ -43,13 +43,13 @@ impl Result<T, E inherits Error>:
 
     // Returns the success value, raising if this is an error
     func unwrap() -> T:
-        if (this.isErr()):
+        if this.isErr():
             raise init ResultError("Result")
         return this.value
 
     // Returns the error value, raising if this is successful
     func unwrapErr() -> E:
-        if (this.isOk()):
+        if this.isOk():
             raise init ResultError("Result")
         return this.error
 
@@ -59,13 +59,13 @@ impl Result<T, E inherits Error>:
 
     // Returns the success value or raises with the given message
     func expect(message: str) -> T:
-        if (this.isErr()):
+        if this.isErr():
             raise message
         return this.unwrap()
 
     // Returns the error value or raises with the given message
     func expectErr(message: str) -> E:
-        if (this.isOk()):
+        if this.isOk():
             raise message
         return this.unwrapErr()
 

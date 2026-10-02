@@ -75,30 +75,30 @@ impl HashMap<K, V>:
         this.size = 0
         this.buckets = init arr -> List<Entry<K, V>>(5)
 
-        for (i in range(5)):
+        for i in range(5):
             this.buckets[i] = init List<Entry<K, V>>()
 
     // Creates an empty map with a given bucket count
     init(cap: int):
-        if (cap <= 0):
+        if cap <= 0:
             raise init IllegalArgumentError("Capacity must be positive: " + cap)
 
         this.capacity = cap
         this.size = 0
         this.buckets = init arr -> List<Entry<K, V>>(cap)
 
-        for (i in range(cap)):
+        for i in range(cap):
             this.buckets[i] = init List<Entry<K, V>>()
 
     // Inserts or updates a key-value pair
     func put(key: K, value: V) -> none:
         idx: mut = (Hash::hash(key)) % this.capacity
-        if (idx < 0):
+        if idx < 0:
             idx += this.capacity
         s = this.buckets[idx].size
-        for (i in range(s)):
+        for i in range(s):
             k = this.buckets[idx].items[i].key
-            if (k == key):
+            if k == key:
                 this.buckets[idx].items[i].value = value
                 return
         this.buckets[idx].add(init Entry<K, V>(key, value))
@@ -109,13 +109,13 @@ impl HashMap<K, V>:
     func getOrDefault(key: K, default: V) -> V:
         idx: mut = Hash::hash(key) % this.capacity
 
-        if (idx < 0):
+        if idx < 0:
             idx += this.capacity
 
         bucket = this.buckets[idx]
 
-        for (i in range(bucket.size)):
-            if (bucket.items[i].key == key):
+        for i in range(bucket.size):
+            if bucket.items[i].key == key:
                 return bucket.items[i].value
 
         return default
@@ -129,13 +129,13 @@ impl HashMap<K, V>:
     func containsKey(key: K) -> bool:
         idx: mut = Hash::hash(key) % this.capacity
 
-        if (idx < 0):
+        if idx < 0:
             idx += this.capacity
 
         bucket = this.buckets[idx]
 
-        for (i in range(bucket.size)):
-            if (bucket.items[i].key == key):
+        for i in range(bucket.size):
+            if bucket.items[i].key == key:
                 return true
 
         return false
@@ -144,13 +144,13 @@ impl HashMap<K, V>:
     func remove(key: K) -> V:
         idx: mut = Hash::hash(key) % this.capacity
 
-        if (idx < 0):
+        if idx < 0:
             idx += this.capacity
 
         bucket = this.buckets[idx]
 
-        for (i in range(bucket.size)):
-            if (bucket.items[i].key == key):
+        for i in range(bucket.size):
+            if bucket.items[i].key == key:
                 entry = bucket.remove(i)
                 this.buckets[idx] = bucket
                 this.size--
@@ -164,10 +164,10 @@ impl HashMap<K, V>:
     func keys() -> List<K>:
         result = init List<K>()
 
-        for (b in range(this.capacity)):
+        for b in range(this.capacity):
             bucket = this.buckets[b]
 
-            for (i in range(bucket.size)):
+            for i in range(bucket.size):
                 result.add(bucket.items[i].key)
 
         return result
@@ -176,17 +176,17 @@ impl HashMap<K, V>:
     func values() -> List<V>:
         result = init List<V>()
 
-        for (b in range(this.capacity)):
+        for b in range(this.capacity):
             bucket = this.buckets[b]
 
-            for (i in range(bucket.size)):
+            for i in range(bucket.size):
                 result.add(bucket.items[i].value)
 
         return result
 
     // Removes all entries from the map
     func clear() -> none:
-        for (i in range(this.capacity)):
+        for i in range(this.capacity):
             this.buckets[i].clear()
 
         this.size = 0
@@ -195,10 +195,10 @@ impl HashMap<K, V>:
     func entries() -> List<Entry<K, V>>:
         result = init List<Entry<K, V>>()
 
-        for (b in range(this.capacity)):
+        for b in range(this.capacity):
             bucket = this.buckets[b]
 
-            for (i in range(bucket.size)):
+            for i in range(bucket.size):
                 result.add(bucket.items[i])
 
         return result

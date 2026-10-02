@@ -35,7 +35,7 @@ generic struct List<T>:
 impl List<T>:
     // Creates a List with a given capacity
     init(capacity: mut int):
-        if (capacity <= 0):
+        if capacity <= 0:
             raise init IllegalArgumentError("Capacity must be positive")
         this.size = 0
         this.capacity = capacity
@@ -51,53 +51,53 @@ impl List<T>:
     func resize() -> none:
         this.capacity *= 2
         newItems = init arr -> T(this.capacity)
-        for (i in range(this.size)):
+        for i in range(this.size):
             newItems[i] = this.items[i]
         this.items = newItems
 
     // Adds an element to the list
     func add(v: T) -> none:
-        if (this.size == this.capacity):
+        if this.size == this.capacity:
             this.resize()
         this.items[this.size] = v
         this.size++
     
     // Gets an element at a given index
     func get(idx: int) -> T:
-        if (idx < 0 or idx >= this.size):
+        if idx < 0 or idx >= this.size:
             raise init IndexOutOfBoundsError(idx, this.size)
         return this.items[idx]
 
     // Sets an element in the list at a given index
     func set(idx: int, v: T) -> none:
-        if (idx < 0 or idx >= this.size):
+        if idx < 0 or idx >= this.size:
             raise init IndexOutOfBoundsError(idx, this.size)
         this.items[idx] = v
 
     // Inserts an element at a given index, creating space if necessary
     func insert(idx: int, v: T) -> none:
-        if (idx < 0 or idx > this.size):
+        if idx < 0 or idx > this.size:
             raise init IndexOutOfBoundsError(idx, this.size)
-        if (this.size == this.capacity):
+        if this.size == this.capacity:
             this.resize()
-        for (i in range(this.size, idx, -1)):
+        for i in range(this.size, idx, -1):
             this.items[i] = this.items[i - 1]
         this.items[idx] = v
         this.size++
 
     // Removes an element at a given index
     func remove(idx: int) -> T:
-        if (idx < 0 or idx >= this.size):
+        if idx < 0 or idx >= this.size:
             raise init IndexOutOfBoundsError(idx, this.size)
         val = this.items[idx]
-        for (i in range(idx, this.size - 1)):
+        for i in range(idx, this.size - 1):
             this.items[i] = this.items[i + 1]
         this.size--
         return val
 
     // Removes and gets the last element from the list
     func pop() -> T:
-        if (this.size == 0):
+        if this.size == 0:
             raise init IndexOutOfBoundsError(0, 0)
 
         this.size--
@@ -105,15 +105,15 @@ impl List<T>:
 
     // Checks whether the list contains a specific element
     func contains(v: T) -> bool:
-        for (i in range(this.size)):
-            if (this.items[i] == v):
+        for i in range(this.size):
+            if this.items[i] == v:
                 return true
         return false
 
     // Gets the index of an element in the list
     func indexOf(v: T) -> int:
-        for (i in range(this.size)):
-            if (this.items[i] == v):
+        for i in range(this.size):
+            if this.items[i] == v:
                 return i
         return -1
 
@@ -131,20 +131,20 @@ impl List<T>:
 
     // Ensures the list can hold at least newCap elements without resizing
     func reserve(newCap: int) -> none:
-        if (newCap <= this.capacity):
+        if newCap <= this.capacity:
             return
         newItems = init arr -> T(newCap)
-        for (i in range(this.size)):
+        for i in range(this.size):
             newItems[i] = this.items[i]
         this.items = newItems
         this.capacity = newCap
 
     // Reduces capacity to match the current size
     func shrinkToFit() -> none:
-        if (this.size == this.capacity):
+        if this.size == this.capacity:
             return
         newItems = init arr -> T(this.size)
-        for (i in range(this.size)):
+        for i in range(this.size):
             newItems[i] = this.items[i]
         this.items = newItems
         this.capacity = this.size

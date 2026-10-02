@@ -36,13 +36,13 @@ impl Random:
     func nextLong() -> long:
         this.seed = (this._a * this.seed + this._c) % this._m
 
-        if (this.seed < 0):
+        if this.seed < 0:
             this.seed *= -1
         return this.seed
 
     // Generates a pseudorandom 64-bit integer in a range
     func nextLong(min: long, max: long) -> long:
-        if (min > max):
+        if min > max:
             raise init IllegalArgumentError("min cannot be greater than max")
 
         raw: long = this.nextLong()
@@ -56,7 +56,7 @@ impl Random:
 
     // Generates a pseudorandom 32-bit integer in a range
     func nextInt(min: int, max: int) -> int:
-        if (min > max):
+        if min > max:
             raise init IllegalArgumentError("min cannot be greater than max")
 
         raw: int = this.nextInt()
@@ -82,21 +82,21 @@ impl Random:
 
     // Returns a pseudorandom float in a range
     func nextFloat(min: float, max: float) -> float:
-        if (min > max):
+        if min > max:
             raise init IllegalArgumentError("min cannot be greater than max")
 
         return min + (this.nextFloat() * (max - min))
 
     // Returns a pseudorandom double in a range
     func nextDouble(min: double, max: double) -> double:
-        if (min > max):
+        if min > max:
             raise init IllegalArgumentError("min cannot be greater than max")
 
         return min + (this.nextDouble() * (max - min))
 
     // Returns true with the given probability from 0.0 to 1.0
     func chance(probability: double) -> bool:
-        if (probability < 0.0 or probability > 1.0):
+        if probability < 0.0 or probability > 1.0:
             raise init IllegalArgumentError("probability must be between 0.0 and 1.0")
 
         return this.nextDouble() < probability

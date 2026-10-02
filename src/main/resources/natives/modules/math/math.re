@@ -41,10 +41,10 @@ namespace Math:
         return deg * DEG_TO_RAD
 
     generic func clamp<N>(val: N, min: N, max: N) -> N:
-        if (val < min):
+        if val < min:
             return min
         else:
-            if (val > max):
+            if val > max:
                 return max
         return val
 

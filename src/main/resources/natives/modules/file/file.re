@@ -28,7 +28,7 @@ impl File:
     func rename(newName: str) -> bool:
         result = BFN_00(4, this.name, newName) // 4 -> rename file
 
-        if (result):
+        if result:
             this.name = newName
 
         return result

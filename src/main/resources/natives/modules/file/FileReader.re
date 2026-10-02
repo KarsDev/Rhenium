@@ -21,14 +21,14 @@ impl FileReader:
 
     // Opens the file for reading
     func open() -> bool:
-        if (this.isOpen):
+        if this.isOpen:
             return false
 
-        if (this.file.exists() == false):
+        if this.file.exists() == false:
             raise init FileError("Tried to open a FileReader of a file that does not exist")
 
         success = BFR_00(0, this.file.name) == "1"
-        if (success):
+        if success:
             this.content = BFR_00(1, this.file.name) 
             this.position = 0
             this.isOpen = true
@@ -37,17 +37,17 @@ impl FileReader:
 
     // Reads the next N characters from the file
     func read(n: int) -> str:
-        if (this.isOpen == false):
+        if this.isOpen == false:
             raise init FileError("Use FileReader#open() before FileReader#read")
 
         start = this.position
         end: mut = start + n
-        if (end > len(this.content)):
+        if end > len(this.content):
             end = len(this.content)
 
         result: mut = ""
         i: mut = start
-        while (i < end):
+        while i < end:
             result = result + this.content[i]
             i++
 
@@ -56,14 +56,14 @@ impl FileReader:
 
     // Reads the next line from the file
     func readLine() -> str:
-        if (this.isOpen == false):
+        if this.isOpen == false:
             raise init FileError("Use FileReader#open() before FileReader#readLine")
 
         result: mut = ""
-        while (this.position < len(this.content)):
+        while this.position < len(this.content):
             c = this.content[this.position]
             this.position = this.position + 1
-            if (c == '\n'):
+            if c == '\n':
                 break
             result = result + c
 
@@ -75,7 +75,7 @@ impl FileReader:
 
     // Closes the file
     func close() -> bool:
-        if (this.isOpen == false):
+        if this.isOpen == false:
             raise init FileError("Use FileReader#open() before FileReader#")
 
         this.content = ""

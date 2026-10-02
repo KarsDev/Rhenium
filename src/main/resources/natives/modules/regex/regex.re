@@ -24,7 +24,7 @@ impl Regex:
 
     func find(input: str) -> Option<str>:
         result = __RegexFind0(this.handle, input)
-        if (result == null):
+        if result == null:
             return init Option<str>()
         
         return init Option<str>(cast<str>(result))
