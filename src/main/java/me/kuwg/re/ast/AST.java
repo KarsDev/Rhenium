@@ -7,6 +7,7 @@ import me.kuwg.re.type.TypeRef;
 
 import java.util.Map;
 
+@SuppressWarnings("ClassCanBeRecord")
 public class AST implements Compilable {
     private final ASTBlockNode block;
 
