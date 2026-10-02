@@ -158,13 +158,6 @@ final class RFunctions {
         functions.forEach(System.out::println);
     }
 
-    private static class MatchResult {
-        private final boolean matches;
-        private final boolean exact;
-
-        MatchResult(boolean matches, boolean exact) {
-            this.matches = matches;
-            this.exact = exact;
-        }
+    private record MatchResult(boolean matches, boolean exact) {
     }
 }
