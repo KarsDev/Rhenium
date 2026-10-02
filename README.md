@@ -72,6 +72,9 @@ The compiler resolves that import to `utils/mod.re` when a directory module is s
 export utils
 ```
 
+### Transitive Imports: 
+Imports are inherited transitively. If module A imports module B, then any module that imports A also has access to B and its exported members.
+
 ### Builtin, LLVM, and Native Declarations
 
 Rhenium can bind language-level declarations to compiler-provided LLVM implementations, embed raw LLVM IR, and load native C++ resources.
@@ -501,6 +504,10 @@ func main(argc: int, args: ptr -> str) -> int:
 ## Language Reference
 
 `RheniumLanguageReference.re` is the comprehensive executable reference for the language. It demonstrates the parser-supported syntax and behavior across modules, declarations, types, expressions, control flow, data structures, memory management, error handling, concurrency, generics, namespaces, traits, enums, and entry points.
+
+## VSCode Extension
+
+`rhenium-0.0.1.vsix` is the Rhenium VSCode extension. Place it into the extensions folder then install from vsix.
 
 ## Goals
 
