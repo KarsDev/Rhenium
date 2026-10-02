@@ -284,15 +284,7 @@ public final class RGenStruct extends RDefaultStruct {
         return false;
     }
 
-    private static class ImplTemplate {
-        final List<TypeParameter> generics;
-        final List<RConstructor> constructors;
-        final List<ASTNode> functions;
-
-        ImplTemplate(List<TypeParameter> generics, List<RConstructor> constructors, List<ASTNode> functions) {
-            this.generics = generics;
-            this.constructors = constructors;
-            this.functions = functions;
-        }
+    private record ImplTemplate(List<TypeParameter> generics, List<RConstructor> constructors,
+                                List<ASTNode> functions) {
     }
 }
