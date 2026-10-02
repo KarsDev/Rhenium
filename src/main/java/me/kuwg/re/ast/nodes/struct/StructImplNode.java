@@ -268,14 +268,7 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
         return new StructImplNode(fileName, line, struct, constructorsCloned, functionsCloned, destructor.clone());
     }
 
-    private static final class PreparedFunction {
-        private final FunctionDeclarationNode node;
-        private final String lookupName;
-
-        private PreparedFunction(FunctionDeclarationNode node, String lookupName) {
-            this.node = node;
-            this.lookupName = lookupName;
-        }
+    private record PreparedFunction(FunctionDeclarationNode node, String lookupName) {
     }
 
     private record PreparedBuiltinFunction(BuiltinFunctionDeclarationNode node, String lookupName) {
