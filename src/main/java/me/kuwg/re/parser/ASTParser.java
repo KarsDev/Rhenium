@@ -635,7 +635,7 @@ public final class ASTParser {
     private @SubFunc ASTNode parseWhileKeyword() {
         int line = line();
 
-        ValueNode condition = parseCondition();
+        ValueNode condition = parseValue();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' after while loop condition", fileName, line()).raise();
@@ -681,7 +681,6 @@ public final class ASTParser {
     private @SubFunc ASTNode parseForKeyword() {
         int line = line();
 
-        boolean opening = matchAndConsume(DIVIDER, "(");
 
         String name = identifier();
 
@@ -690,9 +689,6 @@ public final class ASTParser {
         }
 
         var collection = parseValue();
-
-        if (opening && !matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for for loop", fileName, line).raise();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' after for loop collection", fileName, line()).raise();
@@ -874,7 +870,7 @@ public final class ASTParser {
 
     private @SubFunc IfStatementNode parseIfKeyword() {
         int line = line();
-        ValueNode condition = parseCondition();
+        ValueNode condition = parseValue();
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' after if condition", fileName, line()).raise();
         }
@@ -2248,16 +2244,6 @@ public final class ASTParser {
         }
 
         return args;
-    }
-
-    private @SubFunc ValueNode parseCondition() {
-        boolean opening = matchAndConsume(DIVIDER, "(");
-
-        ValueNode condition = parseValue();
-        if (opening && !matchAndConsume(DIVIDER, ")"))
-            return new RParserError("Expected ')' for the condition", fileName, line()).raise();
-
-        return condition;
     }
 
     private ValueNode parseArrayDeclaration() {
