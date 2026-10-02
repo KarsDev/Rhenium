@@ -34,13 +34,13 @@ func testArray():
     idx: mut = 0
 
     zz = init arr -> int(0)
-    if (len(zz) != 0):
+    if len(zz) != 0:
         raise "Empty array failed"
 
-    if (len(a) != 3):
+    if len(a) != 3:
         raise "Error with len"
 
-    for (ignore in a):
+    for ignore in a:
         v = a[idx]
         idx += 1
         if (v != idx):
@@ -49,7 +49,7 @@ func testArray():
     bLenght = 3
     b = init arr -> int(bLenght)
 
-    for (i in range(bLenght)):
+    for i in range(bLenght):
         b[i] = ((bLenght * bLenght) - i)
 
     if (b[1] != 8):
@@ -66,9 +66,9 @@ func testAsync():
         f = 10
         r: mut long = 1
 
-        for (i in range(f)):
+        for i in range(f):
             j = f - i
-            if (j == 0):
+            if j == 0:
                 break
             r *= j
         
@@ -78,7 +78,7 @@ func testAsync():
     res_intptr = cast<ptr -> int>(res_anyptr)
     res = @res_intptr
     
-    if (res != TEN_FACTORIAL):
+    if res != TEN_FACTORIAL:
         raise "Error with async"
     
     println("Dereference testing passed successfully")
@@ -100,15 +100,15 @@ func testFunctions():
     a = init Test(5)
     b = init Test(5, true)
 
-    if (a != b):
+    if a != b:
         raise "Error with struct"
-    if (not (a == b)):
+    if not (a == b):
         raise "Error with equals"
     
-    if (a.inner != b.getInner()):
+    if a.inner != b.getInner():
         raise "Error with struct functions"
 
-    if (a is not Test):
+    if a is not Test:
         raise "Error with instance"
 
     println("Struct testing passed successfully")
@@ -116,7 +116,7 @@ func testFunctions():
     println("Instance testing passed successfully")
 
 func testModules():
-    if (Math::ln(E) != 1):
+    if Math::ln(E) != 1:
         raise "Error with math"
     
     println("Module testing passed successfully")
@@ -129,12 +129,12 @@ func testPointers():
     x_ptr = ptr(x)
     x_ptr_ptr = ptr(x_ptr)
 
-    if ((@(@x_ptr_ptr)).lol != "olo"):
+    if (@(@x_ptr_ptr)).lol != "olo":
         raise "Error with pointers"
     
     (@(@x_ptr_ptr)).lol = "lol"
 
-    if ((@(@x_ptr_ptr)).lol != "lol"):
+    if (@(@x_ptr_ptr)).lol != "lol":
         raise "Error with pointers"
 
     println("Pointer testing passed successfully")
@@ -153,7 +153,7 @@ func testRaise():
     catch:
         success = true
 
-    if (not success):
+    if not success:
         raise "Error with raise/try-catch"
 
     try:
@@ -166,11 +166,11 @@ func testRaise():
 func testNativeFunctions():
     i = 5
 
-    if (sizeof(i) != 4):
+    if sizeof(i) != 4:
         raise "Error with sizeof"
-    if (typeof(i) != "int"):
+    if typeof(i) != "int":
         raise "Error with typeof"
-    if (len("abc") != 3):
+    if len("abc") != 3:
         raise "Error with len"
 
     println("Native functions testing passed successfully")
@@ -187,15 +187,15 @@ generic func sum<T>(a: T, b: T) -> T inline:
 func testGenerics():
     a: Box<int> = init Box<int>(32)
 
-    if (a.inner != 32):
+    if a.inner != 32:
         raise "Error with generic struct"
     
-    if (sum(5, 10) != 15):
+    if sum(5, 10) != 15:
         raise "Error with generic func"
 
     specificTest0(ptr(a))
 
-    if (a.inner != 33):
+    if a.inner != 33:
         raise "Error with function call in generic params: " + a.inner
 
     println("Generics testing passed successfully")
@@ -205,7 +205,7 @@ func testTernary():
 
     a = "working" if x == 40 else "..."
 
-    if (a != "working"):
+    if a != "working":
         raise "Error with ternary"
 
     println("Ternary testing passed successfully")
@@ -217,7 +217,7 @@ func testConnections():
     raw = conn.receive()
     response = Http::parseHttpResponse(raw)
     equality = strSubRange(response.body, 0, 78) == "<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">"
-    if (not equality):
+    if not equality:
         raise "Error with connections"
     conn.close()
     println("Connection testing passed successfully")
@@ -227,7 +227,7 @@ func testLambda():
 
     y = fsq(square, 15)
 
-    if (y != 225):
+    if y != 225:
         raise "Error with lambda"
 
     println("Lambda testing passed successfully")
@@ -247,7 +247,7 @@ func testNamespaces():
     a = Normal::getAsync()
     b = Thread::awaitAndCast<int>(a)
 
-    if (b != 10):
+    if b != 10:
         raise "Error with namespaces"
     
     println("Namespaces test passed successfully")
@@ -255,5 +255,5 @@ func testNamespaces():
 func testZero():
     a = 0
     b = zero int
-    if (a != b):
+    if a != b:
         raise "Error with zero"
