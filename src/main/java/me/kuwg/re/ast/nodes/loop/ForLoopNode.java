@@ -9,7 +9,6 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.loop.LoopContext;
 import me.kuwg.re.compiler.variable.RVariable;
-import me.kuwg.re.error.errors.loop.RLoopError;
 import me.kuwg.re.error.errors.loop.RValueIsNotIterableError;
 import me.kuwg.re.error.errors.variable.RVariableAlreadyExistsError;
 import me.kuwg.re.error.errors.variable.RVariableNotFoundError;
@@ -58,7 +57,7 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
         String reg = collection.compileAndGet(cctx);
 
-        if (collection.getType() instanceof ArrayType) {
+        if (collection.getType() instanceof ArrayType arr) {
             if (collection instanceof VariableReference varNode) {
                 var v = cctx.getVariable(varNode.getSimpleName());
                 if (v == null) {
@@ -67,8 +66,17 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
                 }
                 reg = v.addrReg();
             } else {
-                new RLoopError("Array expression not supported yet (needs pointer)", fileName, line).raise();
-                return;
+                String llvmArrType =
+                        "[" + arr.size() + " x " + arr.getInner().getLLVMName() + "]";
+
+                String arrayPtr = cctx.nextRegister();
+                cctx.emit(arrayPtr + " = alloca " + llvmArrType);
+                cctx.emit(
+                        "store " + llvmArrType + " " + reg
+                                + ", " + llvmArrType + "* " + arrayPtr
+                );
+
+                reg = arrayPtr;
             }
         }
 
