@@ -471,10 +471,7 @@ public final class ASTParser {
         return switch (current().value()) {
             case "=" -> {
                 consume();
-
-                ValueNode value = parseValue();
-
-                yield new VariableDeclarationNode(fileName, line, variable, false, null, value);
+                yield new VariableDeclarationNode(fileName, line, variable, false, null, parseValue());
             }
             case ":" -> {
                 consume();
