@@ -66,7 +66,7 @@ public class FunctionCallNode extends FunCall {
         }
 
         if (fn == null) {
-            return tryLambda(cctx, callTypes, true);
+            return tryLambda(cctx, callTypes);
         }
 
         cctx.emit("; Function call");
@@ -136,14 +136,14 @@ public class FunctionCallNode extends FunCall {
         }
     }
 
-    private String tryLambda(CompilationContext cctx, final List<TypeRef> callTypes, boolean getting) {
+    private String tryLambda(CompilationContext cctx, final List<TypeRef> callTypes) {
         RVariable v = cctx.getVariable(name);
 
         if (v == null || !(v.type() instanceof final LambdaType lambda)) {
             return throwNotFound(callTypes);
         }
 
-        if (lambda.returnType() == BuiltinTypes.NONE.getType() && getting) {
+        if (lambda.returnType() == BuiltinTypes.NONE.getType()) {
             throwVoid(new RDefFunction(lambda.getLLVMName(), name, lambda.returnType(), List.of()), callTypes);
         }
 
