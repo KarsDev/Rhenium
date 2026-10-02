@@ -291,9 +291,9 @@ generic func sum<T>(a: T, b: T) -> T inline:
 If / Else / Else If
 */
 
-if (a > 0):
+if a > 0:
     println("positive")
-else if (a < 0):
+else if a < 0:
     println("negative")
 else:
     println("zero")
@@ -302,18 +302,18 @@ else:
 While loops
 */
 
-while (a < 10):
+while a < 10:
     a += 1
-    if (a == 5):
+    if a == 5:
         continue
-    if (a == 8):
+    if a == 8:
         break
 
 /*
 For loops
 */
 
-for (i in range(0, 10)):
+for i in range(0, 10):
     println(i)
 
 /*
@@ -336,7 +336,7 @@ tw = 7
 
 // prints 7
 // if 'tw' was not in the range [1,9] it would have went to digit out of bounds
-match (tw):    
+match tw:    
     1:
       println("one")
     2:
@@ -377,7 +377,7 @@ size = len(nums) // returns 3
 */
 
 lst = init List<int>()
-for (i in range(5)):
+for i in range(5):
   lst.add(i)
 
 length = len(lst) // same as lst.length()
@@ -713,14 +713,14 @@ impl CharBuf:
         this.inner = chars
 
     delete:
-        if (this.inner != null):
+        if this.inner != null:
             Memory::free(cast<anyptr>(this.inner))
             this.inner = null
 
         this.length = 0
 
     func getInner() -> str:
-        if (this.inner == null):
+        if this.inner == null:
             return ""
 
         return strFromChars(this.inner, this.length)
@@ -775,7 +775,7 @@ func main() -> int:
 // args[0] is always the executable path
 func main(argc: int, args: ptr -> str) -> int:
     println("Specified " + argc + " args:")
-    for (i in range(argc)):
+    for i in range(argc):
         println("   - " + args[i])
     
     return 0
