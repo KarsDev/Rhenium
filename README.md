@@ -72,7 +72,7 @@ The compiler resolves that import to `utils/mod.re` when a directory module is s
 export utils
 ```
 
-# Transitive Imports: 
+### Transitive Imports: 
 Imports are inherited transitively. If module A imports module B, then any module that imports A also has access to B and its exported members.
 
 ### Builtin, LLVM, and Native Declarations
