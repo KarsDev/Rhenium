@@ -1,6 +1,7 @@
 package me.kuwg.re.compiler.struct;
 
 import me.kuwg.re.ast.nodes.cast.CastNode;
+import me.kuwg.re.ast.nodes.function.declaration.FunctionDeclarationNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.compiler.function.RFunction;
@@ -43,7 +44,7 @@ public final class StructCompiler {
         args.add(struct.type().getLLVMName() + "* " + structPtr);
 
         for (int i = 1; i < params.size(); i++) {
-            TypeRef expected = params.get(i).type();
+            TypeRef expected = cctx.resolveConcrete(params.get(i).type(), line);
             ValueNode valueNode = values.get(i - 1).value();
             String valueReg = valueRegs.get(i - 1);
 
@@ -51,7 +52,16 @@ public final class StructCompiler {
                 valueReg = new CastNode(fileName, line, expected, valueNode).compileAndGet(cctx);
             }
 
-            args.add(expected.getLLVMName() + " " + valueReg);
+            String llvm = expected.getLLVMName();
+
+            if (FunctionDeclarationNode.passedByPointer(expected)) {
+                String tmp = cctx.nextRegister();
+                cctx.emit(tmp + " = alloca " + llvm);
+                cctx.emit("store " + llvm + " " + valueReg + ", " + llvm + "* " + tmp);
+                args.add(llvm + "* " + tmp);
+            } else {
+                args.add(llvm + " " + valueReg);
+            }
         }
 
         cctx.emit("call void @" + constructor.llvmName + "(" + String.join(", ", args) + ")");
