@@ -107,12 +107,7 @@ public class ArrayNode extends PointerValueNode {
 
     @Override
     public boolean isConstant(final CompilationContext cctx) {
-        return values.stream().allMatch(v -> {
-            if (!v.isConstant(cctx)) {
-                System.out.println("not constant " + v);
-            }
-            return v.isConstant(cctx);
-        });
+        return values.stream().allMatch(v -> v.isConstant(cctx));
     }
 
     @Override
