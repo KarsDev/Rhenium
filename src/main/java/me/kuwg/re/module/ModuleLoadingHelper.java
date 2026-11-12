@@ -109,7 +109,7 @@ public final class ModuleLoadingHelper {
                     .toURI();
 
             Path tempRoot = Files.createTempDirectory("re-natives-");
-            tempRoot.toFile().deleteOnExit();
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> deleteRecursively(tempRoot)));
 
             Path locationPath = Path.of(location);
             if (Files.isDirectory(locationPath)) {
@@ -142,15 +142,7 @@ public final class ModuleLoadingHelper {
             return;
         }
 
-        final Path srcPath = Path.of(sourceFile);
-        Path base = pkg.equals("self") ? srcPath.getParent() : Path.of(pkg);
-
-        if (pkg.equals("..")) {
-            Path sourcePath = srcPath.getParent();
-            if (sourcePath != null) {
-                base = sourcePath.getParent();
-            }
-        }
+        Path base = getPathBase(pkg, sourceFile, name, fileName, line);
 
         if (base == null) {
             new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
@@ -255,19 +247,7 @@ public final class ModuleLoadingHelper {
             return collectNativeModuleTypes(fileName, line, name, typeMap);
         }
 
-        final Path srcPath = Path.of(sourceFile);
-        Path base = pkg.equals("self") ? srcPath.getParent() : Path.of(pkg);
-
-        if (pkg.equals("..")) {
-            Path sourcePath = srcPath.getParent();
-            if (sourcePath != null) {
-                base = sourcePath.getParent();
-            }
-        }
-
-        if (base == null) {
-            return new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
-        }
+        Path base = getPathBase(pkg, sourceFile, name, fileName, line);
 
         Path file = resolveModuleFile(base, name);
         String key = fileKey(file);
@@ -297,6 +277,23 @@ public final class ModuleLoadingHelper {
         }
     }
 
+    private Path getPathBase(final String pkg, final String sourceFile, final String name, final String fileName, final int line) {
+        final Path srcPath = Path.of(sourceFile).toAbsolutePath().normalize();
+        Path base = pkg.equals("self") ? srcPath.getParent() : Path.of(pkg);
+
+        if (pkg.equals("..")) {
+            Path sourcePath = srcPath.getParent();
+            if (sourcePath != null) {
+                base = sourcePath.getParent();
+            }
+        }
+
+        if (base == null) {
+            return new RModuleNotFoundError(pkg + "->" + name, fileName, line).raise();
+        }
+        return base;
+    }
+
     private Map<String, TypeRef> collectNativeModuleTypes(final String fileName,
                                                           int line,
                                                           String name,
@@ -314,6 +311,9 @@ public final class ModuleLoadingHelper {
         }
 
         collectingModules.add(key);
+
+        final String guardKey = key;
+        collectingModules.add(guardKey);
         try {
             if (extracted != null) {
                 try {
@@ -347,7 +347,7 @@ public final class ModuleLoadingHelper {
             collectedModules.add(key);
             return out;
         } finally {
-            collectingModules.remove(key);
+            collectingModules.remove(guardKey);
         }
     }
 
@@ -358,4 +358,38 @@ public final class ModuleLoadingHelper {
         parser.collectTypesOnly();
         return parser.typeMap;
     }
+
+
+    private static void deleteRecursively(Path root) {
+        if (root == null || !Files.exists(root)) {
+            return;
+        }
+
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<>() {
+                @Override
+                public @NotNull FileVisitResult visitFile(
+                        @NotNull Path file, @NotNull BasicFileAttributes attrs
+                ) throws IOException {
+                    Files.deleteIfExists(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public @NotNull FileVisitResult postVisitDirectory(
+                        @NotNull Path dir, IOException exc
+                ) throws IOException {
+                    if (exc != null) {
+                        throw exc;
+                    }
+
+                    Files.deleteIfExists(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

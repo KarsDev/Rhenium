@@ -163,7 +163,6 @@ public final class ASTParser {
             removeNewlines();
             int line = line();
             if (!matchAndConsume(KEYWORD, "export")) {
-                System.out.println(current());
                 return new RParserError("Use only 'export <file>' in module", fileName, line).raise();
             }
 
@@ -375,17 +374,7 @@ public final class ASTParser {
                 node = new FunctionCallNode(fileName, line, vr.getSimpleName(), args);
             } else if (match(DIVIDER, "[")) {
                 consume();
-                ValueNode index = parseValue();
-                if (!matchAndConsume(DIVIDER, "]")) {
-                    return new RParserError("Expected ']'", fileName, line).raise();
-                }
-
-                if (matchAndConsume(OPERATOR, "=")) {
-                    ValueNode value = parseValue();
-                    node = new ArraySetNode(fileName, line, node, index, value);
-                } else {
-                    node = new ArrayAccessNode(fileName, line, node, index);
-                }
+                node = parseClosingArrayOperation(line, node);
             } else if (match(OPERATOR, "@")) {
                 consume();
                 if (matchAndConsume(OPERATOR, "=")) {
@@ -747,16 +736,21 @@ public final class ASTParser {
         return new ReturnNode(fileName, line, value);
     }
 
-    private @SubFunc ASTNode parseStructKeyword(boolean builtin) {
-        int line = line();
-        String name = identifier();
-
+    private @SubFunc List<String> parseInherits() {
         List<String> inherited = new ArrayList<>();
         if (matchAndConsume(KEYWORD, "inherits")) {
             do {
                 inherited.add(identifier());
             } while (matchAndConsume(DIVIDER, ","));
         }
+        return inherited;
+    }
+
+    private @SubFunc ASTNode parseStructKeyword(boolean builtin) {
+        int line = line();
+        String name = identifier();
+
+        List<String> inherited = parseInherits();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for struct declaration", fileName, line()).raise();
@@ -848,18 +842,7 @@ public final class ASTParser {
             return new StructInitNode(fileName, line, name, List.of());
         }
 
-        List<RParamValue> args = new ArrayList<>();
-
-        do {
-            String paramName;
-            if (match(IDENTIFIER) && next().matches(OPERATOR, "=")) {
-                paramName = identifier();
-                consume();
-            } else {
-                paramName = null;
-            }
-            args.add(new RParamValue(paramName, parseValue()));
-        } while (matchAndConsume(DIVIDER, ","));
+        List<RParamValue> args = parseRParamValues();
 
         if (!matchAndConsume(DIVIDER, ")")) {
             return new RParserError("Expected ')' for parameters call", fileName, line()).raise();
@@ -1167,18 +1150,7 @@ public final class ASTParser {
                     return new RParserError("Using self as array access", fileName, line).raise();
                 }
 
-                ValueNode index = parseValue();
-
-                if (!matchAndConsume(DIVIDER, "]")) {
-                    return new RParserError("Expected ']'", fileName, line).raise();
-                }
-
-                if (matchAndConsume(OPERATOR, "=")) {
-                    ValueNode value = parseValue();
-                    node = new ArraySetNode(fileName, line, node, index, value);
-                } else {
-                    node = new ArrayAccessNode(fileName, line, node, index);
-                }
+                node = parseClosingArrayOperation(line, node);
                 continue;
             }
 
@@ -1349,6 +1321,20 @@ public final class ASTParser {
         return node;
     }
 
+    private @SubFunc ValueNode parseClosingArrayOperation(int line, ValueNode node) {
+        ValueNode index = parseValue();
+        if (!matchAndConsume(DIVIDER, "]")) {
+            return new RParserError("Expected ']'", fileName, line).raise();
+        }
+
+        if (matchAndConsume(OPERATOR, "=")) {
+            ValueNode value = parseValue();
+            return new ArraySetNode(fileName, line, node, index, value);
+        } else {
+            return new ArrayAccessNode(fileName, line, node, index);
+        }
+    }
+
     private @SubFunc ValueNode parseTernaryOperator(ValueNode thenExpr) {
         int line = line();
 
@@ -1429,12 +1415,7 @@ public final class ASTParser {
 
         var typeParameters = parseTypeParameters();
 
-        List<String> inherited = new ArrayList<>();
-        if (matchAndConsume(KEYWORD, "inherits")) {
-            do {
-                inherited.add(identifier());
-            } while (matchAndConsume(DIVIDER, ","));
-        }
+        List<String> inherited = parseInherits();
 
         if (!matchAndConsume(OPERATOR, ":")) {
             return new RParserError("Expected ':' for struct declaration", fileName, line).raise();
@@ -1526,6 +1507,16 @@ public final class ASTParser {
             return new GenStructInitNode(fileName, line, name, genericTypes, List.of());
         }
 
+        List<RParamValue> args = parseRParamValues();
+
+        if (!matchAndConsume(DIVIDER, ")")) {
+            return new RParserError("Expected ')' for parameters call", fileName, line()).raise();
+        }
+
+        return new GenStructInitNode(fileName, line, name, genericTypes, args);
+    }
+
+    private @SubFunc List<RParamValue> parseRParamValues() {
         List<RParamValue> args = new ArrayList<>();
 
         do {
@@ -1539,11 +1530,7 @@ public final class ASTParser {
             args.add(new RParamValue(paramName, parseValue()));
         } while (matchAndConsume(DIVIDER, ","));
 
-        if (!matchAndConsume(DIVIDER, ")")) {
-            return new RParserError("Expected ')' for parameters call", fileName, line()).raise();
-        }
-
-        return new GenStructInitNode(fileName, line, name, genericTypes, args);
+        return args;
     }
 
     private @SubFunc ASTNode parseGenericImpl(final int line, final GenStructType type) {
@@ -2018,51 +2005,80 @@ public final class ASTParser {
         int line = line();
         int preType = tokenIndex;
 
+        if (!match(IDENTIFIER) && !match(KEYWORD)) {
+            return Optional.empty();
+        }
+
+        String typeName = consume().value();
+
         TypeRef type;
 
-        LABEL_TYPE:
-        {
-            String typeName = consume().value();
+        switch (typeName) {
+            case "ptr" -> type = parsePointerType(line, false);
+            case "arr" -> type = parseArrayType(line, false);
+            case "lambda" -> type = parseLambdaType(line, false);
+            case "struct" -> {
+                type = typeMap.get(identifier());
 
-            switch (typeName) {
-                case "ptr" -> {
-                    type = parsePointerType(line, false);
-                    break LABEL_TYPE;
-                }
-                case "arr" -> {
-                    type = parseArrayType(line, false);
-                    break LABEL_TYPE;
-                }
-                case "struct" -> {
-                    type = typeMap.get(typeName);
-                    if (!(type instanceof StructType || type instanceof GenStructType))
-                        return new RParserError("Expected struct type", fileName, line()).raise();
-                    break LABEL_TYPE;
-                }
-                case "lambda" -> {
-                    type = parseLambdaType(line, false);
-                    break LABEL_TYPE;
+                if (!(type instanceof StructType || type instanceof GenStructType)) {
+                    return new RParserError("Expected struct type", fileName, line()).raise();
                 }
             }
-
-            if (typeMap.containsKey(typeName)) {
+            default -> {
                 type = typeMap.get(typeName);
-                break LABEL_TYPE;
-            }
 
-            type = BuiltinTypes.getByName(typeName);
+                if (type == null) {
+                    type = BuiltinTypes.getByName(typeName);
 
-            if (type == null && currentGenericTypes.contains(typeName)) {
-                return Optional.of(new GenericType(typeName));
+                    if (type == null) {
+                        if (currentGenericTypes.contains(typeName)) {
+                            return Optional.of(new GenericType(typeName));
+                        }
+
+                        tokenIndex = preType;
+                        return Optional.empty();
+                    }
+
+                    addType(typeName, type);
+                }
             }
         }
 
-        if (type != null) {
-            return Optional.of(type);
+        if (type instanceof GenStructType gen && matchAndConsume(OPERATOR, "<")) {
+            List<TypeRef> genericTypes = new ArrayList<>();
+
+            if (!match(OPERATOR, ">")) {
+                do {
+                    TypeRef genericType = parseType(false);
+                    genericTypes.add(genericType);
+                } while (matchAndConsume(DIVIDER, ","));
+            }
+
+            if (fixGenericBitshift())
+                return new RParserError("Expected '>' for generic type", fileName, line()).raise();
+
+            if (gen.getGenericTypes().size() != genericTypes.size()) {
+                return new RParserError(
+                        "Expected " + gen.getGenericTypes().size()
+                                + " generic arguments but got " + genericTypes.size(),
+                        fileName,
+                        line
+                ).raise();
+            }
+
+            type = new AppliedGenStructType(gen, genericTypes);
         }
 
-        tokenIndex = preType;
-        return Optional.empty();
+        return Optional.of(type);
+    }
+
+    private boolean fixGenericBitshift() {
+        if (match(OPERATOR, ">>")) {
+            tokens[tokenIndex] = new Token(OPERATOR, ">", current().line());
+        } else if (match(OPERATOR, ">>>")) {
+            tokens[tokenIndex] = new Token(OPERATOR, ">>", current().line());
+        } else return !matchAndConsume(OPERATOR, ">");
+        return false;
     }
 
     private @SubFunc TypeRef parseType0(final boolean generics) {
@@ -2125,13 +2141,8 @@ public final class ASTParser {
                 } while (matchAndConsume(DIVIDER, ","));
             }
 
-            if (match(OPERATOR, ">>")) {
-                tokens[tokenIndex] = new Token(OPERATOR, ">", current().line());
-            } else if (match(OPERATOR, ">>>")) {
-                tokens[tokenIndex] = new Token(OPERATOR, ">>", current().line());
-            } else if (!matchAndConsume(OPERATOR, ">")) {
+            if (fixGenericBitshift())
                 return new RParserError("Expected '>' for generic type", fileName, line()).raise();
-            }
 
             if (gen.getGenericTypes().size() != genericTypes.size()) {
                 return new RParserError("Expected " + gen.getGenericTypes().size() + " generic arguments but got " + genericTypes.size(), fileName, line()).raise();
@@ -2460,6 +2471,11 @@ public final class ASTParser {
                 continue;
             }
 
+            if (matchAndConsume(KEYWORD, "export")) {
+                collectExportTypes();
+                continue;
+            }
+
             if (outOfBounds(0)) return;
             consume();
         }
@@ -2757,5 +2773,12 @@ public final class ASTParser {
         }
 
         addType(name, new UnionType(name, variants));
+    }
+
+    private void collectExportTypes() {
+        int line = line();
+        String modName = identifier();
+        loader.collectModuleTypes(fileName, line, fileName, modName, "self", typeMap)
+                .forEach(typeMap::putIfAbsent);
     }
 }
