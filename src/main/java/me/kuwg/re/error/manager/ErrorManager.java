@@ -1,6 +1,5 @@
 package me.kuwg.re.error.manager;
 
-import me.kuwg.re.Rhenium;
 import me.kuwg.re.error.codes.ErrorCodes;
 import me.kuwg.re.error.errors.RInternalError;
 
@@ -14,7 +13,7 @@ final class ErrorManager {
         if (error.getLine() != -1) System.err.println("  At line " + error.getLine());
         System.err.println("  Internal error name: \"" + getIEN(error.getCode()) + "\"");
 
-        //System.exit(error.getCode());
+        System.exit(error.getCode());
         throw new RInternalError();
     }
 
