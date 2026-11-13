@@ -761,6 +761,78 @@ copied = copy(alpha)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
+  LABELS
+<=------------------------=>|<=>|<=-----------------------=>
+*/
+
+/*
+ Rhenium supports named breakable blocks, similar to labeled
+ blocks in Java.
+
+ Syntax:
+    label <name>:
+        <code>
+
+ To exit a named block:
+    break <name>
+
+ A named break exits the target label, including when used inside nested loops or conditional statements.
+*/
+
+label outer:
+    println("Entering outer block")
+
+    for i in range(10):
+        println("Iteration: " + i)
+
+        if i == 3:
+            println("Leaving outer block")
+            break outer
+
+        println("Continuing iteration")
+
+    // This is skipped because break outer exits the label.
+  println("etc..")
+
+println("Execution continued after outer")
+
+/*
+ Labels can also be nested.
+ A named break targets the enclosing label with the specificied name.
+*/
+
+label first:
+    println("Inside first")
+
+    label second:
+        println("Inside second")
+        break first
+
+        // Unreachable, produces a compilation error
+        println("This will not execute")
+
+    // Also skipped: breaking first exits both blocks.
+
+println("Outside both labels")
+
+/*
+ A label can be used inside a loop.
+ Breaking the label does not break the surrounding loop.
+*/
+
+for i in range(3):
+    label iteration:
+        println("Starting iteration: " + i)
+
+        if i == 1:
+            break iteration
+
+        println("Finished iteration: " + i)
+
+    println("Loop continues: " + i)
+
+/*
+<=------------------------=>|<=>|<=-----------------------=>
   ENTRY POINT
 <=------------------------=>|<=>|<=-----------------------=>
 */
