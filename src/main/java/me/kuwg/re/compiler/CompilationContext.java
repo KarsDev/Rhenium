@@ -7,6 +7,7 @@ import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.enums.REnum;
 import me.kuwg.re.compiler.error.CatchScopeStack;
 import me.kuwg.re.compiler.function.RFunction;
+import me.kuwg.re.compiler.label.LabelContext;
 import me.kuwg.re.compiler.loop.LoopContext;
 import me.kuwg.re.compiler.struct.RDefaultStruct;
 import me.kuwg.re.compiler.struct.RGenStruct;
@@ -66,6 +67,8 @@ public final class CompilationContext {
     private final Map<String, UnionType> unions = new HashMap<>();
     public boolean compilingConstructor = false;
     private Stack<Map<String, RVariable>> scopeStack = new Stack<>();
+    private final Deque<LabelContext> labelStack = new ArrayDeque<>();
+
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
@@ -360,6 +363,18 @@ public final class CompilationContext {
 
             emit("call void @" + d.destructor().llvmName() + "(ptr " + d.addrReg() + ")");
         }
+    }
+
+    public void pushLabel(LabelContext context) {
+        labelStack.push(context);
+    }
+
+    public void popLabel() {
+        labelStack.pop();
+    }
+
+    public LabelContext getLabel(String name) {
+        return labelStack.stream().filter(context -> context.name().equals(name)).findFirst().orElse(null);
     }
 
     public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs, boolean keepLLVM) throws IOException {

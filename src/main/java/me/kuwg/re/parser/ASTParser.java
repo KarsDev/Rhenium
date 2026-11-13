@@ -26,12 +26,11 @@ import me.kuwg.re.ast.nodes.function.declaration.*;
 import me.kuwg.re.ast.nodes.global.GlobalVariableDeclarationNode;
 import me.kuwg.re.ast.nodes.instance.IsNode;
 import me.kuwg.re.ast.nodes.ir.IRDeclarationNode;
+import me.kuwg.re.ast.nodes.label.LabelBreakNode;
+import me.kuwg.re.ast.nodes.label.LabelNode;
 import me.kuwg.re.ast.nodes.lambda.LambdaDeclarationNode;
 import me.kuwg.re.ast.nodes.len.LenNode;
-import me.kuwg.re.ast.nodes.loop.BreakNode;
-import me.kuwg.re.ast.nodes.loop.ContinueNode;
-import me.kuwg.re.ast.nodes.loop.ForLoopNode;
-import me.kuwg.re.ast.nodes.loop.WhileNode;
+import me.kuwg.re.ast.nodes.loop.*;
 import me.kuwg.re.ast.nodes.module.UsingNode;
 import me.kuwg.re.ast.nodes.namespace.NamespaceCallNode;
 import me.kuwg.re.ast.nodes.namespace.NamespaceDeclarationNode;
@@ -41,9 +40,7 @@ import me.kuwg.re.ast.nodes.pointer.PointerCreationNode;
 import me.kuwg.re.ast.nodes.pointer.ReferenceNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.ast.nodes.range.RangeNode;
-import me.kuwg.re.ast.nodes.statement.IfStatementNode;
-import me.kuwg.re.ast.nodes.statement.MatchNode;
-import me.kuwg.re.ast.nodes.statement.TryCatchNode;
+import me.kuwg.re.ast.nodes.statement.*;
 import me.kuwg.re.ast.nodes.struct.*;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructImplNode;
@@ -441,6 +438,7 @@ public final class ASTParser {
             case "delete" -> parseDeleteKeyword();
             case "zero" -> parseZeroKeyword();
             case "union" -> parseUnionKeyword();
+            case "label" -> parseLabelKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, fileName, line()).raise();
         };
     }
@@ -636,6 +634,11 @@ public final class ASTParser {
     }
 
     private @SubFunc ASTNode parseBreakKeyword() {
+        if (match(IDENTIFIER)) {
+            String name = identifier();
+            return new LabelBreakNode(fileName, previous().line(), name);
+        }
+
         return new BreakNode(fileName, previous().line());
     }
 
@@ -1974,6 +1977,22 @@ public final class ASTParser {
         addType(type.getName(), type);
 
         return new UnionDeclarationNode(fileName, line, type);
+    }
+
+    private @SubFunc ASTNode parseLabelKeyword() {
+        int line = line();
+        String name = identifier();
+
+        if (!matchAndConsume(OPERATOR, ":")) {
+            return new RParserError("Expected ':' for label declaration", fileName, line).raise();
+        }
+
+        if (!match(NEWLINE)) {
+            return new RParserError("Expected newline for label declaration", fileName, line).raise();
+        }
+        consume();
+
+        return new LabelNode(fileName, line, name, parseBlock());
     }
 
     /*

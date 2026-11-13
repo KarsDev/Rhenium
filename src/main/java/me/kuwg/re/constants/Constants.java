@@ -28,6 +28,7 @@ public abstract class Constants {
                 "lambda",
                 "namespace",
                 "type",
+                "label",
         };
 
         public static final String[] BOOLEANS = {
