@@ -41,12 +41,10 @@ import static me.kuwg.re.writer.Writeable.TAB;
 public final class CompilationContext {
     private static final boolean DEBUG = false;
     private static final String ERROR_LINE = "call void @\"MoveGenerator.generatePawnMoves_7175_54\"(%struct.MoveGenerator* %9";
-
+    public final boolean writeExceptionLines;
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
     private final ModuleLoadingHelper loader;
-    public final boolean writeExceptionLines;
-
     private final List<String> irCode = new ArrayList<>();
     private final StringBuilder declarations = new StringBuilder();
     private final StringBuilder globalCode = new StringBuilder();
@@ -54,7 +52,6 @@ public final class CompilationContext {
     private final Map<String, RVariable> variables = new HashMap<>();
     private final RFunctions functions = new RFunctions();
     private final Stack<LoopContext> loopStack = new Stack<>();
-    private Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private final Map<String, RDefaultStruct> structs = new HashMap<>();
     private final CatchScopeStack catchScopeStack = new CatchScopeStack();
     private final Map<String, Path> nativeCPPModules = new LinkedHashMap<>();
@@ -67,15 +64,13 @@ public final class CompilationContext {
     private final Deque<List<RPendingDestructor>> destructorScopes = new ArrayDeque<>();
     private final CopyFunctionGenerator copy = new CopyFunctionGenerator(this);
     private final Map<String, UnionType> unions = new HashMap<>();
-
+    public boolean compilingConstructor = false;
+    private Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private int registerCounter = 1;
     private int indentLevel = 1;
     private int labelCounter = 0;
 
-    public boolean compilingConstructor = false;
-
-    public CompilationContext(final String fileName, Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader,
-                              final boolean writeExceptionLines) {
+    public CompilationContext(final String fileName, Map<String, TypeRef> typeMap, final ModuleLoadingHelper loader, final boolean writeExceptionLines) {
         this.fileName = fileName;
         this.typeMap = typeMap;
         this.loader = loader;
@@ -97,7 +92,7 @@ public final class CompilationContext {
         return "%" + registerCounter++;
     }
 
-    public void emit(String s) {
+    public @SuppressWarnings("unused") void emit(String s) {
         if (DEBUG && s.contains(ERROR_LINE)) throw new RInternalError();
         if (s.contains(" ptr*")) {
             System.err.println("WARNING: emitted invalid LLVM opaque pointer syntax:");
@@ -220,7 +215,7 @@ public final class CompilationContext {
         return declaredGlobals.add(name);
     }
 
-    public void addIR(String ir) {
+    public @SuppressWarnings("unused") void addIR(String ir) {
         if (DEBUG && ir.contains(ERROR_LINE)) throw new RInternalError();
 
         String[] lines = ir.split("\n");
@@ -235,7 +230,7 @@ public final class CompilationContext {
         }
     }
 
-    public void declare(String declaration) {
+    public @SuppressWarnings("unused") void declare(String declaration) {
         if (DEBUG && declaration.contains(ERROR_LINE)) throw new RInternalError();
         declarations.append(declaration).append('\n');
     }
@@ -478,9 +473,7 @@ public final class CompilationContext {
     private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs, boolean keepLLVM) {
         final var quote = (Function<String, String>) s -> "\"" + s + "\"";
 
-        final String extraClangArgs = (clangArgs == null || clangArgs.isEmpty())
-                        ? ""
-                        : " " + String.join(" ", clangArgs);
+        final String extraClangArgs = (clangArgs == null || clangArgs.isEmpty()) ? "" : " " + String.join(" ", clangArgs);
 
         String tempBase = executableFile;
         int lastDot = tempBase.lastIndexOf('.');
@@ -497,14 +490,7 @@ public final class CompilationContext {
             String src = p.toString();
             String ll = src + ".ll";
 
-            cmd.append("clang++ -O3 -march=native -mtune=native")
-                    .append(" -flto -S -emit-llvm -std=c++17")
-                    .append(extraClangArgs)
-                    .append(" ")
-                    .append(quote.apply(src))
-                    .append(" -o ")
-                    .append(quote.apply(ll))
-                    .append(and);
+            cmd.append("clang++ -O3 -march=native -mtune=native").append(" -flto -S -emit-llvm -std=c++17").append(extraClangArgs).append(" ").append(quote.apply(src)).append(" -o ").append(quote.apply(ll)).append(and);
 
             llFiles.add(ll);
         }
@@ -527,32 +513,9 @@ public final class CompilationContext {
 
         String optimized = tempBase + ".opt.bc";
 
-        cmd.append("opt -passes=\"default<O3>,globaldce\" ")
-                .append(quote.apply(linked))
-                .append(" -o ")
-                .append(quote.apply(optimized))
-                .append(and);
+        cmd.append("opt -passes=\"default<O3>,globaldce\" ").append(quote.apply(linked)).append(" -o ").append(quote.apply(optimized)).append(and);
 
-        cmd.append("clang++ ")
-                .append("-O3 ")
-                .append("-march=native ")
-                .append("-mtune=native ")
-                .append("-funroll-loops ")
-                .append("-fomit-frame-pointer ")
-                .append("-flto=full ")
-                .append("-fuse-ld=lld ")
-                .append("-fno-exceptions ")
-                .append("-fno-rtti ")
-                .append("-lws2_32 ")
-                .append("-lgdi32 ")
-                .append("-luser32 ")
-                .append("-lgdiplus ")
-                .append(extraClangArgs)
-                .append(" ")
-                .append(quote.apply(optimized))
-                .append(" -o ")
-                .append(quote.apply(executableFile))
-                .append(and);
+        cmd.append("clang++ ").append("-O3 ").append("-march=native ").append("-mtune=native ").append("-funroll-loops ").append("-fomit-frame-pointer ").append("-flto=full ").append("-fuse-ld=lld ").append("-fno-exceptions ").append("-fno-rtti ").append("-lws2_32 ").append("-lgdi32 ").append("-luser32 ").append("-lgdiplus ").append(extraClangArgs).append(" ").append(quote.apply(optimized)).append(" -o ").append(quote.apply(executableFile)).append(and);
 
         List<String> temporaryFiles = new ArrayList<>();
 
