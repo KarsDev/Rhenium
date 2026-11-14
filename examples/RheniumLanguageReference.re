@@ -113,9 +113,10 @@ Native C++ bindings
 _NativeCPP("math") int add(a: int, b: int) and int sub(a: int, b: int)
 
 // If the C++ file is not in the resources it can be loaded with the extern keyword
-extern("math") _Builtin
+// IMPORTANT: If the 'extern' keyword is used, the file extension MUST be specified
+extern("math.cpp") _Builtin
 // or
-extern("math") int add(a: int, b: int)
+extern("math.cpp") int add(a: int, b: int)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
