@@ -67,7 +67,7 @@ func valid(board: Board, row: int, col: int, num: int) -> bool:
 func solve(board: Board) -> bool:
     empty = findEmpty(board)
 
-    if empty.isEmpty()):
+    if empty.isEmpty():
         return true
     
     row = empty.get().x
