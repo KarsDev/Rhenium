@@ -1,5 +1,5 @@
 // include the C++ functions
-_NativeCPP("time") long _timeMillis() and long _timeNanos() and none _sleepMillis(millis: long) and none _sleepNanos(nanos: long)
+_NativeCPP("clock") long _timeMillis() and long _timeNanos() and none _sleepMillis(millis: long) and none _sleepNanos(nanos: long)
 
 /*
 Time::millis() returns the time difference in milliseconds from UNIX up to now
