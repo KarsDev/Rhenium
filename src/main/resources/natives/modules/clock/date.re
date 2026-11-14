@@ -79,8 +79,8 @@ namespace Date:
     func getLocalDate() -> Date:
         packed: long = __getLocalDate()
 
-        year = cast<int>(packed & cast<long>(65535))
-        month = cast<int>((packed >> 16) & cast<long>(255))
-        day = cast<int>((packed >> 24) & cast<long>(255))
+        year = cast<int>(packed & 65535L)
+        month = cast<int>((packed >> 16) & 255L)
+        day = cast<int>((packed >> 24) & 255L)
 
         return init Date(day, month, year)
