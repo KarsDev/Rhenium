@@ -38,7 +38,7 @@ public final class ErrorCodes {
     public static final int ARRAY_TYPE_IS_NONE_ERROR = 34;
     public static final int FUNCTION_GENERICS_ERROR = 35;
     public static final int STRUCT_ALREADY_EXISTS_ERROR = 36;
-    //public static final int NOT_ADDRESSABLE_ERROR = 37;
+    public static final int NUMBER_FORMAT_ERROR = 58;
     public static final int STRUCT_GENERICS_INIT_ERROR = 38;
     public static final int RANGE_TYPE_ERROR = 39;
     public static final int GLOBAL_FUNCTION_IN_NAMESPACE_ERROR = 40;
@@ -59,5 +59,5 @@ public final class ErrorCodes {
     public static final int STRUCT_IMPLEMENTATION_ERRROR = 55;
     public static final int TERNARY_OPERATOR_ERROR = 56;
     public static final int PRE_COMPILATION_ERROR = 57;
-    public static final int FORMAT_ERROR = 58;
+
 }

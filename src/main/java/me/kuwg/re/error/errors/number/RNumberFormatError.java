@@ -10,6 +10,6 @@ public class RNumberFormatError extends RError {
 
     @Override
     protected int getCode() {
-        return ErrorCodes.FORMAT_ERROR;
+        return ErrorCodes.NUMBER_FORMAT_ERROR;
     }
 }
