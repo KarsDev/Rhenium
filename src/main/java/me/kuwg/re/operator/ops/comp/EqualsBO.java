@@ -172,7 +172,8 @@ public final class EqualsBO extends BinaryOperator {
             return "true";
         }
 
-        if ((leftType instanceof NullType && !(rightType == BuiltinTypes.ANYPTR.getType() || rightType == BuiltinTypes.STR.getType())) || (rightType instanceof NullType && !(leftType == BuiltinTypes.ANYPTR.getType() || leftType == BuiltinTypes.STR.getType()))) {
+        if ((leftType instanceof NullType && !(rightType == BuiltinTypes.ANYPTR.getType() || rightType == BuiltinTypes.STR.getType())) ||
+                (rightType instanceof NullType && !(leftType == BuiltinTypes.ANYPTR.getType() || leftType == BuiltinTypes.STR.getType()))) {
             return unsupported(leftType, rightType, left).raise();
         }
 
@@ -251,21 +252,7 @@ public final class EqualsBO extends BinaryOperator {
 
             c.cctx().emit(rightVal + " = extractvalue " + rightType.getLLVMName() + " " + rightReg + ", " + i);
 
-            String fieldEq = c.cctx().nextRegister();
-
-            if (fieldType == BuiltinTypes.STR.getType()) {
-                c.cctx().emit(fieldEq + " = call i1 @strEquals(i8* " + leftVal + ", i8* " + rightVal + ")");
-            } else if (fieldType == BuiltinTypes.FLOAT.getType() || fieldType == BuiltinTypes.DOUBLE.getType()) {
-                c.cctx().emit(fieldEq + " = fcmp oeq " + fieldType.getLLVMName() + " " + leftVal + ", " + rightVal);
-            } else if (fieldType == BuiltinTypes.BOOL.getType() || fieldType == BuiltinTypes.CHAR.getType() || fieldType == BuiltinTypes.BYTE.getType() || fieldType == BuiltinTypes.SHORT.getType() || fieldType == BuiltinTypes.INT.getType() || fieldType == BuiltinTypes.LONG.getType()) {
-                c.cctx().emit(fieldEq + " = icmp eq " + fieldType.getLLVMName() + " " + leftVal + ", " + rightVal);
-            } else if (fieldType == BuiltinTypes.ANYPTR.getType()) {
-                c.cctx().emit(fieldEq + " = icmp eq ptr " + leftVal + ", " + rightVal);
-            } else if (fieldType instanceof StructType nestedStruct) {
-                fieldEq = compileStructEquality(nestedStruct, nestedStruct, leftVal, rightVal, c);
-            } else {
-                return new RUnsupportedBinaryExpressionError(fieldType.getName(), getSymbol(), fieldType.getName(), c.fileName(), c.line()).raise();
-            }
+            String fieldEq = compareField(fieldType, leftVal, rightVal, c);
 
             if (result == null) {
                 result = fieldEq;
@@ -277,5 +264,32 @@ public final class EqualsBO extends BinaryOperator {
         }
 
         return Objects.requireNonNullElse(result, "true");
+    }
+
+    private String compareField(TypeRef fieldType, String l, String r, BinaryOperatorContext c) {
+        if (fieldType instanceof StructType nested) {
+            return compileStructEquality(nested, nested, l, r, c);
+        }
+
+        String reg = c.cctx().nextRegister();
+
+        if (fieldType == BuiltinTypes.STR.getType()) {
+            c.cctx().emit(reg + " = call i1 @strEquals(i8* " + l + ", i8* " + r + ")");
+        } else if (fieldType == BuiltinTypes.FLOAT.getType() || fieldType == BuiltinTypes.DOUBLE.getType()) {
+            c.cctx().emit(reg + " = fcmp oeq " + fieldType.getLLVMName() + " " + l + ", " + r);
+        } else if (fieldType.isPointer()
+                || fieldType == BuiltinTypes.BOOL.getType()
+                || fieldType == BuiltinTypes.CHAR.getType()
+                || fieldType == BuiltinTypes.BYTE.getType()
+                || fieldType == BuiltinTypes.SHORT.getType()
+                || fieldType == BuiltinTypes.INT.getType()
+                || fieldType == BuiltinTypes.LONG.getType()) {
+            c.cctx().emit(reg + " = icmp eq " + fieldType.getLLVMName() + " " + l + ", " + r);
+        } else {
+            return new RUnsupportedBinaryExpressionError(
+                    fieldType.getName(), getSymbol(), fieldType.getName(),
+                    c.fileName(), c.line()).raise();
+        }
+        return reg;
     }
 }

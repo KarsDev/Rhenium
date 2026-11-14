@@ -95,7 +95,7 @@ import static me.kuwg.re.token.TokenType.*;
 public final class ASTParser {
     public final Map<String, TypeRef> typeMap;
     private final String fileName;
-    private final Token[] tokens;
+    private Token[] tokens;
     private final boolean initial;
     private final boolean noDefaults;
     private final ModuleLoadingHelper loader;
@@ -2092,12 +2092,19 @@ public final class ASTParser {
     }
 
     private boolean fixGenericBitshift() {
-        if (match(OPERATOR, ">>")) {
-            tokens[tokenIndex] = new Token(OPERATOR, ">", current().line());
-        } else if (match(OPERATOR, ">>>")) {
-            tokens[tokenIndex] = new Token(OPERATOR, ">>", current().line());
-        } else return !matchAndConsume(OPERATOR, ">");
-        return false;
+        if (match(OPERATOR, ">>") || match(OPERATOR, ">>>")) {
+            Token t = current();
+            String rest = t.value().substring(1);
+            Token[] out = new Token[tokens.length + 1];
+            System.arraycopy(tokens, 0, out, 0, tokenIndex);
+            out[tokenIndex]     = new Token(OPERATOR, ">", t.line());
+            out[tokenIndex + 1] = new Token(OPERATOR, rest, t.line());
+            System.arraycopy(tokens, tokenIndex + 1, out, tokenIndex + 2, tokens.length - tokenIndex - 1);
+            tokens = out;
+            tokenIndex++;
+            return false;
+        }
+        return !matchAndConsume(OPERATOR, ">");
     }
 
     private @SubFunc TypeRef parseType0(final boolean generics) {

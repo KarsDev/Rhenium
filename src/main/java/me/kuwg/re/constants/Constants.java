@@ -72,21 +72,25 @@ public abstract class Constants {
         private static final String HEX_FLOAT =
                 "0[xX]" + HEX_DIGITS + "(?:\\." + HEX_DIGITS + ")?[pP][+-]?[0-9_]+[fFdD]?";
 
+        private static final String EXP    = "(?:[eE][+-]?[0-9_]+)";
+        private static final String SUFFIX = "[fFdD]";
+
         private static final String DEC_FLOAT =
                 "(?:" +
-                        DEC_DIGITS + "\\.[0-9_]*" +
-                        "|\\.[0-9_]+" +
-                        "|" + DEC_DIGITS +
-                        ")" +
-                        "(?:[eE][+-]?[0-9_]+)?[fFdD]";
+                        DEC_DIGITS + "\\.[0-9][0-9_]*" + EXP + "?" + SUFFIX + "?" +
+                        "|\\.[0-9][0-9_]*" + EXP + "?" + SUFFIX + "?" +
+                        "|" + DEC_DIGITS + "\\.(?:" + EXP + SUFFIX + "?|" + SUFFIX + ")" +
+                        "|" + DEC_DIGITS + EXP + SUFFIX + "?" +
+                        "|" + DEC_DIGITS + SUFFIX +
+                        ")";
 
         public static final Pattern NUMBER_PATTERN = Pattern.compile(
                 "^(?:" +
                         HEX_FLOAT + "|" +
                         HEX_INT + "|" +
                         BIN_INT + "|" +
+                        DEC_FLOAT + "|" +   // moved above OCT_INT
                         OCT_INT + "|" +
-                        DEC_FLOAT + "|" +
                         DEC_INT +
                         ")"
         );
