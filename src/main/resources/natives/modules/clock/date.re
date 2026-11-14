@@ -23,12 +23,15 @@ enum Month:
     NOVEMBER
     DECEMBER
 
-struct Date:
+struct Date inherits Writeable:
     day: int
     month: Month
     year: int
 
 impl Date:
+    func toString() -> str: // override
+        return "Date{day=" + this.day + ", month=" + this.month + ", year=" + this.year + "}"
+    
     func getDayOfWeek() -> DayOfWeek inline:
         d: mut int = this.day
         m: mut int = this.month
