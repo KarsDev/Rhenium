@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.constants;
 
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.number.RNumberFormatError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
@@ -50,7 +51,7 @@ public class NumberNode extends ConstantNode {
             }
 
             return parsed >= Integer.MIN_VALUE && parsed <= Integer.MAX_VALUE ? BuiltinTypes.INT.getType() : BuiltinTypes.LONG.getType();
-        } catch (RuntimeException exception) {
+        } catch (Throwable exception) {
             final String message = "Invalid number literal '" + literal + "': " + exception.getMessage();
             new RNumberFormatError(message, fileName, line).raise();
             return BuiltinTypes.INT.getType();
@@ -82,7 +83,7 @@ public class NumberNode extends ConstantNode {
                 return (int) parsed;
             }
             return parsed;
-        } catch (RuntimeException exception) {
+        } catch (Throwable exception) {
             return new RNumberFormatError("Invalid number literal '" + literal + "': " +
                     exception.getMessage(), fileName, line).raise();
         }
@@ -105,17 +106,17 @@ public class NumberNode extends ConstantNode {
             if (asFloat) {
                 float parsed = Float.parseFloat(number);
                 if (!Float.isFinite(parsed)) {
-                    throw new NumberFormatException("Floating-point value is out of range");
+                    throw new RInternalError("Floating-point value is out of range");
                 }
                 return parsed;
             }
 
             double parsed = Double.parseDouble(number);
             if (!Double.isFinite(parsed)) {
-                throw new NumberFormatException("Floating-point value is out of range");
+                throw new RInternalError("Floating-point value is out of range");
             }
             return parsed;
-        } catch (NumberFormatException exception) {
+        } catch (Throwable exception) {
             return new RNumberFormatError("Invalid floating-point literal '" + literal + "': " +
                     exception.getMessage(), fileName, line).raise();
         }
@@ -142,14 +143,14 @@ public class NumberNode extends ConstantNode {
             }
 
             if (digits.isEmpty()) {
-                throw new NumberFormatException("Missing digits after numeric prefix");
+                throw new RInternalError("Missing digits after numeric prefix");
             }
 
             if (radix == 16 || radix == 2) {
                 return Long.parseUnsignedLong(digits, radix);
             }
             return Long.parseLong(digits, radix);
-        } catch (NumberFormatException exception) {
+        } catch (Throwable exception) {
             return new RNumberFormatError("Invalid integer literal '" + literal + "': " +
                     exception.getMessage(), fileName, line).raise();
         }
@@ -220,7 +221,7 @@ public class NumberNode extends ConstantNode {
             if (value instanceof Float f) return Float.toString(f);
             if (value instanceof Double d) return Double.toString(d);
             return value.toString();
-        } catch (RuntimeException exception) {
+        } catch (Throwable exception) {
             return new RNumberFormatError("Could not format number literal: " + exception.getMessage(),
                     fileName, line).raise();
         }
