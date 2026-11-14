@@ -119,16 +119,7 @@ public class MatchNode extends ASTNode {
             cctx.emit("br label %" + defaultLabel);
 
             for (int i = 0; i < nonDefaultCases.size(); i++) {
-                final MatchCase mc = nonDefaultCases.get(i);
-                final String label = caseLabels.get(i);
-
-                cctx.emit(label + ":");
-                cctx.pushIndent();
-                cctx.pushScope();
-
-                mc.block.compile(cctx);
-
-                cctx.emit("br label %" + endLabel);
+                compileMatchCase(cctx, endLabel, nonDefaultCases, caseLabels, i);
 
                 cctx.popScope();
                 cctx.popIndent();
@@ -209,16 +200,7 @@ public class MatchNode extends ASTNode {
         cctx.emit("]");
 
         for (int i = 0; i < nonDefaultCases.size(); i++) {
-            final MatchCase mc = nonDefaultCases.get(i);
-            final String label = caseLabels.get(i);
-
-            cctx.emit(label + ":");
-            cctx.pushIndent();
-            cctx.pushScope();
-
-            mc.block.compile(cctx);
-
-            cctx.emit("br label %" + endLabel);
+            compileMatchCase(cctx, endLabel, nonDefaultCases, caseLabels, i);
 
             cctx.popIndent();
             cctx.popScope();
@@ -242,6 +224,19 @@ public class MatchNode extends ASTNode {
         }
 
         cctx.emit(endLabel + ":");
+    }
+
+    public void compileMatchCase(final CompilationContext cctx, final String endLabel, final List<MatchCase> nonDefaultCases, final List<String> caseLabels, final int i) {
+        final MatchCase mc = nonDefaultCases.get(i);
+        final String label = caseLabels.get(i);
+
+        cctx.emit(label + ":");
+        cctx.pushIndent();
+        cctx.pushScope();
+
+        mc.block.compile(cctx);
+
+        cctx.emit("br label %" + endLabel);
     }
 
     @Override
