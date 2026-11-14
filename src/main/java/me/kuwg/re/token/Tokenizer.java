@@ -241,11 +241,20 @@ public class Tokenizer {
                 Matcher m = NUMBER_PATTERN.matcher(remaining);
                 if (m.lookingAt()) {
                     String lex = m.group();
+                    if (i + lex.length() < n) {
+                        char next = source.charAt(i + lex.length());
+
+                        if (Character.isJavaIdentifierStart(next)) {
+                            except("Invalid numeric literal at line " + line);
+                        }
+                    }
                     tokens.add(new Token(TokenType.NUMBER, lex, line));
                     for (char ch : lex.toCharArray()) if (ch == '\n') line++;
                     i += lex.length();
+
                     continue;
                 }
+
             }
 
             if (Character.isJavaIdentifierStart(c)) {

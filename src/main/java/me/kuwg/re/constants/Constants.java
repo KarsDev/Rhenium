@@ -64,22 +64,31 @@ public abstract class Constants {
         private static final String BIN_DIGITS = "[01_]+";
         private static final String OCT_DIGITS = "[0-7_]+";
 
-        private static final String HEX_FLOAT = "0[xX]" + HEX_DIGITS + "(?:\\." + "[0-9a-fA-F_]*" + ")?[pP][+-]?[0-9_]+[fFdD]?";
-        private static final String DEC_FLOAT =
-                "(" + DEC_DIGITS + "\\.[0-9_]*" +
-                        "|" +
-                        "\\.[0-9_]+" +
-                        "|" +
-                        DEC_DIGITS + ")" +
-                        "([eE][+-]?[0-9_]+)?[fFdD]?";
-
         private static final String HEX_INT = "0[xX]" + HEX_DIGITS + "[lL]?";
         private static final String BIN_INT = "0[bB]" + BIN_DIGITS + "[lL]?";
         private static final String OCT_INT = "0" + OCT_DIGITS + "[lL]?";
         private static final String DEC_INT = DEC_DIGITS + "[lL]?";
 
+        private static final String HEX_FLOAT =
+                "0[xX]" + HEX_DIGITS + "(?:\\." + HEX_DIGITS + ")?[pP][+-]?[0-9_]+[fFdD]?";
+
+        private static final String DEC_FLOAT =
+                "(?:" +
+                        DEC_DIGITS + "\\.[0-9_]*" +
+                        "|\\.[0-9_]+" +
+                        "|" + DEC_DIGITS +
+                        ")" +
+                        "(?:[eE][+-]?[0-9_]+)?[fFdD]";
+
         public static final Pattern NUMBER_PATTERN = Pattern.compile(
-                "^(?:" + HEX_FLOAT + "|" + HEX_INT + "|" + BIN_INT + "|" + OCT_INT + "|" + DEC_FLOAT + "|" + DEC_INT + ")"
+                "^(?:" +
+                        HEX_FLOAT + "|" +
+                        HEX_INT + "|" +
+                        BIN_INT + "|" +
+                        OCT_INT + "|" +
+                        DEC_FLOAT + "|" +
+                        DEC_INT +
+                        ")"
         );
     }
 
