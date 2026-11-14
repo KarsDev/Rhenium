@@ -62,7 +62,10 @@ public class NativeCPPNode extends ASTNode implements GlobalNode {
         else {
             File f = new File(name);
             if (!f.exists()) {
-                new RNativeCPPError("Native C++ module not found: " + name, fileName, line).raise();
+                if (name.endsWith(".cpp") || name.endsWith(".c"))
+                    new RNativeCPPError("Native C++ module not found: " + name, fileName, line).raise();
+                else
+                    new RNativeCPPError("Native C++ module not found: " + name + ", try adding the file extension", fileName, line).raise();
             }
             path = f.toPath();
         }
