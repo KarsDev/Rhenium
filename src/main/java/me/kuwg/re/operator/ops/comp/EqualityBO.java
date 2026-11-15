@@ -79,6 +79,24 @@ abstract class EqualityBO extends BinaryOperator {
         return res(reg, BuiltinTypes.BOOL.getType());
     }
 
+    private static boolean isBool(final TypeRef t) {
+        return t == BuiltinTypes.BOOL.getType();
+    }
+
+    private static String boolToInt(final BinaryOperatorContext c, final String reg, final TypeRef target) {
+        return switch (reg) {
+            case "true" -> "1";
+            case "false" -> "0";
+            default -> emit(c, "zext i1 " + reg + " to " + target.getLLVMName());
+        };
+    }
+
+    private static long constAsLong(final ValueNode node, final CompilationContext cctx) {
+        final String s = node.compileToConstant(cctx);
+        if (isBool(node.getType())) return Boolean.parseBoolean(s) ? 1 : 0;
+        return Long.parseLong(s);
+    }
+
     private <T> T unsupportedCtx(final TypeRef l, final TypeRef r, final BinaryOperatorContext c) {
         return new RUnsupportedBinaryExpressionError(l.getName(), getSymbol(), r.getName(), c.fileName(), c.line()).raise();
     }
@@ -120,6 +138,16 @@ abstract class EqualityBO extends BinaryOperator {
 
         if (lt instanceof StructType sl && rt instanceof StructType sr) {
             return bool(compareStructs(sl, sr, c.leftReg(), c.rightReg(), c, negated));
+        }
+
+        if (isBool(lt) != isBool(rt)) {
+            final TypeRef other = isBool(lt) ? rt : lt;
+            if (!isIntegral(other)) {
+                return unsupportedCtx(lt, rt, c);
+            }
+            final String l = isBool(lt) ? boolToInt(c, c.leftReg(), other) : c.leftReg();
+            final String r = isBool(rt) ? boolToInt(c, c.rightReg(), other) : c.rightReg();
+            return bool(emit(c, numericCompare(other, l, r, negated)));
         }
 
         if (lt == rt && isIntegral(lt)) {
@@ -169,6 +197,14 @@ abstract class EqualityBO extends BinaryOperator {
 
         if (lt instanceof StructType || rt instanceof StructType || lt instanceof UnionType || rt instanceof UnionType) {
             return new RUnsupportedBinaryExpressionError(lt.getName(), getSymbol(), rt.getName(), left.getFileName(), left.getLine()).raise();
+        }
+
+        if (isBool(lt) != isBool(rt)) {
+            final TypeRef other = isBool(lt) ? rt : lt;
+            if (!isIntegral(other)) {
+                return new RUnsupportedBinaryExpressionError(lt.getName(), getSymbol(), rt.getName(), left.getFileName(), left.getLine()).raise();
+            }
+            return literal(constAsLong(left, cctx) == constAsLong(right, cctx), negated);
         }
 
         final TypeRef resultType = promoteNumeric(lt, rt);

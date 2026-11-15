@@ -60,7 +60,6 @@ public class TernaryOperatorNode extends ValueNode {
         String elseLabel = cctx.nextLabel("ternary_else");
         String mergeLabel = cctx.nextLabel("ternary_merge");
 
-
         cctx.emit("; Ternary operator");
         cctx.emit("br i1 " + condReg + ", label %" + thenLabel + ", label %" + elseLabel);
 
@@ -68,6 +67,7 @@ public class TernaryOperatorNode extends ValueNode {
         cctx.pushIndent();
         String thenReg = thenExpr.compileAndGet(cctx);
         var thenType = thenExpr.getType();
+        String thenEnd = cctx.currentLabel();          // block we actually finished in
         cctx.emit("br label %" + mergeLabel);
         cctx.popIndent();
 
@@ -75,10 +75,9 @@ public class TernaryOperatorNode extends ValueNode {
         cctx.pushIndent();
         String elseReg = elseExpr.compileAndGet(cctx);
         var elseType = elseExpr.getType();
+        String elseEnd = cctx.currentLabel();          // block we actually finished in
         cctx.emit("br label %" + mergeLabel);
         cctx.popIndent();
-
-        cctx.emit(mergeLabel + ":");
 
         if (!thenType.equals(elseType)) {
             return new RTernaryOperatorError(
@@ -87,12 +86,12 @@ public class TernaryOperatorNode extends ValueNode {
                     fileName, line).raise();
         }
 
+        cctx.emit(mergeLabel + ":");
+
         String resultReg = cctx.nextRegister();
-        cctx.emit(
-                resultReg + " = phi " + thenType.getLLVMName() +
-                        " [ " + thenReg + ", %" + thenLabel + " ]," +
-                        " [ " + elseReg + ", %" + elseLabel + " ]"
-        );
+        cctx.emit(resultReg + " = phi " + thenType.getLLVMName()
+                + " [ " + thenReg + ", %" + thenEnd + " ],"
+                + " [ " + elseReg + ", %" + elseEnd + " ]");
 
         setType(thenType);
         return resultReg;

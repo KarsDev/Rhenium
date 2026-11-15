@@ -63,9 +63,16 @@ public abstract class BinaryOperator {
     public static String convertToType(String reg, TypeRef from, TypeRef to, BinaryOperatorContext c) {
         if (from == to) return reg;
 
+
         String newReg = c.cctx().nextRegister();
 
-        if (isInteger(from) && isInteger(to)) {
+        if (from == BuiltinTypes.BOOL.getType()) {
+            if (isFloat(to)) {
+                c.cctx().emit(newReg + " = uitofp i1 " + reg + " to " + to.getLLVMName());
+            } else {
+                c.cctx().emit(newReg + " = zext i1 " + reg + " to " + to.getLLVMName());
+            }
+        } else if (isInteger(from) && isInteger(to)) {
             c.cctx().emit(newReg + " = sext " + from.getLLVMName() + " " + reg + " to " + to.getLLVMName());
         } else if (isInteger(from) && isFloat(to)) {
             c.cctx().emit(newReg + " = sitofp " + from.getLLVMName() + " " + reg + " to " + to.getLLVMName());

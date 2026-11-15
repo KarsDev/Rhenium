@@ -40,8 +40,8 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final boolean DEBUG = false;
-    private static final String ERROR_LINE = "call void @\"MoveGenerator.generatePawnMoves_7175_54\"(%struct.MoveGenerator* %9";
+    private static final boolean DEBUG = true;
+    private static final String ERROR_LINE = "e%266 = sub i32 0, %264";
     public final boolean writeExceptionLines;
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -68,6 +68,8 @@ public final class CompilationContext {
     public boolean compilingConstructor = false;
     private Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private final Deque<LabelContext> labelStack = new ArrayDeque<>();
+    private String currentLabel = "entry";
+    private final Deque<String> savedLabels = new ArrayDeque<>();
 
     private int registerCounter = 1;
     private int indentLevel = 1;
@@ -85,9 +87,12 @@ public final class CompilationContext {
 
     public void pushFunctionBody() {
         codeStack.push(new StringBuilder());
+        savedLabels.push(currentLabel);
+        currentLabel = "entry";
     }
 
     public String popFunctionBody() {
+        currentLabel = savedLabels.isEmpty() ? "entry" : savedLabels.pop();
         return codeStack.pop().toString();
     }
 
@@ -104,6 +109,12 @@ public final class CompilationContext {
             s = s.replace("ptr*", "ptr");
         }
         if (s.strip().matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
+        final String stripped = s.strip();
+        if (stripped.matches("^[A-Za-z_][A-Za-z0-9_.$]*:$")) {
+            currentLabel = stripped.substring(0, stripped.length() - 1);
+        }
+        if (stripped.matches("^[A-Za-z_][A-Za-z0-9_]*_[0-9]+:$")) registerCounter++;
+
         Objects.requireNonNull(codeStack.peek()).append(TAB.repeat(indentLevel)).append(s).append('\n');
     }
 
@@ -375,6 +386,10 @@ public final class CompilationContext {
 
     public LabelContext getLabel(String name) {
         return labelStack.stream().filter(context -> context.name().equals(name)).findFirst().orElse(null);
+    }
+
+    public String currentLabel() {
+        return currentLabel;
     }
 
     public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs, boolean keepLLVM) throws IOException {
