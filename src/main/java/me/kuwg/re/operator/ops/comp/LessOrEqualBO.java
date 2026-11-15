@@ -66,7 +66,7 @@ public final class LessOrEqualBO extends BinaryOperator {
         final TypeRef resultType = promoteNumeric(leftType, rightType);
 
         if (resultType == null) {
-            return unsupported(leftType, rightType, left).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
         }
 
         try {
@@ -114,6 +114,6 @@ public final class LessOrEqualBO extends BinaryOperator {
         } catch (NumberFormatException ignored) {
         }
 
-        return unsupported(leftType, rightType, left).raise();
+        return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
     }
 }

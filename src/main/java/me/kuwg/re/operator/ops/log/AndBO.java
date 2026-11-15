@@ -1,56 +1,16 @@
 package me.kuwg.re.operator.ops.log;
 
-import me.kuwg.re.ast.types.value.ValueNode;
-import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
-import me.kuwg.re.operator.BinaryOperatorContext;
-import me.kuwg.re.operator.result.BOResult;
-import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.BuiltinTypes;
 
-public final class AndBO extends BinaryOperator {
+public final class AndBO extends LogicalBO {
     public static final BinaryOperator INSTANCE = new AndBO();
 
     AndBO() {
-        super(2, "and");
+        super(2, "and", "and");
     }
 
     @Override
-    public BOResult compile(final BinaryOperatorContext c) {
-        TypeRef leftType = c.leftType();
-        TypeRef rightType = c.rightType();
-
-        if (!(leftType == BuiltinTypes.BOOL.getType()) || !(rightType == BuiltinTypes.BOOL.getType())) {
-            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
-        }
-
-        String leftReg = c.leftReg();
-        String rightReg = c.rightReg();
-        String resultReg = c.cctx().nextRegister();
-
-        c.cctx().emit(resultReg + " = and i1 " + leftReg + ", " + rightReg);
-
-        return res(resultReg, BuiltinTypes.BOOL.getType());
-    }
-
-    @Override
-    public String compileToConstant(final ValueNode left, final ValueNode right, final CompilationContext cctx) {
-        final TypeRef leftType = left.getType();
-        final TypeRef rightType = right.getType();
-
-        if (!(leftType == BuiltinTypes.BOOL.getType()) || !(rightType == BuiltinTypes.BOOL.getType())) {
-            return unsupported(leftType, rightType, left).raise();
-        }
-
-        try {
-            return Boolean.toString(
-                    Boolean.parseBoolean(left.compileToConstant(cctx)) &&
-                            Boolean.parseBoolean(right.compileToConstant(cctx))
-            );
-        } catch (Exception ignored) {
-        }
-
-        return unsupported(leftType, rightType, left).raise();
+    protected boolean apply(final boolean l, final boolean r) {
+        return l && r;
     }
 }

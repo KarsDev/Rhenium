@@ -2,6 +2,7 @@ package me.kuwg.re.operator.ops.add;
 
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.operator.result.BOResult;
@@ -22,7 +23,7 @@ public final class SubBO extends BinaryOperator {
 
         TypeRef resultType = promoteNumeric(leftType, rightType);
         if (resultType == null) {
-            return unsupported(leftType, rightType, c.fileName(), c.line()).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
         String leftReg = convertToType(c.leftReg(), leftType, resultType, c);
@@ -44,7 +45,7 @@ public final class SubBO extends BinaryOperator {
         final TypeRef resultType = promoteNumeric(leftType, rightType);
 
         if (resultType == null) {
-            return unsupported(leftType, rightType, left).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
         }
 
         final String lhs = left.compileToConstant(cctx);
@@ -75,9 +76,9 @@ public final class SubBO extends BinaryOperator {
                 return Byte.toString((byte) (Byte.parseByte(lhs) - Byte.parseByte(rhs)));
             }
         } catch (NumberFormatException ex) {
-            return unsupported(leftType, rightType, left).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
         }
 
-        return unsupported(leftType, rightType, left).raise();
+        return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
     }
 }

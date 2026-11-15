@@ -152,7 +152,7 @@ abstract class EqualityBO extends BinaryOperator {
             if ((lNull ? rt : lt) == BuiltinTypes.STR.getType()) {
                 return literal(false, negated);
             }
-            return unsupported(lt, rt, left).raise();
+            return new RUnsupportedBinaryExpressionError(lt.getName(), getSymbol(), rt.getName(), left.getFileName(), left.getLine()).raise();
         }
 
         if (lt == BuiltinTypes.STR.getType() && rt == BuiltinTypes.STR.getType()) {
@@ -168,12 +168,12 @@ abstract class EqualityBO extends BinaryOperator {
         }
 
         if (lt instanceof StructType || rt instanceof StructType || lt instanceof UnionType || rt instanceof UnionType) {
-            return unsupported(lt, rt, left).raise();
+            return new RUnsupportedBinaryExpressionError(lt.getName(), getSymbol(), rt.getName(), left.getFileName(), left.getLine()).raise();
         }
 
         final TypeRef resultType = promoteNumeric(lt, rt);
         if (resultType == null) {
-            return unsupported(lt, rt, left).raise();
+            return new RUnsupportedBinaryExpressionError(lt.getName(), getSymbol(), rt.getName(), left.getFileName(), left.getLine()).raise();
         }
 
         try {
@@ -195,7 +195,7 @@ abstract class EqualityBO extends BinaryOperator {
         } catch (NumberFormatException ignored) {
         }
 
-        return unsupported(lt, rt, left).raise();
+        return new RUnsupportedBinaryExpressionError(lt.getName(), getSymbol(), rt.getName(), left.getFileName(), left.getLine()).raise();
     }
 
     private String compareStructs(final StructType lt, final StructType rt, final String l, final String r,

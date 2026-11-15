@@ -1,125 +1,26 @@
 package me.kuwg.re.operator.ops.mul;
 
-import me.kuwg.re.ast.types.value.ValueNode;
-import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.constant.RDivisionByZeroError;
-import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.BinaryOperator;
-import me.kuwg.re.operator.BinaryOperatorContext;
-import me.kuwg.re.operator.result.BOResult;
-import me.kuwg.re.type.TypeRef;
-import me.kuwg.re.type.builtin.BuiltinTypes;
 
-public final class DivBO extends BinaryOperator {
+public final class DivBO extends ArithmeticBO {
     public static final BinaryOperator INSTANCE = new DivBO();
 
     DivBO() {
-        super(9, "/");
+        super("/", "sdiv", "fdiv", ZeroDivisor.REJECT_ALL);
     }
 
     @Override
-    public BOResult compile(final BinaryOperatorContext c) {
-        TypeRef leftType = c.leftType();
-        TypeRef rightType = c.rightType();
-
-        TypeRef resultType = promoteNumeric(leftType, rightType);
-        if (resultType == null) {
-            return new RUnsupportedBinaryExpressionError(
-                    leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()
-            ).raise();
-        }
-
-        String leftReg = convertToType(c.leftReg(), leftType, resultType, c);
-        String rightReg = convertToType(c.rightReg(), rightType, resultType, c);
-
-        String resultReg = c.cctx().nextRegister();
-        String op = (isFloat(resultType) ? "fdiv" : "sdiv");
-
-        c.cctx().emit(resultReg + " = " + op + " " + resultType.getLLVMName() + " " + leftReg + ", " + rightReg);
-
-        return res(resultReg, resultType);
+    protected long applyLong(final long l, final long r) {
+        return l / r;
     }
 
     @Override
-    public String compileToConstant(final ValueNode left, final ValueNode right, final CompilationContext cctx) {
-        final TypeRef leftType = left.getType();
-        final TypeRef rightType = right.getType();
+    protected float applyFloat(final float l, final float r) {
+        return l / r;
+    }
 
-        final TypeRef resultType = promoteNumeric(leftType, rightType);
-
-        if (resultType == null) {
-            return unsupported(leftType, rightType, left).raise();
-        }
-
-        try {
-            if (resultType == BuiltinTypes.DOUBLE.getType()) {
-                final double l = Double.parseDouble(left.compileToConstant(cctx));
-                final double r = Double.parseDouble(right.compileToConstant(cctx));
-
-                if (r == 0.0d) {
-                    return new RDivisionByZeroError(left.getFileName(), left.getLine()).raise();
-                }
-
-                return Double.toString(l / r);
-            }
-
-            if (resultType == BuiltinTypes.FLOAT.getType()) {
-                final float l = Float.parseFloat(left.compileToConstant(cctx));
-                final float r = Float.parseFloat(right.compileToConstant(cctx));
-
-                if (r == 0.0f) {
-                    return new RDivisionByZeroError(left.getFileName(), left.getLine()).raise();
-                }
-
-                return Float.toString(l / r);
-            }
-
-            if (resultType == BuiltinTypes.LONG.getType()) {
-                final long l = Long.parseLong(left.compileToConstant(cctx));
-                final long r = Long.parseLong(right.compileToConstant(cctx));
-
-                if (r == 0L) {
-                    return new RDivisionByZeroError(left.getFileName(), left.getLine()).raise();
-                }
-
-                return Long.toString(l / r);
-            }
-
-            if (resultType == BuiltinTypes.INT.getType()) {
-                final int l = Integer.parseInt(left.compileToConstant(cctx));
-                final int r = Integer.parseInt(right.compileToConstant(cctx));
-
-                if (r == 0) {
-                    return new RDivisionByZeroError(left.getFileName(), left.getLine()).raise();
-                }
-
-                return Integer.toString(l / r);
-            }
-
-            if (resultType == BuiltinTypes.SHORT.getType()) {
-                final short l = Short.parseShort(left.compileToConstant(cctx));
-                final short r = Short.parseShort(right.compileToConstant(cctx));
-
-                if (r == 0) {
-                    return new RDivisionByZeroError(left.getFileName(), left.getLine()).raise();
-                }
-
-                return Short.toString((short) (l / r));
-            }
-
-            if (resultType == BuiltinTypes.BYTE.getType()) {
-                final byte l = Byte.parseByte(left.compileToConstant(cctx));
-                final byte r = Byte.parseByte(right.compileToConstant(cctx));
-
-                if (r == 0) {
-                    return new RDivisionByZeroError(left.getFileName(), left.getLine()).raise();
-                }
-
-                return Byte.toString((byte) (l / r));
-            }
-        } catch (NumberFormatException ignored) {
-        }
-
-        return unsupported(leftType, rightType, left).raise();
+    @Override
+    protected double applyDouble(final double l, final double r) {
+        return l / r;
     }
 }

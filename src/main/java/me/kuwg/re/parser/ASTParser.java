@@ -1287,7 +1287,7 @@ public final class ASTParser {
         if (match(OPERATOR)) {
             String opSymbol = current().value();
 
-            if (BinaryOperators.getBySymbol(opSymbol) != null || (opSymbol.length() > 2 && opSymbol.endsWith("=")))
+            if (BinaryOperators.getBySymbol(opSymbol) != null)
                 return node;
 
             if (opSymbol.equals("++")) {

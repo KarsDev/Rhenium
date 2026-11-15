@@ -50,13 +50,13 @@ public final class AddBO extends BinaryOperator {
         final TypeRef rightType = right.getType();
 
         if (leftType == BuiltinTypes.STR.getType() || rightType == BuiltinTypes.STR.getType()) {
-            return unsupported(leftType, rightType, left).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
         }
 
         final TypeRef resultType = promoteNumeric(leftType, rightType);
 
         if (resultType == null) {
-            return unsupported(leftType, rightType, left).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
         }
 
         final String lhs = left.compileToConstant(cctx);
@@ -87,10 +87,10 @@ public final class AddBO extends BinaryOperator {
                 return Byte.toString((byte) (Byte.parseByte(lhs) + Byte.parseByte(rhs)));
             }
         } catch (NumberFormatException ex) {
-            return unsupported(leftType, rightType, left).raise();
+            return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
         }
 
-        return unsupported(leftType, rightType, left).raise();
+        return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), left.getFileName(), left.getLine()).raise();
     }
 
     private String compileStringOperation(BinaryOperatorContext c) {

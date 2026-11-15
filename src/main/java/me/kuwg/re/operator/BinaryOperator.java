@@ -2,7 +2,6 @@ package me.kuwg.re.operator;
 
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
-import me.kuwg.re.error.errors.expr.RUnsupportedBinaryExpressionError;
 import me.kuwg.re.operator.result.BOResult;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
@@ -97,13 +96,5 @@ public abstract class BinaryOperator {
 
     public final String getSymbol() {
         return symbol;
-    }
-
-    protected RUnsupportedBinaryExpressionError unsupported(TypeRef left, TypeRef right, ValueNode node) {
-        return unsupported(left, right, node.getFileName(), node.getLine());
-    }
-
-    protected RUnsupportedBinaryExpressionError unsupported(TypeRef left, TypeRef right, String fileName, int line) {
-        return new RUnsupportedBinaryExpressionError(left.getName(), getSymbol(), right.getName(), fileName, line);
     }
 }
