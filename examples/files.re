@@ -24,6 +24,6 @@ func main() -> int:
 
     println(line)
 
-    input.delete()
+    input.deleteFile()
 
     return 0
