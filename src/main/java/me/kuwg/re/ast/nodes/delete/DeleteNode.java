@@ -43,36 +43,7 @@ public class DeleteNode extends ASTNode {
         TypeRef type = cctx.resolveConcrete(variable.type(), line);
         cctx.emit("; Delete " + value.getCompleteName());
 
-        if (type.isPointer()) {
-            String ptrReg = variable.valueReg();
-
-            if (variable.addressBacked()) {
-                String loaded = cctx.nextRegister();
-                cctx.emit(loaded + " = load " + type.getLLVMName() + ", " + type.getLLVMName() + "* " + variable.addrReg());
-                ptrReg = loaded;
-            }
-
-
-            cctx.emit("call void @free(ptr " + ptrReg + ")");
-            return;
-        }
-
-        if (type instanceof ArrayType at) {
-            if (at.isStatic()) {
-                new RDeleteTypeError("cannot delete a static array", fileName, line).raise();
-                return;
-            }
-
-            String ptrReg = variable.valueReg();
-
-            if (variable.addressBacked()) {
-                String loaded = cctx.nextRegister();
-                cctx.emit(loaded + " = load " + type.getLLVMName() + ", " + type.getLLVMName() + "* " + variable.addrReg());
-                ptrReg = loaded;
-            }
-
-            cctx.emit("call void @free(ptr " + ptrReg + ")");
-        } else if (type instanceof StructType st) {
+        if (type instanceof StructType st) {
             RDefaultStruct struct = cctx.getStruct(st.getName());
 
             if (struct == null) {
@@ -84,10 +55,26 @@ public class DeleteNode extends ASTNode {
                 cctx.emit("call void @" + struct.getDestructor().llvmName() + "(ptr " + variable.addrReg() + ")");
                 cctx.unregisterDestructor(variable.addrReg());
             }
+        }
 
-        } else {
+        if (type instanceof ArrayType at) {
+            if (at.isStatic()) {
+                new RDeleteTypeError("cannot delete a static array", fileName, line).raise();
+                return;
+            }
+        } else if (!type.isPointer()) {
             new RDeleteTypeError("delete is only supported for pointers, arrays, and structs", fileName, line).raise();
         }
+
+        String ptrReg = variable.valueReg();
+
+        if (variable.addressBacked()) {
+            String loaded = cctx.nextRegister();
+            cctx.emit(loaded + " = load " + type.getLLVMName() + ", " + type.getLLVMName() + "* " + variable.addrReg());
+            ptrReg = loaded;
+        }
+
+        cctx.emit("call void @free(ptr " + ptrReg + ")");
     }
 
     @Override
