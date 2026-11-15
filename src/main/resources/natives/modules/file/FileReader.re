@@ -1,84 +1,100 @@
+using number
 using file.file
 using errors.FileError
 
-// Native C++ backend for file reading
-_NativeCPP("FileReader") str BFR_00(op: int, path: str) // returns file content or empty string
+_NativeCPP("FileReader") str BFR_00(op: int, handle: int, path: str)
 
-// FileReader struct
 struct FileReader:
     file: File
     isOpen: mut bool
     content: mut str
     position: mut int
+    handle: mut int
 
-// Implement FileReader functions
 impl FileReader:
+
     init(file: File):
         this.file = file
-        this.isOpen = false 
+        this.isOpen = false
         this.content = ""
         this.position = 0
+        this.handle = 0
 
-    // Opens the file for reading
     func open() -> bool:
         if this.isOpen:
             return false
 
-        if this.file.exists() == false:
-            raise init FileError("Tried to open a FileReader of a file that does not exist")
+        if not this.file.exists():
+            raise init FileError("Cannot open a file that does not exist")
 
-        success = BFR_00(0, this.file.name) == "1"
-        if success:
-            this.content = BFR_00(1, this.file.name) 
-            this.position = 0
-            this.isOpen = true
+        result = BFR_00(0, 0, this.file.name)
 
-        return success
+        if result == "0":
+            return false
 
-    // Reads the next N characters from the file
+        this.handle = Number::parseInt(result)
+
+        this.content = BFR_00(1, this.handle, "")
+
+        this.position = 0
+        this.isOpen = true
+
+        return true
+
     func read(n: int) -> str:
-        if this.isOpen == false:
-            raise init FileError("Use FileReader#open() before FileReader#read")
+        this.ensureOpen()
+
+        if n < 0:
+            raise init FileError("Read length cannot be negative")
+
+        if n == 0:
+            return ""
+
+        remaining = len(this.content) - this.position
+        count: mut = n
+
+        if count > remaining:
+            count = remaining
+
+        result = strSubRange(this.content, this.position, this.position + count)
+
+        this.position += count
+
+        return result
+
+    func readLine() -> str:
+        this.ensureOpen()
 
         start = this.position
-        end: mut = start + n
-        if end > len(this.content):
-            end = len(this.content)
 
-        result: mut = ""
-        i: mut = start
-        while i < end:
-            result = result + this.content[i]
-            i++
-
-        this.position = end
-        return result
-
-    // Reads the next line from the file
-    func readLine() -> str:
-        if this.isOpen == false:
-            raise init FileError("Use FileReader#open() before FileReader#readLine")
-
-        result: mut = ""
         while this.position < len(this.content):
-            c = this.content[this.position]
-            this.position = this.position + 1
-            if c == '\n':
-                break
-            result = result + c
+            if this.content[this.position] == '\n':
+                result = strSubRange(this.content, start, this.position)
 
-        return result
+                this.position += 1
+                return result
 
-    // Checks if the reader reached the end of the file
+            this.position += 1
+
+        return strSubRange(this.content, start, this.position)
+
     func eof() -> bool:
+        this.ensureOpen()
         return this.position >= len(this.content)
 
-    // Closes the file
+    func ensureOpen():
+        if this.isOpen == false:
+            raise init FileError("FileReader is not open")
+
     func close() -> bool:
         if this.isOpen == false:
-            raise init FileError("Use FileReader#open() before FileReader#")
+            return false
+
+        result = BFR_00(2, this.handle, "")
 
         this.content = ""
         this.position = 0
+        this.handle = 0
         this.isOpen = false
-        return BFR_00(2, this.file.name) == "1"
+
+        return result == "1"

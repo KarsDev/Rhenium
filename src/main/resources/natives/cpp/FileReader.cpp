@@ -1,74 +1,75 @@
 #include <string>
 #include <fstream>
 #include <unordered_map>
+#include <memory>
 #include <mutex>
+#include <iterator>
+#include <cstdint>
 
-std::unordered_map<std::string, std::ifstream> openReadFiles;
-std::mutex readFileMutex;
+struct ReadHandle {
+    std::ifstream stream;
+    std::mutex mutex;
 
-// Helper function to get file stream (thread-safe)
-std::ifstream& getReadFileStream(const std::string& path) {
-    return openReadFiles[path];
-}
+    explicit ReadHandle(const std::string& path) : stream(path, std::ios::binary) {}
+};
 
-// Open file for reading
-bool openReadFile(const std::string& path) {
-    std::lock_guard<std::mutex> lock(readFileMutex);
-    if (openReadFiles.find(path) != openReadFiles.end()) {
-        // Already open
-        return false;
-    }
-
-    std::ifstream ifs(path, std::ios::in);
-    if (!ifs.is_open()) return false;
-
-    openReadFiles[path] = std::move(ifs);
-    return true;
-}
-
-// Read entire file content
-std::string readFile(const std::string& path) {
-    std::lock_guard<std::mutex> lock(readFileMutex);
-    auto it = openReadFiles.find(path);
-    if (it == openReadFiles.end()) return "";
-
-    std::ifstream& ifs = it->second;
-    ifs.seekg(0, std::ios::beg); // Ensure start at beginning if needed
-    std::string content((std::istreambuf_iterator<char>(ifs)),
-                         std::istreambuf_iterator<char>());
-    return content;
-}
-
-// Close file
-bool closeReadFile(const std::string& path) {
-    std::lock_guard<std::mutex> lock(readFileMutex);
-    auto it = openReadFiles.find(path);
-    if (it == openReadFiles.end()) return false;
-
-    it->second.close();
-    openReadFiles.erase(it);
-    return true;
-}
+static std::unordered_map<int, std::shared_ptr<ReadHandle>> readers;
+static std::mutex readersMutex;
+static int nextHandle = 1;
 
 extern "C" {
-    // op codes: 0 = open, 1 = read, 2 = close
-    const int READ_OPEN = 0;
-    const int READ_READ = 1;
-    const int READ_CLOSE = 2;
+    // 0 = open
+    // 1 = read all
+    // 2 = close
 
-    char* BFR_00(int op, char* path) {
-        static std::string buffer; // static to return pointer safely
-        std::string p(path ? path : "");
+    const char* BFR_00(int op, int handle, const char* path) {
+        static thread_local std::string buffer;
 
-        switch (op) {
-            case READ_OPEN:
-                return openReadFile(p) ? (char*)"1" : (char*)"0";
-            case READ_READ:
-                buffer = readFile(p);
-                return (char*)buffer.c_str();
-            case READ_CLOSE:
-                return closeReadFile(p) ? (char*)"1" : (char*)"0";
+        if (op == 0) {
+            if (!path) return "0";
+
+            auto reader = std::make_shared<ReadHandle>(path);
+
+            if (!reader->stream.is_open())
+                return "0";
+
+            std::lock_guard<std::mutex> lock(readersMutex);
+
+            int id = nextHandle++;
+            readers.emplace(id, std::move(reader));
+
+            buffer = std::to_string(id);
+            return buffer.c_str();
         }
-        return (char*)"0";
+
+        std::shared_ptr<ReadHandle> reader;
+        {
+            std::lock_guard<std::mutex> lock(readersMutex);
+
+            auto it = readers.find(handle);
+
+            if (it == readers.end())
+                return "0";
+
+            reader = it->second;
+
+            if (op == 2) {
+                readers.erase(it);
+                return "1";
+            }
+        }
+
+        std::lock_guard<std::mutex> lock(reader->mutex);
+
+        if (op == 1) {
+            buffer.assign(
+                std::istreambuf_iterator<char>(reader->stream),
+                std::istreambuf_iterator<char>()
+            );
+
+            return buffer.c_str();
+        }
+
+        return "0";
     }
 }
