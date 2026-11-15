@@ -20,7 +20,6 @@ import me.kuwg.re.copy.CopyFunctionGenerator;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.function.RMainFunctionError;
 import me.kuwg.re.error.errors.parser.RParserError;
-import me.kuwg.re.error.errors.variable.RGlobalVariableScopeError;
 import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
@@ -42,7 +41,7 @@ import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final String ERROR_LINE = "e%266 = sub i32 0, %264";
     public final boolean writeExceptionLines;
     private final String fileName;
