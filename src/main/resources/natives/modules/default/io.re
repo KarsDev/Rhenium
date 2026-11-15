@@ -56,6 +56,10 @@ func println(f: float) -> none:
 func println(d: double) -> none:
     println(doubleToStr(d))
 
+// Prints a double followed by a newline
+func println(b: bool) -> none:
+    println(boolToStr(b))
+
 // Print a string without adding a newline
 _Builtin func print(s: str) -> none = """
 entry:
