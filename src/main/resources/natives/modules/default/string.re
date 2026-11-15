@@ -11,7 +11,7 @@ declare i32 @sprintf_external(i8*, i64, i8*, ...)
 
 ; Global format strings used by sprintf
 @fmt_int = private constant [3 x i8] c"%d\00"
-@fmt_long = private constant [4 x i8] c"%ld\00"
+@fmt_long = private constant [5 x i8] c"%lld\00"
 @fmt_float = private constant [3 x i8] c"%f\00"
 @fmt_double = private constant [7 x i8] c"%0.16f\00"
 @fmt_bool = private constant [3 x i8] c"%s\00"
@@ -60,8 +60,8 @@ entry:
 // Converts a 64-bit long to a string
 _Builtin global func longToStr(l: long) -> str = """
 entry:
-    %buf = call i8* @malloc(i64 24)            ; Larger buffer for 64-bit integers
-    %fmt_ptr = getelementptr [4 x i8], [4 x i8]* @fmt_long, i32 0, i32 0
+    %buf = call i8* @malloc(i64 24)
+    %fmt_ptr = getelementptr [5 x i8], [5 x i8]* @fmt_long, i32 0, i32 0
     call i32 (i8*, i64, i8*, ...) @sprintf_external(i8* %buf, i64 24, i8* %fmt_ptr, i64 %l)
     ret i8* %buf
 """
