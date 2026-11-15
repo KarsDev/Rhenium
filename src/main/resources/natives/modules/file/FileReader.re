@@ -81,4 +81,4 @@ impl FileReader:
         this.content = ""
         this.position = 0
         this.isOpen = false
-        return true
+        return BFR_00(2, this.file.name) == "1"
