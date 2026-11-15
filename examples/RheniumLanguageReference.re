@@ -323,10 +323,21 @@ Range forms
 range(<start>[, <end>[, <step>]])
 */
 
-r: mut = range(5) // from 0 to 5
-r = range(0, 5) // from 0 to 5
-r = range(0, 10, 2) // from 0 to 10 by incrementing by 2 every time (0, 2, 4, 6, 8, 10)
+range(5)        // from 0 to 5
+range(0, 5)     // from 0 to 5
+range(0, 10, 2) // from 0 to 10 by incrementing by 2 every time (0, 2, 4, 6, 8, 10)
 
+/*
+For loops also work with arrays with fixed size
+*/
+objs = [0, 1, 2, 3, 4]
+copied = init arr -> int(5) // constant for iteration
+
+for obj in objs:
+    copied[obj] = obj
+
+for c in copied:
+    println(c)
 /*
 <=------------------------=>|<=>|<=-----------------------=>
   MATCH STATEMENTS
