@@ -22,12 +22,17 @@ abstract class BitwiseBO extends BinaryOperator {
         return t == BuiltinTypes.BOOL.getType();
     }
 
-    private static boolean isSupported(final TypeRef t) {
-        return isBool(t)
-                || t == BuiltinTypes.BYTE.getType()
+    private static boolean isIntegral(final TypeRef t) {
+        return t == BuiltinTypes.BYTE.getType()
                 || t == BuiltinTypes.SHORT.getType()
                 || t == BuiltinTypes.INT.getType()
                 || t == BuiltinTypes.LONG.getType();
+    }
+
+    private TypeRef resultTypeOf(final TypeRef left, final TypeRef right) {
+        if (isBool(left) && isBool(right)) return left;
+        if (isIntegral(left) && isIntegral(right)) return promoteNumeric(left, right);
+        return null;
     }
 
     private static long wrap(final long v, final TypeRef t) {
@@ -66,14 +71,18 @@ abstract class BitwiseBO extends BinaryOperator {
         final TypeRef leftType = c.leftType();
         final TypeRef rightType = c.rightType();
 
-        if (leftType != rightType || !isSupported(leftType)) {
+        final TypeRef resultType = resultTypeOf(leftType, rightType);
+        if (resultType == null) {
             return new RUnsupportedBinaryExpressionError(leftType.getName(), getSymbol(), rightType.getName(), c.fileName(), c.line()).raise();
         }
 
-        final String resReg = c.cctx().nextRegister();
-        c.cctx().emit(resReg + " = " + llvmOp + " " + leftType.getLLVMName() + " " + c.leftReg() + ", " + c.rightReg());
+        final String leftReg = isBool(resultType) ? c.leftReg() : convertToType(c.leftReg(), leftType, resultType, c);
+        final String rightReg = isBool(resultType) ? c.rightReg() : convertToType(c.rightReg(), rightType, resultType, c);
 
-        return res(resReg, leftType);
+        final String resReg = c.cctx().nextRegister();
+        c.cctx().emit(resReg + " = " + llvmOp + " " + resultType.getLLVMName() + " " + leftReg + ", " + rightReg);
+
+        return res(resReg, resultType);
     }
 
     @Override
@@ -81,11 +90,13 @@ abstract class BitwiseBO extends BinaryOperator {
         final TypeRef leftType = left.getType();
         final TypeRef rightType = right.getType();
 
-        if (leftType.equals(rightType) && isSupported(leftType)) {
+        final TypeRef resultType = resultTypeOf(leftType, rightType);
+
+        if (resultType != null) {
             try {
                 final long lhs = parse(left.compileToConstant(cctx), leftType);
-                final long rhs = parse(right.compileToConstant(cctx), leftType);
-                return format(wrap(apply(lhs, rhs), leftType), leftType);
+                final long rhs = parse(right.compileToConstant(cctx), rightType);
+                return format(wrap(apply(lhs, rhs), resultType), resultType);
             } catch (NumberFormatException ignored) {
             }
         }

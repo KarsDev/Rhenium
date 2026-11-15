@@ -171,9 +171,10 @@ public class NumberNode extends ConstantNode {
     }
 
     private static IntegerSuffix getIntegerSuffix(final String literal) {
+        final boolean hex = literal.startsWith("0x");
         char last = literal.charAt(literal.length() - 1);
         return switch (last) {
-            case 'b' -> IntegerSuffix.BYTE;
+            case 'b' -> hex ? IntegerSuffix.NONE : IntegerSuffix.BYTE;
             case 's' -> IntegerSuffix.SHORT;
             case 'l' -> IntegerSuffix.LONG;
             default -> IntegerSuffix.NONE;

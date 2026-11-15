@@ -19,6 +19,8 @@ import me.kuwg.re.compiler.variable.RVariable;
 import me.kuwg.re.copy.CopyFunctionGenerator;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.function.RMainFunctionError;
+import me.kuwg.re.error.errors.parser.RParserError;
+import me.kuwg.re.error.errors.variable.RGlobalVariableScopeError;
 import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
@@ -142,7 +144,7 @@ public final class CompilationContext {
         if (!scopeStack.isEmpty()) {
             scopeStack.peek().put(v.name(), v);
         } else {
-            throw new RInternalError();
+            new RParserError("Variable outside of a scope", fileName, -1);
         }
     }
 

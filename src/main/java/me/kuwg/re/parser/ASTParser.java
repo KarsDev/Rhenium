@@ -298,11 +298,11 @@ public final class ASTParser {
                     }
                     case "-" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, SubBO.INSTANCE, parseValue());
+                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, SubBO.INSTANCE, parseUnaryOperand());
                     }
                     case "+" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, AddBO.INSTANCE, parseValue());
+                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, AddBO.INSTANCE, parseUnaryOperand());
                     }
                     case "~" -> {
                         consume();
@@ -310,7 +310,8 @@ public final class ASTParser {
                     }
                     case "not" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), fileName, parseValue(), EqualsBO.INSTANCE, new BooleanNode(fileName, line(), false));
+                        node = new BinaryExpressionNode(line(), fileName, parseExpression(EqualsBO.INSTANCE.getPrecedence()),
+                                EqualsBO.INSTANCE, new BooleanNode(fileName, line(), false));
                     }
                     case "++" -> {
                         consume();
@@ -393,6 +394,14 @@ public final class ASTParser {
 
     private ValueNode parseValue() {
         return parseExpression(0);
+    }
+
+    private ValueNode parseUnaryOperand() {
+        ValueNode operand = parsePrimary();
+        while (match(OPERATOR, ".")) {
+            operand = parseSubExpr(line(), false, null, operand);
+        }
+        return operand;
     }
 
     private ASTNode parseKeyword() {
