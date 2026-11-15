@@ -1,6 +1,6 @@
 using graphics.keys
 
-_NativeCPP("win/win") \
+_NativeCPP("win") \
     anyptr createScreen(width: int, height: int, title: str) and \
     none closeScreen(screen: anyptr) and \
     bool isScreenRunning(screen: anyptr) and \

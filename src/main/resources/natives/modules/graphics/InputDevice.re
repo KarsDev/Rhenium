@@ -1,4 +1,4 @@
-_NativeCPP("win/win") \
+_NativeCPP("win") \
     int getMouseX() and \
     int getMouseY() and \
     \
