@@ -1,8 +1,10 @@
 package me.kuwg.re.ast.nodes.len;
 
+import me.kuwg.re.ast.nodes.constants.StringNode;
 import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.constant.RNotConstantError;
 import me.kuwg.re.error.errors.len.RInvalidLenError;
 import me.kuwg.re.error.errors.variable.RVariableTypeError;
 import me.kuwg.re.type.TypeRef;
@@ -62,6 +64,36 @@ public class LenNode extends ValueNode {
         cctx.emit(resultReg + " = trunc i64 " + longReg + " to i32");
 
         return resultReg;
+    }
+
+    @Override
+    public boolean isConstant(final CompilationContext cctx) {
+        return value.isConstant(cctx);
+    }
+
+    @Override
+    public String compileToConstant(final CompilationContext cctx) {
+        if (value instanceof StringNode stringNode) {
+            return String.valueOf(stringNode.getValue().length());
+        }
+
+        TypeRef valueType = value.getType();
+
+        if (valueType instanceof ArrayType arrType) {
+            if (arrType.isDynamic()) {
+                return new RInvalidLenError(
+                        "Dynamic array", fileName, line
+                ).raise();
+            }
+
+            return String.valueOf(arrType.size());
+        }
+
+        return new RNotConstantError(
+                "Cannot compile to constant the len value. Only string literals and static array types are supported.",
+                fileName,
+                line
+        ).raise();
     }
 
     @Override

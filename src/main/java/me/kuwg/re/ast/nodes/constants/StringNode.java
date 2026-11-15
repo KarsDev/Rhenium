@@ -83,6 +83,14 @@ public class StringNode extends ConstantNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("String: \"").append(value.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")).append("\"").append(NEWLINE);
+        sb.append(indent).append("String: \"")
+                .append(value.replace("\n", "\\n")
+                        .replace("\r", "\\r")
+                        .replace("\t", "\\t"))
+                .append("\"").append(NEWLINE);
+    }
+
+    public String getValue() {
+        return value;
     }
 }
