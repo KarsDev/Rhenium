@@ -87,7 +87,7 @@ Builtin functions bind RE functions to LLVM implementations.
 They are declared using `_Builtin func`.
 */
 
-_Builtin func toggleAlarm(msg: string) -> none = """
+_Builtin func toggleAlarm(msg: str) -> none = """
 LLVM Implementation
 """
 
@@ -135,10 +135,10 @@ Note:
     You don't need to specify the type when declaring a variable
 */
 
-a: int = 10
-b: bool = true
-c: char = 'x'
-s: str = "hello"
+alpha: int = 10
+beta: bool = true
+gamma: char = 'x'
+delta: str = "hello"
 
 /*
 Pointer types
@@ -146,7 +146,7 @@ Syntax:
     ptr -> <type>
 */
 
-pointer_to_a: ptr -> int = ptr(a)
+pointer_to_alpha: ptr -> int = ptr(alpha)
 
 /*
 Array types
@@ -185,11 +185,11 @@ Note:
 */
 
 // Deduced type: int
-x = 5
-y: int = 10
+int_five = 5
+int_ten: int = 10
 
 // Here the compiler deduces the 'int' type and sets 'z' as mutable
-z: mut = 15
+mutable_variable: mut = 15
 
 /*
 Global variables:
@@ -253,7 +253,7 @@ func add(a: int, b: int) -> int:
 Functions without explicit return type return `none`
 */
 
-func log(msg: string):
+func log(msg: str):
     println(msg)
 
 /*
@@ -267,7 +267,7 @@ func increment(x: mut int):
 Function calls
 */
 
-r = add(1, 2)
+result = add(1, 2)
 log("hello")
 
 /*
@@ -292,9 +292,11 @@ generic func sum<T>(a: T, b: T) -> T inline:
 If / Else / Else If
 */
 
-if a > 0:
+idx = 0
+
+if idx > 0:
     println("positive")
-else if a < 0:
+else if idx < 0:
     println("negative")
 else:
     println("zero")
@@ -303,11 +305,11 @@ else:
 While loops
 */
 
-while a < 10:
-    a += 1
-    if a == 5:
+while idx < 10:
+    idx += 1
+    if idx == 5:
         continue
-    if a == 8:
+    if idx == 8:
         break
 
 /*
@@ -331,12 +333,12 @@ range(0, 10, 2) // from 0 to 10 by incrementing by 2 every time (0, 2, 4, 6, 8, 
 For loops also work with arrays with fixed size
 */
 objs = [0, 1, 2, 3, 4]
-copied = init arr -> int(5) // constant for iteration
+copied_objs = init arr -> int(5) // constant for iteration
 
 for obj in objs:
     copied[obj] = obj
 
-for c in copied:
+for c in copied_objs:
     println(c)
 /*
 <=------------------------=>|<=>|<=-----------------------=>
@@ -559,11 +561,10 @@ t.run()
 t2 = async(str):
   return "Hello World!"
 
-// Waits for the thread to run and get the result asynchronously
-result = t2.await()
+// Waits for the thread to run and get the result asynchronously, casting it to a string
+result = Thread::awaitAndCast<str>(t2)
 
-
-strPtr = cast<ptr -> str>(result)
+t2.destroy()
 
 // Prints "Hello World!"
 println(@strPtr)
@@ -632,8 +633,8 @@ Alpha::I
 // creates an alias of ptr -> int
 type IntPtr = ptr -> int
 
-x: int = 5
-x_ptr: IntPtr = ptr(x)
+five: int = 5
+five_ptr: IntPtr = ptr(five)
 
 /*
 <=------------------------=>|<=>|<=-----------------------=>
