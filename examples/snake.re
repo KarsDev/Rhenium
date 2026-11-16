@@ -31,9 +31,9 @@ func main() -> int:
     foodX: mut = 0
     foodY: mut = 0
 
-    alive: mut = 1
-    needReset: mut = 1
-    needFood: mut = 1
+    alive: mut = true
+    needReset: mut = true
+    needFood: mut = true
 
     tick: mut = 0
     moveDelay: mut = 10
@@ -42,19 +42,19 @@ func main() -> int:
 
     newX: mut = 0
     newY: mut = 0
-    ate: mut = 0
+    ate: mut = false
     checkCount: mut = 0
     idx: mut = 0
     fx: mut = 0
     fy: mut = 0
-    free: mut = 0
-    found: mut = 0
+    free: mut = false
+    found: mut = false
 
     while isScreenRunning(screen):
         pollScreenEvents(screen)
 
         // start
-        if needReset == 1:
+        if needReset:
             snakeLen = 3
             bodyX.set(0, 20)
             bodyY.set(0, 15)
@@ -66,29 +66,29 @@ func main() -> int:
             dirY = 0
             nextDX = 1
             nextDY = 0
-            alive = 1
+            alive = true
             tick = 0
             moveDelay = 10
-            needFood = 1
-            needReset = 0
+            needFood = true
+            needReset = false
 
         // place food on a random free cell
-        if needFood == 1:
-            found = 0
+        if needFood:
+            found = false
             for t in range(100):
                 fx = rng.nextInt(0, cols - 1)
                 fy = rng.nextInt(0, rows - 1)
 
-                free = 1
+                free = true
                 for i in range(snakeLen):
                     if bodyX.get(i) == fx and bodyY.get(i) == fy:
-                        free = 0
+                        free = false
 
-                if free == 1 and found == 0:
+                if free and not found:
                     foodX = fx
                     foodY = fy
-                    found = 1
-            needFood = 0
+                    found = true
+            needFood = false
 
         // input
         if isKeyPressed(Keys::KEY_UP) or isKeyPressed(Keys::KEY_W):
@@ -108,7 +108,7 @@ func main() -> int:
                 nextDX = 1
                 nextDY = 0
 
-        if alive == 1:
+        if alive:
             tick++
 
             if tick >= moveDelay:
@@ -121,26 +121,26 @@ func main() -> int:
 
                 // walls
                 if newX < 0 or newX >= cols or newY < 0 or newY >= rows:
-                    alive = 0
+                    alive = false
 
-                if alive == 1:
-                    ate = 0
+                if alive:
+                    ate = false
                     if newX == foodX and newY == foodY:
-                        ate = 1
+                        ate = true
 
                     // self collision
                     checkCount = snakeLen - 1
-                    if ate == 1:
+                    if ate:
                         checkCount = snakeLen
 
                     for i in range(checkCount):
                         if bodyX.get(i) == newX and bodyY.get(i) == newY:
-                            alive = 0
+                            alive = false
 
-                if alive == 1:
-                    if ate == 1:
+                if alive:
+                    if ate:
                         snakeLen++
-                        needFood = 1
+                        needFood = true
                         if moveDelay > 4:
                             moveDelay--
 
@@ -153,9 +153,9 @@ func main() -> int:
                     bodyX.set(0, newX)
                     bodyY.set(0, newY)
 
-        if alive == 0:
+        if not alive:
             if isKeyPressed(Keys::KEY_ENTER):
-                needReset = 1
+                needReset = true
 
 
         setScreenColor(screen, 15, 15, 25, 255)
@@ -172,7 +172,7 @@ func main() -> int:
 
         // head
         setScreenColor(screen, 120, 255, 150, 255)
-        if alive == 0:
+        if not alive:
             setScreenColor(screen, 255, 120, 60, 255)
         fillScreenRect(screen, bodyX.get(0) * cell + 1, bodyY.get(0) * cell + 1, cell - 2, cell - 2)
 
@@ -181,7 +181,7 @@ func main() -> int:
         for i in range(snakeLen - 3):
             fillScreenRect(screen, 8 + i * 10, 6, 6, 6)
 
-        if alive == 0:
+        if not alive:
             drawScreenText(screen, "GAME OVER - press Enter to restart", 270, 290)
 
         presentScreen(screen)
