@@ -1,14 +1,14 @@
 package me.kuwg.re.runner;
 
+import me.kuwg.re.env.OperatingSystem;
 import me.kuwg.re.error.errors.RInternalError;
-
-import static me.kuwg.re.constants.Constants.Lang.WIN;
 
 public final class CommandRunner {
     public static void run(String command) throws Exception {
+        boolean win = OperatingSystem.isWindows();
         ProcessBuilder builder = new ProcessBuilder(
-                WIN ? "cmd.exe" : "sh",
-                WIN ? "/c" : "-c",
+                win ? "cmd.exe" : "sh",
+                win ? "/c" : "-c",
                 command
         );
 

@@ -16,6 +16,7 @@ import me.kuwg.re.compiler.struct.RStruct;
 import me.kuwg.re.compiler.trait.Trait;
 import me.kuwg.re.compiler.variable.RStructField;
 import me.kuwg.re.compiler.variable.RVariable;
+import me.kuwg.re.env.OperatingSystem;
 import me.kuwg.re.copy.CopyFunctionGenerator;
 import me.kuwg.re.error.errors.RInternalError;
 import me.kuwg.re.error.errors.function.RMainFunctionError;
@@ -35,14 +36,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Function;
-
-import static me.kuwg.re.constants.Constants.Lang.WIN;
 import static me.kuwg.re.writer.Writeable.TAB;
 
 public final class CompilationContext {
     private static final boolean DEBUG = false;
-    private static final String ERROR_LINE = "e%266 = sub i32 0, %264";
+    private static final String ERROR_LINE = "";
     public final boolean writeExceptionLines;
     private final String fileName;
     private final Map<String, TypeRef> typeMap;
@@ -501,73 +499,170 @@ public final class CompilationContext {
         return unions.get(name);
     }
 
-    private String getCompilationCommand(String llvmFile, String executableFile, List<String> clangArgs, boolean keepLLVM) {
-        final var quote = (Function<String, String>) s -> "\"" + s + "\"";
+    private void runCommand(List<String> command) throws IOException {
+        ProcessBuilder builder = new ProcessBuilder(command);
+        builder.inheritIO();
 
-        final String extraClangArgs = (clangArgs == null || clangArgs.isEmpty()) ? "" : " " + String.join(" ", clangArgs);
+        Process process = builder.start();
 
-        String tempBase = executableFile;
+        try {
+            int exitCode = process.waitFor();
+
+            if (exitCode != 0) {
+                throw new IOException(
+                        "Command failed with exit code " + exitCode
+                                + ": " + String.join(" ", command)
+                );
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Compilation interrupted", e);
+        }
+    }
+
+    private String getCompilationCommand(
+            String llvmFile,
+            String executableFile,
+            List<String> clangArgs,
+            boolean keepLLVM
+    ) throws IOException {
+
+        Path executable = Path.of(executableFile).toAbsolutePath();
+        Path llvm = Path.of(llvmFile).toAbsolutePath();
+
+        String tempBase = executable.toString();
+
         int lastDot = tempBase.lastIndexOf('.');
+        if (lastDot > 0) {
+            tempBase = tempBase.substring(0, lastDot);
+        }
 
-        if (lastDot > 0) tempBase = tempBase.substring(0, lastDot);
+        Path combined = Path.of(tempBase + ".combined.ll");
+        Path optimized = Path.of(tempBase + ".opt.bc");
 
-        String deleteCmd = WIN ? "del /f " : "rm -f ";
-        String and = " && ";
+        List<Path> llFiles = new ArrayList<>();
+        List<Path> temporaryFiles = new ArrayList<>();
 
-        StringBuilder cmd = new StringBuilder();
-        List<String> llFiles = new ArrayList<>();
+        List<String> commonFlags = new ArrayList<>(List.of(
+                "-O3",
+                "-flto",
+                "-std=c++17"
+        ));
 
-        for (Path p : nativeCPPModules.values()) {
-            String src = p.toString();
-            String ll = src + ".ll";
+        if (clangArgs != null) {
+            commonFlags.addAll(clangArgs);
+        }
 
-            cmd.append("clang++ -O3 -march=native -mtune=native").append(" -flto -S -emit-llvm -std=c++17").append(extraClangArgs).append(" ").append(quote.apply(src)).append(" -o ").append(quote.apply(ll)).append(and);
+        for (Path source : nativeCPPModules.values()) {
+            Path src = source.toAbsolutePath();
+            Path ll = Path.of(src + ".ll");
+
+            List<String> command = new ArrayList<>();
+            command.add("clang++");
+            command.addAll(commonFlags);
+
+            command.add("-S");
+            command.add("-emit-llvm");
+            command.add(src.toString());
+            command.add("-o");
+            command.add(ll.toString());
+
+            runCommand(command);
 
             llFiles.add(ll);
         }
 
         boolean hasNativeModules = !llFiles.isEmpty();
 
-        String combined = tempBase + ".combined.ll";
-
         if (hasNativeModules) {
-            cmd.append("llvm-link ").append(quote.apply(llvmFile)).append(" ");
+            List<String> command = new ArrayList<>();
 
-            for (String ll : llFiles) {
-                cmd.append(quote.apply(ll)).append(" ");
+            command.add("llvm-link");
+            command.add(llvm.toString());
+
+            for (Path ll : llFiles) {
+                command.add(ll.toString());
             }
 
-            cmd.append("-S -o ").append(quote.apply(combined)).append(and);
+            command.add("-S");
+            command.add("-o");
+            command.add(combined.toString());
+
+            runCommand(command);
         }
 
-        String linked = hasNativeModules ? combined : llvmFile;
+        Path linked = hasNativeModules ? combined : llvm;
 
-        String optimized = tempBase + ".opt.bc";
+        runCommand(List.of(
+                "opt",
+                "-passes=default<O3>,globaldce",
+                linked.toString(),
+                "-o",
+                optimized.toString()
+        ));
 
-        cmd.append("opt -passes=\"default<O3>,globaldce\" ").append(quote.apply(linked)).append(" -o ").append(quote.apply(optimized)).append(and);
+        List<String> command = new ArrayList<>();
 
-        cmd.append("clang++ ").append("-O3 ").append("-march=native ").append("-mtune=native ").append("-funroll-loops ").append("-fomit-frame-pointer ").append("-flto=full ").append("-fuse-ld=lld ").append("-fno-exceptions ").append("-fno-rtti ").append("-lws2_32 ").append("-lgdi32 ").append("-luser32 ").append("-lgdiplus ").append(extraClangArgs).append(" ").append(quote.apply(optimized)).append(" -o ").append(quote.apply(executableFile)).append(and);
+        command.add("clang++");
 
-        List<String> temporaryFiles = new ArrayList<>();
+        command.addAll(List.of(
+                "-O3",
+                "-funroll-loops",
+                "-fomit-frame-pointer",
+                "-flto"
+        ));
+
+        command.add("-march=native");
+        command.add("-mtune=native");
+
+        switch (OperatingSystem.current()) {
+            case WINDOWS -> {
+                command.add("-fuse-ld=lld");
+
+                command.addAll(List.of(
+                        "-lws2_32",
+                        "-lgdi32",
+                        "-luser32",
+                        "-lgdiplus"
+                ));
+            }
+
+            case LINUX, MACOS -> command.add("-fuse-ld=lld");
+
+            default -> throw new IOException(
+                    "Unsupported operating system: "
+                            + System.getProperty("os.name")
+            );
+        }
+
+        if (clangArgs != null) {
+            command.addAll(clangArgs);
+        }
+
+        command.add(optimized.toString());
+        command.add("-o");
+        command.add(executable.toString());
+
+        runCommand(command);
 
         temporaryFiles.add(optimized);
 
         if (hasNativeModules) {
+            temporaryFiles.addAll(llFiles);
+
             if (!keepLLVM) {
                 temporaryFiles.add(combined);
-                temporaryFiles.add(llvmFile);
+                temporaryFiles.add(llvm);
             }
-            temporaryFiles.addAll(llFiles);
+        } else if (!keepLLVM) {
+            temporaryFiles.add(llvm);
         }
 
-        cmd.append(deleteCmd);
-
-        for (int i = 0; i < temporaryFiles.size(); i++) {
-            if (i > 0) cmd.append(" ");
-            cmd.append(quote.apply(temporaryFiles.get(i)));
+        for (Path temporary : temporaryFiles) {
+            java.nio.file.Files.deleteIfExists(temporary);
         }
 
-        return cmd.toString().trim();
+        return executable.toString();
     }
 
     public TypeRef resolveConcrete(TypeRef t, final int line) {

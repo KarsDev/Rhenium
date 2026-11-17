@@ -1,12 +1,11 @@
 package me.kuwg.re.cli;
 
 import me.kuwg.re.cli.annotations.IncompatibleWith;
+import me.kuwg.re.env.OperatingSystem;
 import me.kuwg.re.error.thrower.RThrower;
 
 import java.io.File;
 import java.util.List;
-
-import static me.kuwg.re.constants.Constants.Lang.WIN;
 
 public final class Arguments {
     private final File inputFile;
@@ -147,7 +146,7 @@ public final class Arguments {
             if (executableFile == null) {
                 executableFile = new File(
                         inputFile.getParent(),
-                        WIN ? "output.exe" : "output.out"
+                        OperatingSystem.isWindows() ? "output.exe" : "output.out"
                 );
             }
 

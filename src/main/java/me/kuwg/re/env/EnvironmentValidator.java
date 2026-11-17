@@ -2,15 +2,13 @@ package me.kuwg.re.env;
 
 import java.io.IOException;
 
-import static me.kuwg.re.constants.Constants.Lang.*;
-
 public final class EnvironmentValidator {
     public static boolean isSupported() {
-        return WIN || SUPPORT_NW;
+        return OperatingSystem.isWindows() || OperatingSystem.isLinux() || OperatingSystem.isMacOS();
     }
 
     public static String notSupportedErrorMessage() {
-        return "This OS is not supported: " + OS;
+        return "This OS is not supported: " + OperatingSystem.current().name();
     }
 
     public static boolean isClangInstalled() {
