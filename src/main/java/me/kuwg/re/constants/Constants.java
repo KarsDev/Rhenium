@@ -4,11 +4,13 @@ import me.kuwg.re.error.errors.RInternalError;
 
 import java.util.regex.Pattern;
 
+@SuppressWarnings("ALL")
 public abstract class Constants {
     private Constants() {
         throw new RInternalError();
     }
 
+    @SuppressWarnings("RegExpRedundantEscape")
     public static final class Tokens extends Constants {
         public static final String[] KEYWORDS = {
                 "using",
@@ -94,13 +96,6 @@ public abstract class Constants {
                         DEC_INT +
                         ")"
         );
-    }
-
-    public static final class Lang extends Constants {
-        public static final String OS = System.getProperty("os.name").toLowerCase();
-        public static final boolean WIN = OS.contains("win");
-
-        public static final boolean SUPPORT_NW = false;
     }
 
     public static final class Parser extends Constants {
