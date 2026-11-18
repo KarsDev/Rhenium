@@ -1,7 +1,6 @@
 package me.kuwg.re.runner;
 
 import me.kuwg.re.env.OperatingSystem;
-import me.kuwg.re.error.errors.RInternalError;
 
 public final class CommandRunner {
     public static void run(String command) throws Exception {
@@ -23,7 +22,7 @@ public final class CommandRunner {
         int exitCode = process.waitFor();
 
         if (exitCode != 0) {
-            throw new RInternalError("Execution failed with code " + exitCode);
+            System.err.println("Execution failed with code " + exitCode);
         }
         System.exit(exitCode);
     }
