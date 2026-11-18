@@ -78,7 +78,7 @@ public final class Arguments {
         File inputFile;
         File llvmFile;
         File executableFile;
-        boolean runCommand = true;
+        boolean runCommand = false;
         boolean keepLLVM = false;
         boolean dumpAST = false;
         List<String> clangArgs = List.of();

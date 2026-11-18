@@ -391,7 +391,7 @@ public final class CompilationContext {
         return currentLabel;
     }
 
-    public String compileAndGet(File llvmFile, File executableFile, List<String> clangArgs, boolean keepLLVM) throws IOException {
+    public void compile(File llvmFile, File executableFile, List<String> clangArgs, boolean keepLLVM) throws IOException {
         var main = getFunction("main", List.of());
         if (main == null) {
             main = getFunction("main", List.of(new ArrayType(ArrayType.UNKNOWN_SIZE, BuiltinTypes.STR.getType()), BuiltinTypes.INT.getType()));
@@ -403,7 +403,7 @@ public final class CompilationContext {
             withMain(main, llvmFile);
         }
 
-        return getCompilationCommand(llvmFile.getAbsolutePath(), executableFile.getAbsolutePath(), clangArgs, keepLLVM);
+        runCompilationCommand(llvmFile.getAbsolutePath(), executableFile.getAbsolutePath(), clangArgs, keepLLVM);
     }
 
     private void noMain(File output) throws IOException {
@@ -520,7 +520,7 @@ public final class CompilationContext {
         }
     }
 
-    private String getCompilationCommand(
+    private void runCompilationCommand(
             String llvmFile,
             String executableFile,
             List<String> clangArgs,
@@ -661,8 +661,6 @@ public final class CompilationContext {
         for (Path temporary : temporaryFiles) {
             java.nio.file.Files.deleteIfExists(temporary);
         }
-
-        return executable.toString();
     }
 
     public TypeRef resolveConcrete(TypeRef t, final int line) {

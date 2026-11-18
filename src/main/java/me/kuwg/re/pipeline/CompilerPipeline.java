@@ -31,10 +31,9 @@ public final class CompilerPipeline {
             if (args.dumpAST()) dumpAST(ast);
             ast.compile(cctx);
 
-            String command = cctx.compileAndGet(args.llvmFile(), args.executableFile(), args.clangArgs(), args.keepLLVM());
+           cctx.compile(args.llvmFile(), args.executableFile(), args.clangArgs(), args.keepLLVM());
 
-
-            if (args.runCommand()) CommandRunner.run(command);
+            if (args.runCommand()) CommandRunner.run(args.executableFile().getPath());
             if (!args.keepLLVM()) args.llvmFile().delete();
 
         } catch (Exception e) {
