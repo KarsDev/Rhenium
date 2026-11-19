@@ -132,6 +132,8 @@ static_assert(SCREEN_KEY_9 == 57 && SCREEN_KEY_Z == 90 &&
 
 #ifdef __APPLE__
 static void releaseAllPressedKeys();
+struct AppScreen;
+static void applyMacStyle(AppScreen* s);
 @class ScreenWindowDelegate;
 #endif
 
@@ -153,10 +155,15 @@ struct AppScreen
     uint8_t colorB = 255;
     uint8_t colorA = 255;
 
+    char* title = nullptr;      // UTF-8 copy owned by the screen
+    bool resizable = true;
+    bool fullscreen = false;
+
 #ifdef _WIN32
 
     HWND hwnd = nullptr;
     HDC dc = nullptr;
+    WINDOWPLACEMENT savedPlacement{};   // windowed placement, for leaving fullscreen
 
 #elif defined(__APPLE__)
 
@@ -171,6 +178,8 @@ struct AppScreen
     GC gc = nullptr;
     Atom wmDelete = None;
     XImage* ximage = nullptr;          // cached presentation image
+    int savedWidth = 0;                // windowed size, for leaving fullscreen
+    int savedHeight = 0;
 
 #endif
 
@@ -197,8 +206,28 @@ static void freeScreenObject(AppScreen* s)
         return;
 
     std::free(s->pixels);
+    std::free(s->title);
     s->~AppScreen();
     std::free(s);
+}
+
+// Stores a private copy of the title (null becomes an empty title).
+static bool storeTitle(AppScreen* s, const char* text)
+{
+    if (!text)
+        text = "";
+
+    const size_t len = std::strlen(text);
+    char* copy = static_cast<char*>(std::malloc(len + 1));
+
+    if (!copy)
+        return false;
+
+    std::memcpy(copy, text, len + 1);
+
+    std::free(s->title);
+    s->title = copy;
+    return true;
 }
 
 #ifdef __APPLE__
@@ -360,6 +389,32 @@ static inline void writeColorAt(AppScreen* s, std::size_t index)
 {
     (void)notification;
     releaseAllPressedKeys();
+}
+
+// Fullscreen can also be entered / left by the user (green button).
+- (void)windowWillEnterFullScreen:(NSNotification*)notification
+{
+    (void)notification;
+
+    if (owner)
+        owner->fullscreen = true;
+}
+
+- (void)windowWillExitFullScreen:(NSNotification*)notification
+{
+    (void)notification;
+
+    if (owner)
+        owner->fullscreen = false;
+}
+
+- (void)windowDidExitFullScreen:(NSNotification*)notification
+{
+    (void)notification;
+
+    // Re-apply the resizable flag that fullscreen had to override.
+    if (owner)
+        applyMacStyle(owner);
 }
 
 @end
@@ -1162,6 +1217,42 @@ static void drawScreenToX11(AppScreen* s)
     XFlush(s->display);
 }
 
+// Sets the window title (legacy Latin-1 name plus UTF-8 _NET_WM_NAME).
+static void applyX11Title(AppScreen* s)
+{
+    if (!s->display || !s->window || !s->title)
+        return;
+
+    XStoreName(s->display, s->window, s->title);
+
+    XChangeProperty(
+        s->display,
+        s->window,
+        XInternAtom(s->display, "_NET_WM_NAME", False),
+        XInternAtom(s->display, "UTF8_STRING", False),
+        8,
+        PropModeReplace,
+        reinterpret_cast<const unsigned char*>(s->title),
+        static_cast<int>(std::strlen(s->title))
+    );
+}
+
+// A fixed-size window is expressed to the window manager as min == max.
+// No hints are set while resizable or fullscreen.
+static void applyX11SizeHints(AppScreen* s, int width, int height)
+{
+    XSizeHints hints{};
+
+    if (!s->resizable && !s->fullscreen && width > 0 && height > 0)
+    {
+        hints.flags = PMinSize | PMaxSize;
+        hints.min_width = hints.max_width = width;
+        hints.min_height = hints.max_height = height;
+    }
+
+    XSetWMNormalHints(s->display, s->window, &hints);
+}
+
 #endif
 // ============================================================
 // MACOS
@@ -1447,6 +1538,12 @@ void* createScreen(int width, int height, const char* title)
 
     const char* windowTitle = title ? title : "Screen";
 
+    if (!storeTitle(s, windowTitle))
+    {
+        freeScreenObject(s);
+        return nullptr;
+    }
+
 #ifdef _WIN32
     if (!registerScreenClass())
     {
@@ -1545,7 +1642,7 @@ XSetWMProtocols(
     1
 );
 
-XStoreName(s->display, s->window, windowTitle);
+applyX11Title(s);
 
 XSelectInput(
     s->display,
@@ -3480,4 +3577,438 @@ bool drawScreenImage(
 
     std::fclose(file);
     return ok;
+}
+
+// ============================================================
+// WINDOW PROPERTIES
+// ============================================================
+
+#ifdef _WIN32
+
+static DWORD screenWindowStyle(const AppScreen* s)
+{
+    DWORD style = WS_OVERLAPPEDWINDOW;
+
+    if (!s->resizable)
+        style &= ~static_cast<DWORD>(WS_THICKFRAME | WS_MAXIMIZEBOX);
+
+    return style;
+}
+
+// Resizes the window so that its client area is width x height.
+static void setWindowClientSize(AppScreen* s, int width, int height)
+{
+    const DWORD style = static_cast<DWORD>(
+        GetWindowLongPtrW(s->hwnd, GWL_STYLE));
+    const DWORD exStyle = static_cast<DWORD>(
+        GetWindowLongPtrW(s->hwnd, GWL_EXSTYLE));
+
+    RECT rect{ 0, 0, width, height };
+    AdjustWindowRectEx(&rect, style, FALSE, exStyle);
+
+    SetWindowPos(
+        s->hwnd,
+        nullptr,
+        0, 0,
+        rect.right - rect.left,
+        rect.bottom - rect.top,
+        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE
+    );
+}
+
+#endif
+
+#ifdef __linux__
+
+// Tells the window manager to add or remove the fullscreen state.
+static void sendX11Fullscreen(AppScreen* s, bool enable)
+{
+    XEvent ev{};
+
+    ev.xclient.type = ClientMessage;
+    ev.xclient.window = s->window;
+    ev.xclient.message_type =
+        XInternAtom(s->display, "_NET_WM_STATE", False);
+    ev.xclient.format = 32;
+    ev.xclient.data.l[0] = enable ? 1 : 0;   // _NET_WM_STATE_ADD / REMOVE
+    ev.xclient.data.l[1] = static_cast<long>(
+        XInternAtom(s->display, "_NET_WM_STATE_FULLSCREEN", False));
+    ev.xclient.data.l[2] = 0;
+    ev.xclient.data.l[3] = 1;                // source: normal application
+
+    XSendEvent(
+        s->display,
+        DefaultRootWindow(s->display),
+        False,
+        SubstructureNotifyMask | SubstructureRedirectMask,
+        &ev
+    );
+
+    XFlush(s->display);
+}
+
+#endif
+
+#ifdef __APPLE__
+
+// Applies the resizable flag to the window (style mask and zoom button).
+static void applyMacStyle(AppScreen* s)
+{
+    if (!s || !s->window)
+        return;
+
+    NSWindowStyleMask mask = [s->window styleMask];
+
+    // A window that is (or is becoming) fullscreen must keep the flag.
+    const bool keep = s->resizable || s->fullscreen ||
+                      (mask & NSWindowStyleMaskFullScreen) != 0;
+
+    if (keep)
+        mask |= NSWindowStyleMaskResizable;
+    else
+        mask &= ~NSWindowStyleMaskResizable;
+
+    [s->window setStyleMask:mask];
+
+    // Needed so that setScreenFullscreen can work for any window.
+    [s->window setCollectionBehavior:
+        [s->window collectionBehavior] |
+        NSWindowCollectionBehaviorFullScreenPrimary];
+
+    // The green button is the zoom / fullscreen button.
+    [[s->window standardWindowButton:NSWindowZoomButton]
+        setEnabled:s->resizable];
+}
+
+#endif
+
+// Width of the drawable area (the framebuffer) in pixels; 0 for a null screen.
+extern "C"
+int getScreenWidth(void* screen)
+{
+    AppScreen* s = static_cast<AppScreen*>(screen);
+
+    return s ? s->width : 0;
+}
+
+// Height of the drawable area (the framebuffer) in pixels; 0 for a null screen.
+extern "C"
+int getScreenHeight(void* screen)
+{
+    AppScreen* s = static_cast<AppScreen*>(screen);
+
+    return s ? s->height : 0;
+}
+
+// Sets the window title (UTF-8). A null title becomes an empty title.
+extern "C"
+void setScreenTitle(void* screen, const char* title)
+{
+    AppScreen* s = static_cast<AppScreen*>(screen);
+
+    if (!s)
+        return;
+
+    if (!storeTitle(s, title))
+        return;
+
+#ifdef _WIN32
+
+    if (s->hwnd && IsWindow(s->hwnd))
+    {
+        wchar_t* wide = utf8ToWide(s->title);
+
+        if (wide)
+        {
+            SetWindowTextW(s->hwnd, wide);
+            std::free(wide);
+        }
+    }
+
+#elif defined(__linux__)
+
+    if (s->display && s->window)
+    {
+        applyX11Title(s);
+        XFlush(s->display);
+    }
+
+#elif defined(__APPLE__)
+
+    if (s->window)
+    {
+        @autoreleasepool
+        {
+            NSString* ns = [NSString stringWithUTF8String:s->title];
+
+            [s->window setTitle:(ns ? ns : @"")];
+        }
+    }
+
+#endif
+}
+
+// Returns the current title. The pointer stays valid until the next
+// setScreenTitle call on this screen or until the screen is closed.
+extern "C"
+const char* getScreenTitle(void* screen)
+{
+    AppScreen* s = static_cast<AppScreen*>(screen);
+
+    if (!s || !s->title)
+        return "";
+
+    return s->title;
+}
+
+// Resizes the drawable area (client area) to width x height pixels.
+// Ignored while the window is fullscreen.
+extern "C"
+void setScreenSize(void* screen, int width, int height)
+{
+    AppScreen* s = static_cast<AppScreen*>(screen);
+
+    if (!s || !s->running || width <= 0 || height <= 0 || s->fullscreen)
+        return;
+
+#ifdef _WIN32
+
+    if (!s->hwnd || !IsWindow(s->hwnd))
+        return;
+
+    if (IsZoomed(s->hwnd))
+        ShowWindow(s->hwnd, SW_RESTORE);
+
+    // WM_SIZE resizes the framebuffer synchronously.
+    setWindowClientSize(s, width, height);
+
+#elif defined(__linux__)
+
+    if (!s->display || !s->window)
+        return;
+
+    // Update the hints first so a fixed-size window accepts the new size.
+    applyX11SizeHints(s, width, height);
+
+    XResizeWindow(
+        s->display,
+        s->window,
+        static_cast<unsigned int>(width),
+        static_cast<unsigned int>(height)
+    );
+
+    XFlush(s->display);
+
+#elif defined(__APPLE__)
+
+    if (!s->window)
+        return;
+
+    @autoreleasepool
+    {
+        [s->window setContentSize:NSMakeSize(width, height)];
+    }
+
+#endif
+
+    // Make the new size visible immediately instead of waiting for the
+    // platform's resize notification (which then finds nothing left to do).
+    resizeFramebuffer(s, width, height);
+}
+
+// Allows or forbids resizing the window by the user. Returns false if the
+// window is not available. While fullscreen the flag is remembered and
+// applied when fullscreen ends.
+extern "C"
+bool setScreenResizable(void* screen, bool resizable)
+{
+    AppScreen* s = static_cast<AppScreen*>(screen);
+
+    if (!s || !s->running)
+        return false;
+
+    s->resizable = resizable;
+
+#ifdef _WIN32
+
+    if (!s->hwnd || !IsWindow(s->hwnd))
+        return false;
+
+    if (s->fullscreen)
+        return true;
+
+    if (!resizable && IsZoomed(s->hwnd))
+        ShowWindow(s->hwnd, SW_RESTORE);
+
+    // Keep the client size; the frame width differs between the styles.
+    RECT client{};
+    GetClientRect(s->hwnd, &client);
+
+    LONG_PTR style = GetWindowLongPtrW(s->hwnd, GWL_STYLE);
+    const LONG_PTR bits = WS_THICKFRAME | WS_MAXIMIZEBOX;
+
+    style = resizable ? (style | bits) : (style & ~bits);
+
+    SetWindowLongPtrW(s->hwnd, GWL_STYLE, style);
+
+    SetWindowPos(
+        s->hwnd, nullptr, 0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+        SWP_NOACTIVATE | SWP_FRAMECHANGED
+    );
+
+    setWindowClientSize(s, client.right, client.bottom);
+    return true;
+
+#elif defined(__linux__)
+
+    if (!s->display || !s->window)
+        return false;
+
+    if (!s->fullscreen)
+    {
+        applyX11SizeHints(s, s->width, s->height);
+        XFlush(s->display);
+    }
+
+    return true;
+
+#elif defined(__APPLE__)
+
+    if (!s->window)
+        return false;
+
+    @autoreleasepool
+    {
+        applyMacStyle(s);
+    }
+
+    return true;
+
+#else
+
+    return false;
+
+#endif
+}
+
+// Enters or leaves fullscreen. Returns false if the request could not be
+// made. On macOS the transition is animated and finishes asynchronously.
+extern "C"
+bool setScreenFullscreen(void* screen, bool fullscreen)
+{
+    AppScreen* s = static_cast<AppScreen*>(screen);
+
+    if (!s || !s->running)
+        return false;
+
+#ifdef _WIN32
+
+    if (!s->hwnd || !IsWindow(s->hwnd))
+        return false;
+
+    if (s->fullscreen == fullscreen)
+        return true;
+
+    if (fullscreen)
+    {
+        MONITORINFO mi{};
+        mi.cbSize = sizeof(mi);
+
+        s->savedPlacement.length = sizeof(WINDOWPLACEMENT);
+
+        if (!GetWindowPlacement(s->hwnd, &s->savedPlacement) ||
+            !GetMonitorInfoW(
+                MonitorFromWindow(s->hwnd, MONITOR_DEFAULTTONEAREST), &mi))
+        {
+            return false;
+        }
+
+        SetWindowLongPtrW(s->hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+
+        SetWindowPos(
+            s->hwnd, HWND_TOP,
+            mi.rcMonitor.left,
+            mi.rcMonitor.top,
+            mi.rcMonitor.right - mi.rcMonitor.left,
+            mi.rcMonitor.bottom - mi.rcMonitor.top,
+            SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+        );
+
+        s->fullscreen = true;
+    }
+    else
+    {
+        s->fullscreen = false;
+
+        SetWindowLongPtrW(
+            s->hwnd, GWL_STYLE, screenWindowStyle(s) | WS_VISIBLE);
+
+        SetWindowPlacement(s->hwnd, &s->savedPlacement);
+
+        SetWindowPos(
+            s->hwnd, nullptr, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+            SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+        );
+    }
+
+    return true;
+
+#elif defined(__linux__)
+
+    if (!s->display || !s->window)
+        return false;
+
+    if (s->fullscreen == fullscreen)
+        return true;
+
+    if (fullscreen)
+    {
+        // Remember the windowed size, drop any fixed-size hints (they would
+        // fight the window manager) and ask for fullscreen.
+        s->savedWidth = s->width;
+        s->savedHeight = s->height;
+        s->fullscreen = true;
+
+        applyX11SizeHints(s, s->width, s->height);
+        sendX11Fullscreen(s, true);
+    }
+    else
+    {
+        s->fullscreen = false;
+
+        applyX11SizeHints(s, s->savedWidth, s->savedHeight);
+        sendX11Fullscreen(s, false);
+    }
+
+    return true;
+
+#elif defined(__APPLE__)
+
+    if (!s->window)
+        return false;
+
+    if (s->fullscreen == fullscreen)
+        return true;
+
+    s->fullscreen = fullscreen;
+
+    @autoreleasepool
+    {
+        // On exit the style is restored by windowDidExitFullScreen.
+        if (fullscreen)
+            applyMacStyle(s);
+
+        [s->window toggleFullScreen:nil];
+    }
+
+    return true;
+
+#else
+
+    (void)fullscreen;
+    return false;
+
+#endif
 }

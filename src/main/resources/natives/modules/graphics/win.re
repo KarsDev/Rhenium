@@ -68,4 +68,12 @@ _NativeCPP("win") \
         filename: str,    \
         x: int,           \
         y: int            \
-    )
+    ) and \
+    \
+    int getScreenWidth(screen: anyptr) and \
+    int getScreenHeight(screen: anyptr) and \
+    none setScreenTitle(screen: anyptr, title: str) and \
+    str getScreenTitle(screen: anyptr) and \
+    none setScreenSize(screen: anyptr, width: int, height: int) and \
+    none setScreenResizable(screen: anyptr, resizable: bool) and \
+    none setScreenFullscreen(screen: anyptr, fullscreen: bool) 
