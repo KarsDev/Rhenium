@@ -2738,7 +2738,7 @@ public final class ASTParser {
             }
 
             if (!matchAndConsume(KEYWORD, "func")) {
-                return;
+                 new RParserError("Expected 'func' in trait declaration", fileName, line()).raise();
             }
 
             if (!match(IDENTIFIER)) {
