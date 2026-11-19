@@ -2738,8 +2738,7 @@ public final class ASTParser {
             }
 
             if (!matchAndConsume(KEYWORD, "func")) {
-                consume();
-                continue;
+                return;
             }
 
             if (!match(IDENTIFIER)) {
