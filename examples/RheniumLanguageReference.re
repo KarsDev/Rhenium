@@ -490,8 +490,11 @@ dv = @rp
 
 /*
 Dereference assignment
+  Note:
+    Dereferencing a pointer of a not-mutable variable will
+    NOT change the variable's value. It will still retain its
+    original value.
 */
-
 @rp = init Vec2(0, 0)
 
 /*
