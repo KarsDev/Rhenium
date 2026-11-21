@@ -8,7 +8,7 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 
 import java.util.Map;
 
-public class SizeofNode extends ConstantNode {
+public class SizeofNode extends ValueNode {
     private TypeRef type;
     private final ValueNode value;
 
@@ -31,8 +31,19 @@ public class SizeofNode extends ConstantNode {
     }
 
     @Override
+    public boolean isConstant(final CompilationContext cctx) {
+        return value == null || value.isConstant(cctx);
+    }
+
+    @Override
     public String compileToConstant(final CompilationContext cctx) {
-        if (value != null) return new RVariableTypeError("constant", "runtime", fileName, line).raise();
+        if (value != null) {
+            if (value.isConstant(cctx)) {
+                value.compileToConstant(cctx); // ignore result
+                return Long.toString(value.getType().getSize());
+            }
+            return new RVariableTypeError("constant", "runtime", fileName, line).raise();
+        }
         cctx.emit("; Sizeof");
         return Long.toString(type.getSize());
     }
@@ -58,7 +69,6 @@ public class SizeofNode extends ConstantNode {
     }
 
     @Override
-    @SuppressWarnings("MethodDoesntCallSuperMethod")
     public SizeofNode clone() {
         if (type == null) {
             return new SizeofNode(fileName, line, value.clone());
