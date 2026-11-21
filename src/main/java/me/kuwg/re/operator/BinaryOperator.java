@@ -104,4 +104,8 @@ public abstract class BinaryOperator {
     public final String getSymbol() {
         return symbol;
     }
+
+    public boolean isComparison() {
+        return this.getClass().getPackageName().contains(".ops.comp");
+    }
 }

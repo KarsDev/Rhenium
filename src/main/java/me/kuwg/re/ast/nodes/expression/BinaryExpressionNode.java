@@ -5,6 +5,7 @@ import me.kuwg.re.compiler.CompilationContext;
 import me.kuwg.re.operator.BinaryOperator;
 import me.kuwg.re.operator.BinaryOperatorContext;
 import me.kuwg.re.type.TypeRef;
+import me.kuwg.re.type.builtin.BuiltinTypes;
 
 import java.util.Map;
 
@@ -28,6 +29,9 @@ public class BinaryExpressionNode extends ValueNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
+        if (isConstant(cctx)) {
+            return compileToConstant(cctx);
+        }
         String leftReg =  cctx.ensureValue(left, left.compileAndGet(cctx));
         String rightReg = cctx.ensureValue(right, right.compileAndGet(cctx));
 
@@ -70,8 +74,22 @@ public class BinaryExpressionNode extends ValueNode {
 
     @Override
     public String compileToConstant(final CompilationContext cctx) {
+        cctx.pushFunctionBody();
+        left.compileAndGet(cctx);
+        right.compileAndGet(cctx);
+        cctx.popFunctionBody(); // remove useless code
+
+        TypeRef leftType = left.getType();
+        TypeRef rightType = right.getType();
+
         String result = op.compileToConstant(left, right, cctx);
-        setType(BinaryOperator.promoteNumeric(left.getType(), right.getType()));
+
+        if (op.isComparison()) {
+            setType(BuiltinTypes.BOOL.getType());
+        } else {
+            setType(BinaryOperator.promoteNumeric(leftType, rightType));
+        }
+
         return result;
     }
 }

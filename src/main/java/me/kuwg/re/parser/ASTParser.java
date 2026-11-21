@@ -41,6 +41,7 @@ import me.kuwg.re.ast.nodes.pointer.ReferenceNode;
 import me.kuwg.re.ast.nodes.raise.RaiseNode;
 import me.kuwg.re.ast.nodes.range.RangeNode;
 import me.kuwg.re.ast.nodes.statement.*;
+import me.kuwg.re.ast.nodes.string.StringNode;
 import me.kuwg.re.ast.nodes.struct.*;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructDeclarationNode;
 import me.kuwg.re.ast.nodes.struct.gen.GenStructImplNode;

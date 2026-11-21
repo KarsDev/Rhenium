@@ -56,13 +56,6 @@ public final class GreaterOrEqualBO extends BinaryOperator {
         final TypeRef leftType = left.getType();
         final TypeRef rightType = right.getType();
 
-        if (leftType == BuiltinTypes.STR.getType() && rightType == BuiltinTypes.STR.getType()) {
-            return Boolean.toString(
-                    left.compileToConstant(cctx).length() >=
-                            right.compileToConstant(cctx).length()
-            );
-        }
-
         final TypeRef resultType = promoteNumeric(leftType, rightType);
 
         if (resultType == null) {

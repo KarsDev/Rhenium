@@ -28,6 +28,6 @@ public class BooleanNode extends ConstantNode {
 
     @Override
     public String compileToConstant(final CompilationContext cctx) {
-        return value ? "1" : "0";
+        return Boolean.toString(value);
     }
 }

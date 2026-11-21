@@ -1,12 +1,14 @@
-package me.kuwg.re.ast.nodes.constants;
+package me.kuwg.re.ast.nodes.string;
 
+import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class StringNode extends ConstantNode {
+public class StringNode extends ValueNode {
     private static final Map<String, String> valueToGlobalName = new HashMap<>();
     private static int globalNameCounter = 0;
     private final String value;
@@ -35,15 +37,6 @@ public class StringNode extends ConstantNode {
     }
 
     @Override
-    public String compileToConstant(final CompilationContext cctx) {
-        ensureDeclared(cctx);
-
-        int length = value.length() + 1;
-
-        return "getelementptr inbounds ([" + length + " x i8], [" + length + " x i8]* " + globalName + ", i32 0, i32 0)";
-    }
-
-    @Override
     public String compileAndGet(final CompilationContext cctx) {
         ensureDeclared(cctx);
 
@@ -53,6 +46,11 @@ public class StringNode extends ConstantNode {
         cctx.emit(reg + " = getelementptr inbounds [" + length + " x i8], [" + length + " x i8]* " + globalName + ", i32 0, i32 0");
 
         return reg;
+    }
+
+    @Override
+    public ValueNode clone() {
+        return this;
     }
 
     private String escapeForLLVM(String s) {
@@ -74,6 +72,10 @@ public class StringNode extends ConstantNode {
             }
         }
         return sb.toString();
+    }
+
+    @Override
+    public void replaceGenerics(final Map<String, TypeRef> generics, final CompilationContext cctx) {
     }
 
     @Override

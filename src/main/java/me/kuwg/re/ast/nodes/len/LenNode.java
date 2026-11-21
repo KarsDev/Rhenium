@@ -1,6 +1,6 @@
 package me.kuwg.re.ast.nodes.len;
 
-import me.kuwg.re.ast.nodes.constants.StringNode;
+import me.kuwg.re.ast.nodes.string.StringNode;
 import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
 import me.kuwg.re.ast.types.value.ValueNode;
 import me.kuwg.re.compiler.CompilationContext;

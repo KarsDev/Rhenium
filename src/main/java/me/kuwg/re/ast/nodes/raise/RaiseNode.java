@@ -2,7 +2,7 @@ package me.kuwg.re.ast.nodes.raise;
 
 import me.kuwg.re.ast.ASTNode;
 import me.kuwg.re.ast.nodes.constants.NumberNode;
-import me.kuwg.re.ast.nodes.constants.StringNode;
+import me.kuwg.re.ast.nodes.string.StringNode;
 import me.kuwg.re.ast.nodes.function.call.FunctionCallNode;
 import me.kuwg.re.ast.nodes.function.call.StructFunctionCallNode;
 import me.kuwg.re.ast.nodes.statement.TryCatchNode;
