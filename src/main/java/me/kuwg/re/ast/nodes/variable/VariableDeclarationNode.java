@@ -175,10 +175,16 @@ public class VariableDeclarationNode extends ValueNode {
 
         cctx.emit("store " + varType.getLLVMName() + " " + storeVal + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
 
-        String loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
-        cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
+        boolean ssaValue = canBindAsSsa(varType);
+        String loaded;
+        if (ssaValue) {
+            loaded = storeVal;
+        } else {
+            loaded = "%" + RVariable.makeUnique(variable.getSimpleName());
+            cctx.emit(loaded + " = load " + varType.getLLVMName() + ", " + toPtr(varType.getLLVMName()) + " " + addrReg);
+        }
 
-        RVariable v = new RVariable(variable.getSimpleName(), mutable, true, varType, addrReg, loaded, null);
+        RVariable v = new RVariable(variable.getSimpleName(), mutable, !ssaValue, varType, addrReg, loaded, null);
         cctx.addVariable(v);
 
         if (varType instanceof StructType st) {
@@ -189,6 +195,17 @@ public class VariableDeclarationNode extends ValueNode {
         }
 
         return valueReg;
+    }
+
+    // An immutable scalar can be read straight from its value register instead of being reloaded from its stack slot.
+    private boolean canBindAsSsa(final TypeRef varType) {
+        return !mutable
+                && !(variable instanceof StructFieldAccessNode)
+                && !(varType instanceof ArrayType)
+                && !(varType instanceof StructType)
+                && !(varType instanceof TraitType)
+                && !(varType instanceof RangeType)
+                && varType != BuiltinTypes.NONE.getType();
     }
 
     private void checkTraitType(TypeRef type, TraitType traitType, CompilationContext cctx) {
