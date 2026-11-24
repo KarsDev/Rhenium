@@ -69,7 +69,6 @@ import me.kuwg.re.error.errors.parser.RParserError;
 import me.kuwg.re.error.errors.range.RRangeTypeError;
 import me.kuwg.re.module.ModuleLoadingHelper;
 import me.kuwg.re.operator.BinaryOperators;
-import me.kuwg.re.operator.ops.add.AddBO;
 import me.kuwg.re.operator.ops.add.SubBO;
 import me.kuwg.re.operator.ops.comp.EqualsBO;
 import me.kuwg.re.token.Token;
@@ -299,11 +298,21 @@ public final class ASTParser {
                     }
                     case "-" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, SubBO.INSTANCE, parseUnaryOperand());
+                        if (match(NUMBER)) {
+                            String num = consume().value();
+                            node = new NumberNode(fileName, line(), "-" + num);
+                        } else {
+                            node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, SubBO.INSTANCE, parseUnaryOperand());
+                        }
                     }
                     case "+" -> {
                         consume();
-                        node = new BinaryExpressionNode(line(), fileName, NumberNode.ZERO, AddBO.INSTANCE, parseUnaryOperand());
+                        if (match(NUMBER)) {
+                            String num = consume().value();
+                            node = new NumberNode(fileName, line(), num);
+                        } else {
+                            node = parseUnaryOperand();
+                        }
                     }
                     case "~" -> {
                         consume();
