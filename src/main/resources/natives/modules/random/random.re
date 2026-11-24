@@ -11,14 +11,15 @@ struct Random:
     _c: int
     _m: int
 
-// Combines high-resolution nanotime with standard millisecond time
-// to create a unique seed value.
-func _randomSeed() -> long:
-    return Time::millis() + Time::nanos()
+namespace RandomUtil:
+    // Combines high-resolution nanotime with standard millisecond time
+    // to create a unique seed value.
+    func randomSeed() -> long:
+        return Time::millis() + Time::nanos()
 
 impl Random:
     init():
-        this.seed = _randomSeed()
+        this.seed = RandomUtil::randomSeed()
         this._a = 1103515245
         this._c = 12345
         this._m = 2147483647 // 2^31 - 1
