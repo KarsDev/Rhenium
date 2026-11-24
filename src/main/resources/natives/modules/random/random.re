@@ -86,14 +86,14 @@ impl Random:
         if min > max:
             raise init IllegalArgumentError("min cannot be greater than max")
 
-        return min + (this.nextFloat() * (max - min))
+        return min + this.nextFloat() * (max - min)
 
     // Returns a pseudorandom double in a range
     func nextDouble(min: double, max: double) -> double:
         if min > max:
             raise init IllegalArgumentError("min cannot be greater than max")
 
-        return min + (this.nextDouble() * (max - min))
+        return min + this.nextDouble() * (max - min)
 
     // Returns true with the given probability from 0.0 to 1.0
     func chance(probability: double) -> bool:
