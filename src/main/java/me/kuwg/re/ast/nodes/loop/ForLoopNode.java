@@ -66,15 +66,11 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
                 }
                 reg = v.addrReg();
             } else {
-                String llvmArrType =
-                        "[" + arr.size() + " x " + arr.getInner().getLLVMName() + "]";
+                String llvmArrType = "[" + arr.size() + " x " + arr.getInner().getLLVMName() + "]";
 
                 String arrayPtr = cctx.nextRegister();
                 cctx.emit(arrayPtr + " = alloca " + llvmArrType);
-                cctx.emit(
-                        "store " + llvmArrType + " " + reg
-                                + ", " + llvmArrType + "* " + arrayPtr
-                );
+                cctx.emit("store " + llvmArrType + " " + reg + ", " + llvmArrType + "* " + arrayPtr);
 
                 reg = arrayPtr;
             }
@@ -105,49 +101,63 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         new RValueIsNotIterableError(variable, fileName, line).raise();
     }
 
+    private String widen(final CompilationContext cctx, final String val, final TypeRef from, final String target) {
+        final String fromLLVM = from.getLLVMName();
+        if (fromLLVM.equals(target)) return val;
+
+        final String ext = cctx.nextRegister();
+        cctx.emit(ext + " = sext " + fromLLVM + " " + val + " to " + target);
+        return ext;
+    }
+
     private void compileRange(CompilationContext cctx, RangeType range) {
         cctx.pushScope();
+
+        final String start = range.start().compileAndGet(cctx);
+        final String end = range.end().compileAndGet(cctx);
+        final String step = range.step().compileAndGet(cctx);
+
+        final TypeRef startType = range.start().getType();
+        final TypeRef endType = range.end().getType();
+        final TypeRef stepType = range.step().getType();
+
+        final boolean useLong = startType == BuiltinTypes.LONG.getType() || endType == BuiltinTypes.LONG.getType() || stepType == BuiltinTypes.LONG.getType();
+        final String llvmType = useLong ? "i64" : "i32";
+        final int align = useLong ? 8 : 4;
+        final TypeRef loopType = useLong ? BuiltinTypes.LONG.getType() : BuiltinTypes.INT.getType();
 
         String startReg = cctx.nextRegister();
         String endReg = cctx.nextRegister();
         String stepReg = cctx.nextRegister();
 
-        cctx.emit(startReg + " = alloca i32, align 4");
-        cctx.emit(endReg + " = alloca i32, align 4");
-        cctx.emit(stepReg + " = alloca i32, align 4");
+        cctx.emit(startReg + " = alloca " + llvmType + ", align " + align);
+        cctx.emit(endReg + " = alloca " + llvmType + ", align " + align);
+        cctx.emit(stepReg + " = alloca " + llvmType + ", align " + align);
 
-        String startVal = range.start().compileAndGet(cctx);
-        String endVal = range.end().compileAndGet(cctx);
-        String stepVal = range.step().compileAndGet(cctx);
+        String startVal = widen(cctx, start, startType, llvmType);
+        String endVal = widen(cctx, end, endType, llvmType);
+        String stepVal = widen(cctx, step, stepType, llvmType);
 
-        cctx.emit("store i32 " + startVal + ", i32* " + startReg);
-        cctx.emit("store i32 " + endVal + ", i32* " + endReg);
-        cctx.emit("store i32 " + stepVal + ", i32* " + stepReg);
+        cctx.emit("store " + llvmType + " " + startVal + ", " + llvmType + "* " + startReg);
+        cctx.emit("store " + llvmType + " " + endVal + ", " + llvmType + "* " + endReg);
+        cctx.emit("store " + llvmType + " " + stepVal + ", " + llvmType + "* " + stepReg);
 
-        cctx.emit('%' + llvmVariable + " = alloca i32");
+        cctx.emit('%' + llvmVariable + " = alloca " + llvmType);
         String startLoaded = cctx.nextRegister();
-        cctx.emit(startLoaded + " = load i32, i32* " + startReg);
-        cctx.emit("store i32 " + startLoaded + ", i32* %" + llvmVariable);
+        cctx.emit(startLoaded + " = load " + llvmType + ", " + llvmType + "* " + startReg);
+        cctx.emit("store " + llvmType + " " + startLoaded + ", " + llvmType + "* %" + llvmVariable);
 
         String loopVarAddr = "%" + llvmVariable;
 
         String loopVarValue = cctx.nextRegister();
-        cctx.emit(loopVarValue + " = load i32, i32* " + loopVarAddr);
+        cctx.emit(loopVarValue + " = load " + llvmType + ", " + llvmType + "* " + loopVarAddr);
 
-        cctx.addVariable(new RVariable(
-                variable,
-                true,
-                true,
-                BuiltinTypes.INT.getType(),
-                loopVarAddr,
-                loopVarValue,
-                null
-        ));
+        cctx.addVariable(new RVariable(variable, true, true, loopType, loopVarAddr, loopVarValue, null));
 
         String startLabel = cctx.nextLabel("for_start");
         String bodyLabel = cctx.nextLabel("for_body");
-        String incLabel   = cctx.nextLabel("for_inc");
-        String endLabel   = cctx.nextLabel("for_end");
+        String incLabel = cctx.nextLabel("for_inc");
+        String endLabel = cctx.nextLabel("for_end");
 
         cctx.getLoopStack().push(new LoopContext(incLabel, bodyLabel, endLabel));
 
@@ -155,11 +165,11 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
         cctx.emit(startLabel + ":");
         String currentReg = cctx.nextRegister();
-        cctx.emit(currentReg + " = load i32, i32* %" + llvmVariable);
+        cctx.emit(currentReg + " = load " + llvmType + ", " + llvmType + "* %" + llvmVariable);
         String endLoaded = cctx.nextRegister();
-        cctx.emit(endLoaded + " = load i32, i32* " + endReg);
+        cctx.emit(endLoaded + " = load " + llvmType + ", " + llvmType + "* " + endReg);
         String condReg = cctx.nextRegister();
-        cctx.emit(condReg + " = icmp slt i32 " + currentReg + ", " + endLoaded);
+        cctx.emit(condReg + " = icmp slt " + llvmType + " " + currentReg + ", " + endLoaded);
         cctx.emit("br i1 " + condReg + ", label %" + bodyLabel + ", label %" + endLabel);
 
         cctx.emit(bodyLabel + ":");
@@ -170,12 +180,12 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
 
         cctx.emit(incLabel + ":");
         String currForInc = cctx.nextRegister();
-        cctx.emit(currForInc + " = load i32, i32* %" + llvmVariable);
+        cctx.emit(currForInc + " = load " + llvmType + ", " + llvmType + "* %" + llvmVariable);
         String stepLoaded = cctx.nextRegister();
-        cctx.emit(stepLoaded + " = load i32, i32* " + stepReg);
+        cctx.emit(stepLoaded + " = load " + llvmType + ", " + llvmType + "* " + stepReg);
         String updatedReg = cctx.nextRegister();
-        cctx.emit(updatedReg + " = add i32 " + currForInc + ", " + stepLoaded);
-        cctx.emit("store i32 " + updatedReg + ", i32* %" + llvmVariable);
+        cctx.emit(updatedReg + " = add " + llvmType + " " + currForInc + ", " + stepLoaded);
+        cctx.emit("store " + llvmType + " " + updatedReg + ", " + llvmType + "* %" + llvmVariable);
         cctx.emit("br label %" + startLabel);
 
         cctx.emit(endLabel + ":");
@@ -201,26 +211,15 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
             loopVarValue = loopVarAddr;
         } else {
             loopVarValue = cctx.nextRegister();
-            cctx.emit(loopVarValue + " = load "
-                    + arr.getInner().getLLVMName() + ", "
-                    + toPtr(arr.getInner().getLLVMName())
-                    + loopVarAddr);
+            cctx.emit(loopVarValue + " = load " + arr.getInner().getLLVMName() + ", " + toPtr(arr.getInner().getLLVMName()) + loopVarAddr);
         }
 
-        cctx.addVariable(new RVariable(
-                variable,
-                true,
-                true,
-                arr.getInner(),
-                loopVarAddr,
-                loopVarValue,
-                null
-        ));
+        cctx.addVariable(new RVariable(variable, true, true, arr.getInner(), loopVarAddr, loopVarValue, null));
 
         String startLabel = cctx.nextLabel("for_start");
         String bodyLabel = cctx.nextLabel("for_body");
-        String incLabel   = cctx.nextLabel("for_inc");
-        String endLabel   = cctx.nextLabel("for_end");
+        String incLabel = cctx.nextLabel("for_inc");
+        String endLabel = cctx.nextLabel("for_end");
 
         cctx.getLoopStack().push(new LoopContext(incLabel, bodyLabel, endLabel));
 
@@ -272,20 +271,12 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
         String loopVarValue = cctx.nextRegister();
         cctx.emit(loopVarValue + " = load i8, i8* %" + llvmVariable);
 
-        cctx.addVariable(new RVariable(
-                variable,
-                true,
-                true,
-                BuiltinTypes.CHAR.getType(),
-                "%" + llvmVariable,
-                loopVarValue,
-                null
-        ));
+        cctx.addVariable(new RVariable(variable, true, true, BuiltinTypes.CHAR.getType(), "%" + llvmVariable, loopVarValue, null));
 
         String startLabel = cctx.nextLabel("for_start");
-        String bodyLabel  = cctx.nextLabel("for_body");
-        String incLabel   = cctx.nextLabel("for_inc");
-        String endLabel   = cctx.nextLabel("for_end");
+        String bodyLabel = cctx.nextLabel("for_body");
+        String incLabel = cctx.nextLabel("for_inc");
+        String endLabel = cctx.nextLabel("for_end");
 
         cctx.getLoopStack().push(new LoopContext(incLabel, bodyLabel, endLabel));
 
