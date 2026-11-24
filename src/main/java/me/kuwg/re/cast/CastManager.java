@@ -357,9 +357,18 @@ public final class CastManager {
             return incompatible(fileName, line, sourceArray, targetType);
         }
 
+        final String arrLLVM = sourceArray.getLLVMName();
+
+        final String slot = newRegister(cctx);
+        cctx.emit(slot + " = alloca " + arrLLVM);
+        cctx.emit("store " + arrLLVM + " " + valueRegister + ", " + arrLLVM + "* " + slot);
+
+        final String elemPtr = newRegister(cctx);
+        cctx.emit(elemPtr + " = getelementptr inbounds " + arrLLVM + ", " + arrLLVM + "* " + slot + ", i32 0, i32 0");
+
         final String result = newRegister(cctx);
-        final PointerType pointerToElement = new PointerType(sourceArray.getInner());
-        cctx.emit(result + " = bitcast " + pointerToElement.getLLVMName() + " " + valueRegister + " to " + targetType.getLLVMName());
+        cctx.emit(result + " = bitcast " + new PointerType(sourceArray.getInner()).getLLVMName()
+                + " " + elemPtr + " to " + targetType.getLLVMName());
         return result;
     }
 
