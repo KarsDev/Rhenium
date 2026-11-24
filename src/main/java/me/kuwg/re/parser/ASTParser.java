@@ -1202,7 +1202,12 @@ public final class ASTParser {
             if (matchAndConsume(OPERATOR, "::")) {
                 if (self) return new RParserError("Self for namespace is not allowed", fileName, line).raise();
 
+                StringBuilder ns = new StringBuilder(name);
                 String fieldName = identifier();
+                while (matchAndConsume(OPERATOR, "::")) {
+                    ns.append("::").append(fieldName);
+                    fieldName = identifier();
+                }
 
                 if (matchAndConsume(OPERATOR, "<")) {
                     List<TypeRef> genTypes = new ArrayList<>();
@@ -1218,21 +1223,21 @@ public final class ASTParser {
                     }
 
                     var params = parseParamsCall();
-
                     var inner = new GenericFunctionCallNode(fileName, line, fieldName, genTypes, params);
 
-                    node = new NamespaceCallNode(fileName, line, name, inner);
+                    node = new NamespaceCallNode(fileName, line, ns.toString(), inner);
                     continue;
                 }
 
                 if (!match(DIVIDER, "(")) {
-                    node = new NamespaceCallNode(fileName, line, name, new DirectVariableReferenceNode(fileName, line, fieldName));
+                    node = new NamespaceCallNode(fileName, line, ns.toString(), new DirectVariableReferenceNode(fileName, line, fieldName));
                     continue;
                 }
 
                 var args = parseParamsCall();
 
-                node = new NamespaceCallNode(fileName, line, name, new FunctionCallNode(fileName, line, fieldName, args));
+                node = new NamespaceCallNode(fileName, line, ns.toString(), new FunctionCallNode(fileName, line, fieldName, args));
+                continue;
             }
 
             if (matchAndConsume(OPERATOR, "<")) {

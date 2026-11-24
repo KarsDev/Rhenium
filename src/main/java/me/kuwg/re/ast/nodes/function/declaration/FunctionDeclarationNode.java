@@ -91,7 +91,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         boolean main = isMain();
 
-        llvmName = registered ? this.llvmName : getEmissionLLVMName(cctx);
+        llvmName = llvmSymbol(registered ? this.llvmName : getEmissionLLVMName(cctx));
 
         StringBuilder func = new StringBuilder("; Function declaration\n");
 
@@ -118,7 +118,7 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         func.append("entry:\n");
 
         Stack<Map<String, RVariable>> oldScopes = cctx.detachScopes();
-        String ns;
+        List<String> oldNamespaces = null;
 
         try {
             cctx.pushIndent();
@@ -149,13 +149,14 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
                 cctx.addVariable(paramVar);
             }
 
-            ns = cctx.popNamespace();
+            oldNamespaces = cctx.detachNamespaces();
             block.compile(cctx);
 
             if (returnType == BuiltinTypes.NONE.getType()) {
                 cctx.emit("ret void");
             }
         } finally {
+            if (oldNamespaces != null) cctx.restoreNamespaces(oldNamespaces);
             cctx.popScope();
             cctx.popIndent();
             cctx.restoreScopes(oldScopes);
@@ -163,10 +164,6 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
         if (!main) {
             block.checkTypes(cctx, returnType, true);
-        }
-
-        if (ns != null) {
-            cctx.pushNamespace(ns);
         }
 
         String body = cctx.popFunctionBody();
@@ -203,6 +200,12 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
         return v;
     }
 
+    public static String llvmSymbol(String name) {
+        if (name.startsWith("\"") && name.endsWith("\"")) return name;
+        if (name.matches("[-a-zA-Z$._][-a-zA-Z$._0-9]*")) return name;
+        return "\"" + name.replace("\\", "\\5C").replace("\"", "\\22") + "\"";
+    }
+
     public void register(final CompilationContext cctx) {
         if (registered) return;
 
@@ -231,13 +234,10 @@ public class FunctionDeclarationNode extends ASTNode implements GlobalNode, IBlo
 
     private String getLLVMName(CompilationContext cctx) {
         String qualified = getQualifiedName(cctx);
-
         if (qualified.startsWith("\"") && qualified.endsWith("\"")) {
-            String clean = qualified.substring(1, qualified.length() - 1);
-            return "\"" + RFunction.makeUnique(clean) + "\"";
+            qualified = qualified.substring(1, qualified.length() - 1);
         }
-
-        return RFunction.makeUnique(qualified);
+        return llvmSymbol(RFunction.makeUnique(qualified));
     }
 
     private String getEmissionLLVMName(CompilationContext cctx) {

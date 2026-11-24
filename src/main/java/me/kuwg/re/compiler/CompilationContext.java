@@ -184,6 +184,17 @@ public final class CompilationContext {
         scopeStack = old;
     }
 
+    public List<String> detachNamespaces() {
+        List<String> old = new ArrayList<>(namespaceStack);
+        namespaceStack.clear();
+        return old;
+    }
+
+    public void restoreNamespaces(List<String> old) {
+        namespaceStack.clear();
+        namespaceStack.addAll(old);
+    }
+
     public void addFunction(RFunction f) {
         functions.add(f);
     }
