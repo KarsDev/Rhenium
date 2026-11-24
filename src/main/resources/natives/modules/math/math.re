@@ -174,3 +174,10 @@ namespace Math:
     // Returns the logarithm of x with a specified base
     func log(x: double, base: double) -> double:
         return Math::ln(x) / Math::ln(base)
+
+    // Returns e raised to the power of x
+    _Builtin func exp(x: double) -> double = """
+    entry:
+        %res = call double @llvm.exp.f64(double %x)
+        ret double %res
+    """
