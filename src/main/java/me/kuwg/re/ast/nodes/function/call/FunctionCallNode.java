@@ -47,14 +47,19 @@ public class FunctionCallNode extends FunCall {
         List<String> argRegs = new ArrayList<>(parameters.size());
         List<TypeRef> callTypes = new ArrayList<>(parameters.size());
 
-        for (ValueNode param : parameters) {
-            argRegs.add(param.compileAndGet(cctx));
-            callTypes.add(param.getType());
-        }
-
         String qualifiedName = cctx.qualify(name);
 
-        RFunction fn  = cctx.getExact(qualifiedName, callTypes);
+        var ns = cctx.detachNamespaces();
+        try {
+            for (ValueNode param : parameters) {
+                argRegs.add(param.compileAndGet(cctx));
+                callTypes.add(param.getType());
+            }
+        } finally {
+            cctx.restoreNamespaces(ns);
+        }
+
+        RFunction fn = cctx.getExact(qualifiedName, callTypes);
 
         if (fn == null) {
             fn = cctx.getFunction(qualifiedName, callTypes);
@@ -62,18 +67,18 @@ public class FunctionCallNode extends FunCall {
 
         if (fn instanceof RGenFunction genFn) {
             cctx.emit("; Generic function call");
-            return compileGeneric(cctx, genFn, callTypes, getting);
+            return compileGeneric(cctx, genFn, argRegs, callTypes, getting);
         }
 
         if (fn == null) {
-            return tryLambda(cctx, callTypes);
+            return tryLambda(cctx, argRegs, callTypes);
         }
 
         cctx.emit("; Function call");
         return emitCall(cctx, fn, argRegs, callTypes, getting);
     }
 
-    private String compileGeneric(CompilationContext cctx, RGenFunction genFn, List<TypeRef> callTypes, boolean getting) {
+    private String compileGeneric(CompilationContext cctx, RGenFunction genFn, List<String> argRegs, List<TypeRef> callTypes, boolean getting) {
         validateGenericUsage(genFn);
 
         Map<String, TypeRef> bindings = inferGenericTypes(genFn, callTypes);
@@ -107,9 +112,6 @@ public class FunctionCallNode extends FunCall {
             existing = concreteFn;
         }
 
-        List<String> argRegs = new ArrayList<>();
-        for (ValueNode param : parameters) argRegs.add(param.compileAndGet(cctx));
-
         return emitCall(cctx, existing, argRegs, concreteParams.stream().map(FunctionParameter::type).toList(), getting);
     }
 
@@ -136,7 +138,7 @@ public class FunctionCallNode extends FunCall {
         }
     }
 
-    private String tryLambda(CompilationContext cctx, final List<TypeRef> callTypes) {
+    private String tryLambda(CompilationContext cctx, final List<String> argRegs, final List<TypeRef> callTypes) {
         RVariable v = cctx.getVariable(name);
 
         if (v == null || !(v.type() instanceof final LambdaType lambda)) {
@@ -145,12 +147,6 @@ public class FunctionCallNode extends FunCall {
 
         if (lambda.returnType() == BuiltinTypes.NONE.getType()) {
             throwVoid(new RDefFunction(lambda.getLLVMName(), name, lambda.returnType(), List.of()), callTypes);
-        }
-
-        List<String> argRegs = new ArrayList<>(parameters.size());
-
-        for (ValueNode param : parameters) {
-            argRegs.add(param.compileAndGet(cctx));
         }
 
         for (int i = 0; i < parameters.size(); i++) {
