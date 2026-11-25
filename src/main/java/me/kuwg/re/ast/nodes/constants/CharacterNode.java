@@ -24,16 +24,11 @@ public class CharacterNode extends ConstantNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String reg = cctx.nextRegister();
-
-        cctx.emit(reg + " = add i8 0, " + (int) value + " ; char literal '" + printable(value) + "'");
-
-        return reg;
+        return compileToConstant(cctx);
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        compileAndGet(cctx);
     }
 
     @Override
