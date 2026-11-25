@@ -55,25 +55,18 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
             return;
         }
 
-        String reg = collection.compileAndGet(cctx);
+        String reg;
 
-        if (collection.getType() instanceof ArrayType arr) {
-            if (collection instanceof VariableReference varNode) {
-                var v = cctx.getVariable(varNode.getSimpleName());
-                if (v == null) {
-                    new RVariableNotFoundError(varNode.getSimpleName(), fileName, line).raise();
-                    return;
-                }
-                reg = v.addrReg();
-            } else {
-                String llvmArrType = "[" + arr.size() + " x " + arr.getInner().getLLVMName() + "]";
-
-                String arrayPtr = cctx.nextRegister();
-                cctx.emit(arrayPtr + " = alloca " + llvmArrType);
-                cctx.emit("store " + llvmArrType + " " + reg + ", " + llvmArrType + "* " + arrayPtr);
-
-                reg = arrayPtr;
+        if (collection instanceof VariableReference varNode
+                && collection.getType() instanceof ArrayType) {
+            var v = cctx.getVariable(varNode.getSimpleName());
+            if (v == null) {
+                new RVariableNotFoundError(varNode.getSimpleName(), fileName, line).raise();
+                return;
             }
+            reg = v.addrReg();
+        } else {
+            reg = collection.compileAndGet(cctx);
         }
 
         TypeRef type = collection.getType();
