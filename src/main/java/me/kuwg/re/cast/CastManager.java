@@ -359,12 +359,8 @@ public final class CastManager {
 
         final String arrLLVM = sourceArray.getLLVMName();
 
-        final String slot = newRegister(cctx);
-        cctx.emit(slot + " = alloca " + arrLLVM);
-        cctx.emit("store " + arrLLVM + " " + valueRegister + ", " + arrLLVM + "* " + slot);
-
         final String elemPtr = newRegister(cctx);
-        cctx.emit(elemPtr + " = getelementptr inbounds " + arrLLVM + ", " + arrLLVM + "* " + slot + ", i32 0, i32 0");
+        cctx.emit(elemPtr + " = getelementptr inbounds " + arrLLVM + ", " + arrLLVM + "* " + valueRegister + ", i32 0, i32 0");
 
         final String result = newRegister(cctx);
         cctx.emit(result + " = bitcast " + new PointerType(sourceArray.getInner()).getLLVMName()
