@@ -15,14 +15,11 @@ public class NullNode extends ConstantNode {
 
     @Override
     public String compileAndGet(final CompilationContext cctx) {
-        String reg = cctx.nextRegister();
-        cctx.emit(reg + " = bitcast ptr null to ptr ; null literal");
-        return reg;
+        return compileToConstant(cctx);
     }
 
     @Override
     public void compile(final CompilationContext cctx) {
-        compileAndGet(cctx);
     }
 
     @Override
