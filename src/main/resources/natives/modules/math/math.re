@@ -40,6 +40,7 @@ namespace Math:
     func toRadians(deg: double) -> double:
         return deg * DEG_TO_RAD
 
+    // Clamps a number between two numbers
     generic func clamp<N>(val: N, min: N, max: N) -> N:
         if val < min:
             return min
@@ -47,6 +48,14 @@ namespace Math:
             if val > max:
                 return max
         return val
+
+    // Returns the bigger value between x and y
+    generic func max<N>(x: N, y: N) -> N:
+        return x if x > y else y
+
+    // Returns the smaller value between x and y
+    generic func min<N>(x: N, y: N) -> N:
+        return y if x > y else x
 
     // Builtins:
 
