@@ -1,6 +1,7 @@
 package me.kuwg.re.ast.nodes.constants;
 
 import me.kuwg.re.compiler.CompilationContext;
+import me.kuwg.re.error.errors.parser.RParserError;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 
 public class CharacterNode extends ConstantNode {
@@ -8,6 +9,11 @@ public class CharacterNode extends ConstantNode {
 
     public CharacterNode(final String fileName, final int line, final char value) {
         super(fileName, line, BuiltinTypes.CHAR.getType());
+
+        if (value > 0xFF) {
+            new RParserError("char literal U+%04X does not fit in i8".formatted((int) value), fileName, line);
+        }
+
         this.value = value;
     }
 
