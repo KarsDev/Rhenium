@@ -32,17 +32,20 @@ public class CharacterNode extends ConstantNode {
 
     @Override
     public void write(final StringBuilder sb, final String indent) {
-        sb.append(indent).append("Char: ").append(value).append(NEWLINE);
+        sb.append(indent).append("Char: '").append(printable(value)).append('\'').append(NEWLINE);
     }
 
     private String printable(char c) {
         return switch (c) {
+            case '\0' -> "\\0";
             case '\n' -> "\\n";
             case '\t' -> "\\t";
             case '\r' -> "\\r";
             case '\\' -> "\\\\";
             case '\'' -> "\\'";
-            default -> Character.toString(c);
+            default -> Character.isISOControl(c)
+                    ? "\\x%02X".formatted((int) c)
+                    : Character.toString(c);
         };
     }
 }
