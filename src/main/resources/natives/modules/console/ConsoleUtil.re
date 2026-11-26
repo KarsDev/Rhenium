@@ -61,11 +61,11 @@ namespace Console:
     func getChar() -> int:
         return BCU_00(10, 0, 0)
     
-    // Gets console X size
+    // Gets console window width
     func getSizeX() -> int:
         return (BCU_00(11, 0, 0) >> 16) & 0xFFFF
 
-    // Gets console Y size
+    // Gets console window height
     func getSizeY() -> int:
         return BCU_00(11, 0, 0) & 0xFFFF
         
