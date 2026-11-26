@@ -12,7 +12,6 @@ import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.StructType;
 import me.kuwg.re.type.trait.TraitType;
-import me.kuwg.re.type.union.UnionType;
 import me.kuwg.re.writer.Writeable;
 
 import java.util.*;
@@ -117,14 +116,6 @@ public abstract class ASTNode implements Compilable, Writeable, Cloneable {
         if (type instanceof ArrayType arr) {
             TypeRef inner = evalType(arr.getInner(), cctx, fileName, line, expanding);
             return inner == arr.getInner() ? arr : new ArrayType(arr.size(), inner);
-        }
-
-        if (type instanceof UnionType union) {
-            List<TypeRef> variants = new ArrayList<>(union.variants().size());
-            for (TypeRef v : union.variants()) {
-                variants.add(evalType(v, cctx, fileName, line, expanding));
-            }
-            return new UnionType(union.getName(), variants);
         }
 
         if (type instanceof StructType st) {

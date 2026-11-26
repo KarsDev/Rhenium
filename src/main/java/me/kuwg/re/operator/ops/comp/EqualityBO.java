@@ -10,7 +10,6 @@ import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.struct.StructType;
-import me.kuwg.re.type.union.UnionType;
 
 /// Shared implementation of {@code ==} and {@code !=}
 abstract class EqualityBO extends BinaryOperator {
@@ -132,10 +131,6 @@ abstract class EqualityBO extends BinaryOperator {
             return bool(emit(c, "icmp " + intPred(negated) + " ptr " + c.leftReg() + ", " + c.rightReg()));
         }
 
-        if (lt instanceof UnionType ul && rt instanceof UnionType ur) {
-            return bool(compareUnions(ul, ur, c.leftReg(), c.rightReg(), c, negated));
-        }
-
         if (lt instanceof StructType sl && rt instanceof StructType sr) {
             return bool(compareStructs(sl, sr, c.leftReg(), c.rightReg(), c, negated));
         }
@@ -195,7 +190,7 @@ abstract class EqualityBO extends BinaryOperator {
             return literal(Integer.parseInt(left.compileToConstant(cctx)) == Integer.parseInt(right.compileToConstant(cctx)), negated);
         }
 
-        if (lt instanceof StructType || rt instanceof StructType || lt instanceof UnionType || rt instanceof UnionType) {
+        if (lt instanceof StructType || rt instanceof StructType) {
             return new RUnsupportedBinaryExpressionError(lt.getName(), getSymbol(), rt.getName(), left.getFileName(), left.getLine()).raise();
         }
 
@@ -261,44 +256,9 @@ abstract class EqualityBO extends BinaryOperator {
         return result != null ? result : literal(true, neg);
     }
 
-    private String compareUnions(final UnionType lt, final UnionType rt, final String l, final String r,
-                                 final BinaryOperatorContext c, final boolean neg) {
-        if (!lt.getName().equals(rt.getName())) {
-            return literal(false, neg);
-        }
-
-        final var def = c.cctx().getUnion(lt.getName());
-        if (def == null) {
-            return unsupportedCtx(lt, rt, c);
-        }
-
-        final String leftTag = extract(c, lt.getLLVMName(), l, 0);
-        final String rightTag = extract(c, rt.getLLVMName(), r, 0);
-        final String tagEq = emit(c, "icmp eq i32 " + leftTag + ", " + rightTag);
-
-        String payloadEq = null;
-
-        for (int i = 0; i < def.variants().size(); i++) {
-            final TypeRef variant = def.variants().get(i);
-
-            final String lv = extract(c, lt.getLLVMName(), l, i + 1);
-            final String rv = extract(c, rt.getLLVMName(), r, i + 1);
-            final String valueEq = compareValues(variant, lv, rv, c, false);
-
-            final String active = emit(c, "icmp eq i32 " + leftTag + ", " + i);
-            final String caseEq = emit(c, "and i1 " + active + ", " + valueEq);
-
-            payloadEq = payloadEq == null ? caseEq : emit(c, "or i1 " + payloadEq + ", " + caseEq);
-        }
-
-        final String eq = payloadEq == null ? tagEq : emit(c, "and i1 " + tagEq + ", " + payloadEq);
-        return neg ? emit(c, "xor i1 " + eq + ", true") : eq;
-    }
-
     private String compareValues(final TypeRef type, final String l, final String r,
                                  final BinaryOperatorContext c, final boolean neg) {
         if (type instanceof StructType s) return compareStructs(s, s, l, r, c, neg);
-        if (type instanceof UnionType u) return compareUnions(u, u, l, r, c, neg);
 
         final String ir = leafCompare(type, l, r, neg);
         return ir == null ? unsupportedCtx(type, type, c) : emit(c, ir);

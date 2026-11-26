@@ -1,11 +1,10 @@
 package me.kuwg.re.type.layout;
 
-import me.kuwg.re.error.errors.union.RUnionError;
+import me.kuwg.re.error.errors.struct.RStructSizeError;
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.StructType;
-import me.kuwg.re.type.union.UnionType;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +26,7 @@ public final class LayoutCalculator {
 
         if (type instanceof StructType st) {
             if (!sizing.add(st)) {
-                return new RUnionError(
+                return new RStructSizeError(
                         "Recursive struct '" + st.getName() + "' has infinite size.", "Unknown in context", -1).raise();
             }
 
@@ -49,30 +48,6 @@ public final class LayoutCalculator {
             }
         }
 
-        if (type instanceof UnionType ut) {
-            if (!sizing.add(ut)) {
-                return new RUnionError(
-                        "Recursive union '" + ut.getName() + "' has infinite size.", "Unknown in context", -1).raise();
-            }
-
-            try {
-                long payloadSize = 0;
-                long payloadAlign = 4;
-
-                for (TypeRef variant : ut.variants()) {
-                    payloadSize = Math.max(payloadSize, size(variant));
-                    payloadAlign = Math.max(payloadAlign, alignment(variant));
-                }
-
-                long tagSize = 4;
-                long payloadOffset = alignTo(tagSize, payloadAlign);
-
-                return payloadOffset + payloadSize;
-            } finally {
-                sizing.remove(ut);
-            }
-        }
-
         return type.getSize();
     }
 
@@ -87,7 +62,7 @@ public final class LayoutCalculator {
 
         if (type instanceof StructType st) {
             if (!aligning.add(st)) {
-                return new RUnionError(
+                return new RStructSizeError(
                         "Recursive struct '" + st.getName() + "' has infinite alignment.", "Unknown in context", -1).raise();
             }
 
@@ -101,25 +76,6 @@ public final class LayoutCalculator {
                 return max;
             } finally {
                 aligning.remove(st);
-            }
-        }
-
-        if (type instanceof UnionType ut) {
-            if (!aligning.add(ut)) {
-                return new RUnionError(
-                        "Recursive union '" + ut.getName() + "' has infinite alignment.", "Unknown in context", -1).raise();
-            }
-
-            try {
-                long max = 4;
-
-                for (TypeRef variant : ut.variants()) {
-                    max = Math.max(max, alignment(variant));
-                }
-
-                return max;
-            } finally {
-                aligning.remove(ut);
             }
         }
 

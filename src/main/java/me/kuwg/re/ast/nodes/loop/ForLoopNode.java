@@ -55,10 +55,12 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
             return;
         }
 
+        ValueNode cloned = collection.clone();
+        cloned.compileAndGet(cctx);
         String reg;
 
         if (collection instanceof VariableReference varNode
-                && collection.getType() instanceof ArrayType) {
+                && cloned.getType() instanceof ArrayType) {
             var v = cctx.getVariable(varNode.getSimpleName());
             if (v == null) {
                 new RVariableNotFoundError(varNode.getSimpleName(), fileName, line).raise();
@@ -69,7 +71,7 @@ public class ForLoopNode extends ASTNode implements IBlockContainer {
             reg = collection.compileAndGet(cctx);
         }
 
-        TypeRef type = collection.getType();
+        TypeRef type = cloned.getType();
 
         if (!(type instanceof IterableTypeRef)) {
             new RValueIsNotIterableError(type.getName(), fileName, line).raise();

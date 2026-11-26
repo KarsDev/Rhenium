@@ -103,7 +103,7 @@ impl FileReader:
         this.ensureOpen()
 
         if this.position >= len(this.content):
-            return ""
+            return '?'
 
         return strSubRange(this.content, this.position, this.position + 1)[0]
 

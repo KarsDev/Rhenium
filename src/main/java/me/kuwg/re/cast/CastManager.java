@@ -8,8 +8,6 @@ import me.kuwg.re.type.builtin.BuiltinTypes;
 import me.kuwg.re.type.iterable.arr.ArrayType;
 import me.kuwg.re.type.ptr.NullType;
 import me.kuwg.re.type.ptr.PointerType;
-import me.kuwg.re.type.struct.StructType;
-import me.kuwg.re.type.union.UnionType;
 
 public final class CastManager {
 
@@ -75,12 +73,6 @@ public final class CastManager {
         }
         if (sourceType == BuiltinTypes.STR.getType()) {
             return fromStr(fileName, line, valueRegister, targetType, cctx);
-        }
-        if (sourceType instanceof UnionType unionType) {
-            return fromUnion(fileName, line, unionType, valueRegister, targetType, cctx);
-        }
-        if (sourceType instanceof StructType structType) {
-            return fromStruct(fileName, line, structType, valueRegister, targetType, cctx);
         }
 
         return incompatible(fileName, line, sourceType, targetType);
@@ -386,65 +378,5 @@ public final class CastManager {
         }
 
         return incompatible(fileName, line, BuiltinTypes.STR.getType(), targetType);
-    }
-
-    private static String fromUnion(final String fileName,
-                                    final int line,
-                                    final UnionType sourceUnion,
-                                    final String valueRegister,
-                                    final TypeRef targetType,
-                                    final CompilationContext cctx) {
-        if (!(targetType instanceof StructType structTarget) || !sourceUnion.contains(targetType)) {
-            return incompatible(fileName, line, sourceUnion, targetType);
-        }
-
-        final String unionPtr = newRegister(cctx);
-        cctx.emit(unionPtr + " = alloca " + sourceUnion.getLLVMName());
-        cctx.emit("store " + sourceUnion.getLLVMName() + " " + valueRegister + ", " + sourceUnion.getLLVMName() + "* " + unionPtr);
-
-        final String payloadPtr = newRegister(cctx);
-        cctx.emit(payloadPtr + " = getelementptr inbounds " + sourceUnion.getLLVMName() + ", " + sourceUnion.getLLVMName() + "* " + unionPtr + ", i32 0, i32 1");
-
-        final String structPtr = newRegister(cctx);
-        cctx.emit(structPtr + " = bitcast [" + sourceUnion.payloadSize() + " x i8]* " + payloadPtr + " to " + structTarget.getLLVMName() + "*");
-
-        final String result = newRegister(cctx);
-        cctx.emit(result + " = load " + structTarget.getLLVMName() + ", " + structTarget.getLLVMName() + "* " + structPtr);
-        return result;
-    }
-
-    private static String fromStruct(final String fileName,
-                                     final int line,
-                                     final StructType sourceStruct,
-                                     final String valueRegister,
-                                     final TypeRef targetType,
-                                     final CompilationContext cctx) {
-        if (!(targetType instanceof UnionType unionTarget)) {
-            return incompatible(fileName, line, sourceStruct, targetType);
-        }
-
-        final int tag = unionTarget.variants().indexOf(sourceStruct);
-        if (tag < 0) {
-            return incompatible(fileName, line, sourceStruct, targetType);
-        }
-
-        final String unionPtr = newRegister(cctx);
-        cctx.emit(unionPtr + " = alloca " + unionTarget.getLLVMName());
-
-        final String tagPtr = newRegister(cctx);
-        cctx.emit(tagPtr + " = getelementptr inbounds " + unionTarget.getLLVMName() + ", " + unionTarget.getLLVMName() + "* " + unionPtr + ", i32 0, i32 0");
-        cctx.emit("store i32 " + tag + ", i32* " + tagPtr);
-
-        final String payloadPtr = newRegister(cctx);
-        cctx.emit(payloadPtr + " = getelementptr inbounds " + unionTarget.getLLVMName() + ", " + unionTarget.getLLVMName() + "* " + unionPtr + ", i32 0, i32 1");
-
-        final String structPtr = newRegister(cctx);
-        cctx.emit(structPtr + " = bitcast [" + (unionTarget.getSize() - 4) + " x i8]* " + payloadPtr + " to " + sourceStruct.getLLVMName() + "*");
-
-        cctx.emit("store " + sourceStruct.getLLVMName() + " " + valueRegister + ", " + sourceStruct.getLLVMName() + "* " + structPtr);
-
-        final String result = newRegister(cctx);
-        cctx.emit(result + " = load " + unionTarget.getLLVMName() + ", " + unionTarget.getLLVMName() + "* " + unionPtr);
-        return result;
     }
 }

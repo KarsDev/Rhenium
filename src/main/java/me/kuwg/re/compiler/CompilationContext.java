@@ -29,7 +29,6 @@ import me.kuwg.re.type.ptr.PointerType;
 import me.kuwg.re.type.struct.AppliedGenStructType;
 import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
-import me.kuwg.re.type.union.UnionType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -63,7 +62,6 @@ public final class CompilationContext {
     private final Map<String, Trait> traits = new HashMap<>();
     private final Deque<List<RPendingDestructor>> destructorScopes = new ArrayDeque<>();
     private final CopyFunctionGenerator copy = new CopyFunctionGenerator(this);
-    private final Map<String, UnionType> unions = new HashMap<>();
     public boolean compilingConstructor = false;
     private Stack<Map<String, RVariable>> scopeStack = new Stack<>();
     private final Deque<LabelContext> labelStack = new ArrayDeque<>();
@@ -500,14 +498,6 @@ public final class CompilationContext {
 
     public void ensureCopyFunction(TypeRef type, String fileName, int line) {
         copy.ensure(type, fileName, line);
-    }
-
-    public void addUnion(String name, UnionType type) {
-        unions.put(name, type);
-    }
-
-    public UnionType getUnion(String name) {
-        return unions.get(name);
     }
 
     private void runCommand(List<String> command) throws IOException {

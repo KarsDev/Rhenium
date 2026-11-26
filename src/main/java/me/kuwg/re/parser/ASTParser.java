@@ -49,7 +49,6 @@ import me.kuwg.re.ast.nodes.struct.gen.GenStructInitNode;
 import me.kuwg.re.ast.nodes.ternary.TernaryOperatorNode;
 import me.kuwg.re.ast.nodes.trait.TraitDeclarationNode;
 import me.kuwg.re.ast.nodes.type.TypeofNode;
-import me.kuwg.re.ast.nodes.union.UnionDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.DirectVariableReferenceNode;
 import me.kuwg.re.ast.nodes.variable.VariableDeclarationNode;
 import me.kuwg.re.ast.nodes.variable.VariableReference;
@@ -85,7 +84,6 @@ import me.kuwg.re.type.struct.GenStructType;
 import me.kuwg.re.type.struct.StructType;
 import me.kuwg.re.type.trait.TraitType;
 import me.kuwg.re.type.undefined.UndefinedType;
-import me.kuwg.re.type.union.UnionType;
 
 import java.util.*;
 import java.util.function.Function;
@@ -456,7 +454,6 @@ public final class ASTParser {
             case "copy" -> parseCopyKeyword();
             case "delete" -> parseDeleteKeyword();
             case "zero" -> parseZeroKeyword();
-            case "union" -> parseUnionKeyword();
             case "label" -> parseLabelKeyword();
             default -> new RParserError("Unexpected keyword: " + kw, fileName, line()).raise();
         };
@@ -1955,54 +1952,6 @@ public final class ASTParser {
         return new ZeroInitializerNode(fileName, line, parseOptionalType().orElse(null));
     }
 
-    private @SubFunc UnionDeclarationNode parseUnionKeyword() {
-        int line = line();
-
-        String name = identifier();
-
-        if (!matchAndConsume(OPERATOR, ":"))
-            return new RParserError("Expected ':' for union declaration", fileName, line).raise();
-
-        if (!match(NEWLINE)) {
-            return new RParserError("Expected newline after union declaration", fileName, line).raise();
-        }
-        consume();
-
-        if (!match(INDENT)) {
-            return new RParserError("Expected indented union body", fileName, line).raise();
-        }
-        consume();
-
-        List<TypeRef> variants = new ArrayList<>();
-
-        while (!match(EOF) && !match(DEDENT)) {
-            removeNewlines();
-
-            if (match(EOF) || match(DEDENT)) {
-                break;
-            }
-
-            TypeRef type = parseType(false);
-
-            if (!(type instanceof StructType))
-                return new RParserError("Unions allow only struct types: " + type.getName(), fileName, line()).raise();
-
-            variants.add(type);
-        }
-
-        if (match(DEDENT)) {
-            consume();
-        } else if (!match(EOF)) {
-            return new RParserError("Expected dedent to close enum declaration", fileName, line).raise();
-        }
-
-        UnionType type = new UnionType(name, variants);
-
-        addType(type.getName(), type);
-
-        return new UnionDeclarationNode(fileName, line, type);
-    }
-
     private @SubFunc ASTNode parseLabelKeyword() {
         int line = line();
         String name = identifier();
@@ -2516,11 +2465,6 @@ public final class ASTParser {
                 continue;
             }
 
-            if (matchAndConsume(KEYWORD, "union")) {
-                collectUnionType();
-                continue;
-            }
-
             if (matchAndConsume(KEYWORD, "export")) {
                 collectExportTypes();
                 continue;
@@ -2780,48 +2724,6 @@ public final class ASTParser {
         }
 
         addType(name, new TraitType(name, functions));
-    }
-
-    private void collectUnionType() {
-        if (!match(IDENTIFIER)) {
-            return;
-        }
-
-        String name = consume().value();
-
-        if (!matchAndConsume(OPERATOR, ":")) {
-            return;
-        }
-
-        removeNewlines();
-
-        if (!match(INDENT)) {
-            return;
-        }
-        consume();
-
-        List<TypeRef> variants = new ArrayList<>();
-
-        while (!match(DEDENT) && !match(EOF)) {
-            removeNewlines();
-
-            if (match(DEDENT) || match(EOF)) {
-                break;
-            }
-
-            TypeRef type = collectType(false);
-            variants.add(type);
-
-            while (!match(NEWLINE) && !match(DEDENT) && !match(EOF)) {
-                consume();
-            }
-        }
-
-        if (match(DEDENT)) {
-            consume();
-        }
-
-        addType(name, new UnionType(name, variants));
     }
 
     private void collectExportTypes() {

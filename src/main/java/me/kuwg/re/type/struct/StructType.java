@@ -2,7 +2,6 @@ package me.kuwg.re.type.struct;
 
 import me.kuwg.re.type.TypeRef;
 import me.kuwg.re.type.layout.LayoutCalculator;
-import me.kuwg.re.type.union.UnionType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,7 +30,6 @@ public final class StructType implements TypeRef {
 
     @Override
     public boolean isCompatibleWith(final TypeRef other) {
-        if (other instanceof UnionType u) return u.contains(this);
         if (!(other instanceof StructType s)) return false;
         return Objects.equals(name, s.name);
     }
