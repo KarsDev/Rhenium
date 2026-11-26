@@ -12,11 +12,11 @@ using errors.IllegalArgumentError
     - Automatic capacity growth
     - Generic over any element type T
 
-    The list maintains two separate values:
+    The List maintains two separate values:
     - size     : the number of elements currently stored
     - capacity : the amount of allocated storage available
 
-    When the list becomes full, its capacity is automatically doubled.
+    When the List becomes full, its capacity is automatically doubled.
 
     Example:
     nums = init List<int>()
@@ -41,13 +41,13 @@ impl List<T>:
         this.capacity = capacity
         this.items = init arr -> T(capacity)
 
-    // Creates a list with default capacity (5)
+    // Creates a List with default capacity (5)
     init():
         this.size = 0
         this.capacity = 5
         this.items = init arr -> T(this.capacity)
 
-    // Resizes the list, doubling the capacity
+    // Resizes the List, doubling the capacity
     func resize() -> none:
         this.capacity *= 2
         newItems = init arr -> T(this.capacity)
@@ -55,7 +55,7 @@ impl List<T>:
             newItems[i] = this.items[i]
         this.items = newItems
 
-    // Adds an element to the list
+    // Adds an element to the List
     func add(v: T) -> none:
         if this.size == this.capacity:
             this.resize()
@@ -68,7 +68,7 @@ impl List<T>:
             raise init IndexOutOfBoundsError(idx, this.size)
         return this.items[idx]
 
-    // Sets an element in the list at a given index
+    // Sets an element in the List at a given index
     func set(idx: int, v: T) -> none:
         if idx < 0 or idx >= this.size:
             raise init IndexOutOfBoundsError(idx, this.size)
@@ -95,7 +95,7 @@ impl List<T>:
         this.size--
         return val
 
-    // Removes and gets the last element from the list
+    // Removes and gets the last element from the List
     func pop() -> T:
         if this.size == 0:
             raise init IndexOutOfBoundsError(0, 0)
@@ -103,33 +103,33 @@ impl List<T>:
         this.size--
         return this.items[this.size]
 
-    // Checks whether the list contains a specific element
+    // Checks whether the List contains a specific element
     func contains(v: T) -> bool:
         for i in range(this.size):
             if this.items[i] == v:
                 return true
         return false
 
-    // Gets the index of an element in the list
+    // Gets the index of an element in the List
     func indexOf(v: T) -> int:
         for i in range(this.size):
             if this.items[i] == v:
                 return i
         return -1
 
-    // Clears the list, setting its size to 0
+    // Clears the List, setting its size to 0
     func clear() -> none:
         this.size = 0
 
-    // Checks whether the list is empty
+    // Checks whether the List is empty
     func isEmpty() -> bool:
         return this.size == 0
 
-    // Gives the length (or size) of the list. This can also be called using len(<List object>)
+    // Gives the length (or size) of the List. This can also be called using len(<List object>)
     func length() -> int:
         return this.size
 
-    // Ensures the list can hold at least newCap elements without resizing
+    // Ensures the List can hold at least newCap elements without resizing
     func reserve(newCap: int) -> none:
         if newCap <= this.capacity:
             return
