@@ -1,0 +1,5 @@
+export FileError
+export IllegalArgumentError
+export IndexOutOfBoundsError
+export NetworkError
+export ResultError

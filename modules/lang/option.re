@@ -1,0 +1,73 @@
+using errors.ResultError
+
+/*
+  Represents an optional value.
+  
+  An Option<T> can either:
+  - contain a value (Some)
+  - contain no value (None)
+  
+  This type is useful when a value may or may not exist,
+  avoiding the need for null references.
+  
+  Example:
+  name = init Option<str>("Alice")
+  
+  if (name.isPresent()):
+      println(name.get())
+  
+  empty = init Option<str>()
+  println(empty.orElse("Unknown"))
+  
+  Common Uses:
+  - Search results
+  - Configuration values
+  - Function return values that may fail
+  - Nullable data
+  
+  Example:
+  func findUser(id: int) -> Option<User>:
+      ...
+*/
+generic struct Option<T>:
+    value: T
+    present: bool
+
+impl Option<T>:
+    // Creates an empty Option
+    init():
+        this.present = false
+    
+    // Creates an Option containing a value
+    init(value: T):
+        this.value = copy(value)
+        this.present = true
+
+    // Returns true if a value is present
+    func isPresent() -> bool:
+        return present
+
+    // Returns true if no value is present
+    func isEmpty() -> bool:
+        return not this.isPresent()
+
+    // Gets the contained value, raising an exception if the Option is empty
+    func get() -> T:
+        if not this.isPresent():
+            raise init ResultError("Option")
+        
+        return this.value
+    
+    // Returns the contained value or 'other' if the Option is empty
+    func orElse(other: T) -> T:
+        return this.value if this.isPresent() else other
+    
+    // Returns the contained value or raises an exception with the message if empty
+    func expect(message: str) -> T:
+        if this.isEmpty():
+            raise message
+        return this.get()
+    
+    // Return true if the Option contains the specified value
+    func contains(value: T) -> bool:
+        return this.isPresent() and this.get() == value
