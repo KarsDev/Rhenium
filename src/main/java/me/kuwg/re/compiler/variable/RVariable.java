@@ -19,6 +19,6 @@ public record RVariable(
 
     public static String makeUnique(String base) {
         int hash = Math.abs(base.hashCode() % 10_000);
-        return "%s_%04d_%d".formatted(base, hash, COUNTER.getAndIncrement());
+        return "\"%s_%04d_%d\"".formatted(base, hash, COUNTER.getAndIncrement());
     }
 }
