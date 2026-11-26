@@ -340,6 +340,14 @@ for obj in objs:
 
 for c in copied_objs:
     println(c)
+
+// For loops also support unnamed variables:
+
+// Ignores the value of the current range index and just repeats the loop 10 times
+for _ in range(10):
+  println("next")
+
+
 /*
 <=------------------------=>|<=>|<=-----------------------=>
   MATCH STATEMENTS
