@@ -91,6 +91,8 @@ import java.util.function.Function;
 import static me.kuwg.re.token.TokenType.*;
 
 public final class ASTParser {
+    private static int IgnoredVariableCount = 0;
+
     public final Map<String, TypeRef> typeMap;
     private final String fileName;
     private Token[] tokens;
@@ -689,8 +691,7 @@ public final class ASTParser {
     private @SubFunc ASTNode parseForKeyword() {
         int line = line();
 
-
-        String name = identifier();
+        String name = parseOptionalVariableName();
 
         if (!matchAndConsume(OPERATOR, "in")) {
             return new RParserError("Expected 'in' for for loop", fileName, line).raise();
@@ -2343,6 +2344,13 @@ public final class ASTParser {
         }
 
         return false;
+    }
+
+    private String parseOptionalVariableName() {
+        if (matchAndConsume(OPERATOR, "_")) {
+            return "IgnoredVariableName " + IgnoredVariableCount++;
+        }
+        return identifier();
     }
 
     /*
