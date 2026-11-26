@@ -89,7 +89,7 @@ LLVM Top code declarations
 """
 
 _NativeCPP("math") int add(a: int, b: int) and int sub(a: int, b: int) // used natively
-extern("math") int add(a: int, b: int) // with math.cpp in the same folder
+extern("math.cpp") int add(a: int, b: int) // with math.cpp in the same folder
 ```
 
 ### Types
