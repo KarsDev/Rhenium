@@ -35,7 +35,7 @@ extern "C" {
         localtime_s(&now, &currentTime);
 
         return static_cast<int64_t>(now.tm_year + 1900)
-            | (static_cast<int64_t>(now.tm_mon + 1) << 16)
+            | (static_cast<int64_t>(now.tm_mon) << 16)
             | (static_cast<int64_t>(now.tm_mday) << 24);
     }
 }
