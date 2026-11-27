@@ -33,19 +33,18 @@ impl Date:
         return "Date{day=" + this.day + ", month=" + this.month + ", year=" + this.year + "}"
     
     func getDayOfWeek() -> DayOfWeek inline:
-        d: mut int = this.day
-        m: mut int = this.month
         y: mut int = this.year
+        m: int = this.month + 1
+        d: int = this.day
+
+        offsets = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
 
         if m < 3:
-            m += 12
             y -= 1
-        
-        K = y % 100
-        J = y / 100
 
-        h = (d + (13 * (m + 1)) / 5 + K + K / 4 + J / 4 + 5 * J ) % 7
-        return h
+        dow = (y + y / 4 - y / 100 + y / 400 + offsets[m - 1] + d) % 7
+
+        return dow
     
     func isLeapYear() -> bool inline:
         return this.year % 400 == 0 or (this.year % 4 == 0 and this.year % 100 != 0)
