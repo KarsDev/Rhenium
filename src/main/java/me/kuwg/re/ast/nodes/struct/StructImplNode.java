@@ -116,6 +116,7 @@ public class StructImplNode extends ASTNode implements GlobalNode, TopLevelNode 
                         lookupName,
                         params,
                         blt.getReturnType(),
+                        blt.isInline(),
                         blt.getLlvmBody()
                 );
 

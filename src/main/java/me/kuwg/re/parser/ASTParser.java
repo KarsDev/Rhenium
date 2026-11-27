@@ -529,6 +529,8 @@ public final class ASTParser {
 
         TypeRef returnType = parseType(false);
 
+        boolean inline = matchAndConsume(KEYWORD, "inline");
+
         if (!matchAndConsume(OPERATOR, "=")) {
             return new RParserError("Expected '=' for builtin function declaration", fileName, line).raise();
         }
@@ -539,7 +541,7 @@ public final class ASTParser {
 
         String body = consume().value();
 
-        return new BuiltinFunctionDeclarationNode(fileName, line, keepName, name, params, returnType, body);
+        return new BuiltinFunctionDeclarationNode(fileName, line, keepName, name, params, returnType, inline, body);
     }
 
     private @SubFunc ASTNode parse_IRKeyword() {

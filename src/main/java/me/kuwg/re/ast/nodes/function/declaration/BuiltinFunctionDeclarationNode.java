@@ -21,17 +21,28 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
     private final String name;
     private final List<FunctionParameter> parameters;
     private final String llvmBody;
+    private final boolean inline;
     private boolean registered = false;
     private String llvmName;
     private TypeRef returnType;
 
-    public BuiltinFunctionDeclarationNode(final String fileName, final int line, final boolean keepName, final String name, final List<FunctionParameter> parameters, final TypeRef returnType, final String llvmBody) {
+    public BuiltinFunctionDeclarationNode(
+            final String fileName,
+            final int line,
+            final boolean keepName,
+            final String name,
+            final List<FunctionParameter> parameters,
+            final TypeRef returnType,
+            final boolean inline,
+            final String llvmBody
+    ) {
         super(fileName, line);
         this.keepName = keepName;
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;
         this.llvmBody = llvmBody;
+        this.inline = inline;
 
         if (returnType instanceof RangeType) {
             new RRangeTypeError(fileName, line).raise();
@@ -80,7 +91,12 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
             }
         }
 
-        func.append(") {\n");
+        func.append(") ");
+        if (inline) {
+            cctx.declareOnce("attributes #0 = { alwaysinline }");
+            func.append("#0 ");
+        }
+        func.append("{\n");
 
         for (String s : llvmBody.split("\n")) {
             func.append(TAB).append(s).append('\n');
@@ -107,9 +123,12 @@ public class BuiltinFunctionDeclarationNode extends ASTNode implements GlobalNod
         return RFunction.makeUnique(qualified);
     }
 
-
     public String getLlvmBody() {
         return llvmBody;
+    }
+
+    public boolean isInline() {
+        return inline;
     }
 
     public String getName() {

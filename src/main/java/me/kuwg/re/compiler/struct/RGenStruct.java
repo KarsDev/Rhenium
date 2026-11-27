@@ -200,7 +200,9 @@ public final class RGenStruct extends RDefaultStruct {
 
                     String mangledName = StructImplNode.generateName(struct.type().getName(), blt.getName());
 
-                    BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(fileName, blt.getLine(), true, mangledName, withSelf, returnType, blt.getLlvmBody());
+                    BuiltinFunctionDeclarationNode renamed = new BuiltinFunctionDeclarationNode(
+                            fileName, blt.getLine(), true, mangledName, withSelf, returnType, blt.isInline(), blt.getLlvmBody()
+                    );
 
                     renamed.replaceGenerics(combined, cctx);
                     renamed.compile(cctx);
